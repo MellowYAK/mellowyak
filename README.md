@@ -663,20 +663,22 @@ The intended principle is:
 
 ## Project status
 
-MellowYak is currently in the extraction and local-core phase.
+MellowYak Phase 1 has a working local-core foundation on the local development branch. It is not a released product. The macOS `.app`, managed engine, secure handshake, SQLite persistence and First Setup UI have been exercised locally; Windows and Linux packaging are CI configurations and have not yet been run for this revision.
 
 The complete workflow described in this README is the product direction. Implementation must advance through verified stages.
 
 ### Phase 1 — Local core foundation
 
-- native desktop shell;
-- managed Python sidecar;
-- secure loopback-only communication;
-- local SQLite database;
-- local storage paths;
-- First Setup UI;
-- cross-platform packaging foundation;
-- privacy and migration documentation.
+- implemented Tauri/React desktop shell;
+- implemented managed PyInstaller Python sidecar;
+- tested loopback-only, dynamic-port, per-launch authenticated communication;
+- migrated local SQLite database with persistent installation identity;
+- platform-native local storage paths;
+- First Setup UI backed by live engine values;
+- macOS build evidence plus Windows/Linux packaging workflows;
+- privacy, security, architecture and APC migration documentation.
+
+Phase 1 does **not** protect regressions yet. Add Project is an honest Phase 2 placeholder; there is no source scanner, Git watcher, Impact Map, recorder, verification engine, connector or cloud service.
 
 ### Phase 2 — Projects and Git
 
@@ -756,12 +758,12 @@ Every reused APC component must be classified, reviewed, tested, and documented 
 
 ## Installation
 
-No public installer is available yet.
+No public installer is available. Local development packaging is unsigned and unnotarized and must not be treated as a production release.
 
 The planned distribution is:
 
 - **macOS:** `.app` and `.dmg`
-- **Windows:** signed installer `.exe`
+- **Windows:** NSIS `.exe`
 - **Linux:** AppImage and `.deb`
 
 The release requirement is one installable application with bundled runtime dependencies.
@@ -770,7 +772,26 @@ The release requirement is one installable application with bundled runtime depe
 
 ## Development
 
-Development setup and exact commands will be published when the Phase 1 local-core structure lands.
+Contributors need Python 3.11+ (Python 3.12 is the CI target), Node.js 22+, Rust stable and the Tauri prerequisites for their platform. End users will not need these toolchains after installation.
+
+```sh
+python3 scripts/dev.py bootstrap
+python3 scripts/dev.py dev
+python3 scripts/dev.py test
+python3 scripts/dev.py lint
+python3 scripts/dev.py typecheck
+python3 scripts/dev.py engine-build
+python3 scripts/dev.py desktop-build
+python3 scripts/dev.py package
+python3 scripts/dev.py clean
+```
+
+The API contract is tracked at `packages/contracts/openapi.json`. After an API change:
+
+```sh
+engine/.venv/bin/python scripts/export_openapi.py
+cd apps/desktop && npm run contract:generate
+```
 
 The intended repository structure is:
 
@@ -838,7 +859,7 @@ Contribution guidelines will prioritize:
 - cross-platform behavior;
 - secure defaults.
 
-See `CONTRIBUTING.md` when the public development foundation is available.
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the implemented development workflow.
 
 ---
 
@@ -846,7 +867,7 @@ See `CONTRIBUTING.md` when the public development foundation is available.
 
 Security reports should not be filed as public issues when they contain exploit details or sensitive project information.
 
-See `SECURITY.md` for the private reporting process once it is published.
+See [`SECURITY.md`](SECURITY.md) for the reporting and current implementation boundary.
 
 The local engine must default to loopback-only communication, per-launch authentication, restricted origins, redacted logs, and no outbound MellowYak network dependency.
 
@@ -854,7 +875,7 @@ The local engine must default to loopback-only communication, per-launch authent
 
 ## License
 
-The repository’s license and open-core boundary will be declared before the first public code release.
+No license file existed at the Phase 1 starting point, so no license was silently added. See [`docs/OPEN_SOURCE_LICENSE_DECISION.md`](docs/OPEN_SOURCE_LICENSE_DECISION.md) for the pending owner decision.
 
 No README statement should be interpreted as formal trademark, licensing, security, or production-readiness clearance.
 

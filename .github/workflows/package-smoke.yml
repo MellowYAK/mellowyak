@@ -1,0 +1,69 @@
+name: Unpublished package smoke
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "apps/desktop/**"
+      - "engine/**"
+      - "scripts/build_engine.py"
+      - ".github/workflows/package-smoke.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            bundles: app,dmg
+          - os: windows-2025
+            bundles: nsis
+          - os: ubuntu-24.04
+            bundles: appimage,deb
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Linux prerequisites
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install build dependencies
+        shell: bash
+        run: |
+          python -m venv engine/.venv
+          engine/.venv/bin/python -m pip install -e './engine[dev]'
+          npm ci --prefix apps/desktop
+        if: runner.os != 'Windows'
+      - name: Install build dependencies (Windows)
+        shell: pwsh
+        run: |
+          python -m venv engine/.venv
+          engine/.venv/Scripts/python.exe -m pip install -e './engine[dev]'
+          npm ci --prefix apps/desktop
+        if: runner.os == 'Windows'
+      - name: Build bundled engine
+        run: python scripts/build_engine.py
+      - name: Export local API contract (Unix)
+        if: runner.os != 'Windows'
+        run: engine/.venv/bin/python scripts/export_openapi.py
+      - name: Export local API contract (Windows)
+        if: runner.os == 'Windows'
+        run: engine/.venv/Scripts/python.exe scripts/export_openapi.py
+      - name: Generate typed TypeScript client
+        run: npm --prefix apps/desktop run contract:generate
+      - name: Build platform package without publishing
+        run: npm run tauri build -- --bundles ${{ matrix.bundles }}
+        working-directory: apps/desktop

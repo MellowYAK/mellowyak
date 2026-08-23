@@ -1,0 +1,60 @@
+:root {
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #e9f4fa;
+  background: #06131f;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; min-height: 100vh; background: radial-gradient(circle at 75% 0%, rgba(87, 65, 205, .19), transparent 34%), radial-gradient(circle at 8% 18%, rgba(22, 198, 183, .13), transparent 28%), #06131f; }
+button { font: inherit; }
+.app-shell { min-height: 100vh; padding: 28px clamp(20px, 5vw, 72px) 36px; display: flex; flex-direction: column; gap: 28px; }
+.app-shell.compact { justify-content: center; max-width: 760px; margin: auto; }
+.brand-bar { display: flex; align-items: center; gap: 13px; }
+.mark { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; color: #051521; font-weight: 950; letter-spacing: -.06em; background: linear-gradient(135deg, #36dbc0, #40a4f4 68%, #7d65e8); box-shadow: 0 10px 32px rgba(45, 185, 203, .2); }
+.brand-name { font-size: 18px; font-weight: 850; }
+.tagline { color: #8ea7b9; font-size: 12px; margin-top: 2px; }
+.principle { margin-left: auto; color: #91aaba; font-size: 12px; }
+.hero { max-width: 800px; padding: 22px 0 4px; }
+.eyebrow,.phase-label { color: #3ed8c0; text-transform: uppercase; letter-spacing: .14em; font-size: 11px; font-weight: 800; }
+h1 { margin: 10px 0 6px; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; letter-spacing: -.045em; }
+.hero > p { margin: 0; color: #9eb4c3; font-size: 18px; }
+.privacy-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.privacy-pills span { border: 1px solid rgba(75, 207, 196, .22); border-radius: 999px; padding: 7px 11px; color: #bad6dc; background: rgba(10, 50, 62, .55); font-size: 12px; }
+.content-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(260px, .8fr); gap: 18px; }
+.panel { border: 1px solid rgba(125, 170, 196, .18); border-radius: 18px; padding: 22px; background: rgba(8, 27, 42, .88); box-shadow: 0 24px 70px rgba(0, 0, 0, .23); }
+.panel h2 { margin: 0 0 16px; font-size: 16px; }
+.section-head { display: flex; align-items: center; justify-content: space-between; }
+.live-dot { color: #4be0ad; font-size: 11px; font-weight: 800; }
+.live-dot::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: #4be0ad; box-shadow: 0 0 12px #4be0ad; }
+.status-row { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 14px; padding: 10px 0; border-top: 1px solid rgba(128, 167, 190, .1); }
+.status-row span { color: #829cab; font-size: 12px; }
+.status-row strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: #dcebf1; font-size: 12px; font-weight: 700; }
+.status-row strong.good { color: #58e0b0; }
+.privacy-card ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 11px; }
+.privacy-card li::before { content: "✓"; margin-right: 9px; color: #45dcb2; font-weight: 900; }
+.privacy-card li { color: #c6d9e1; font-size: 13px; }
+.privacy-card p { margin: 20px 0; padding: 13px; border-radius: 12px; background: rgba(51, 141, 180, .1); color: #9dc3d2; font-size: 12px; line-height: 1.5; }
+.versions { display: flex; flex-wrap: wrap; gap: 8px; }
+.versions span { color: #7893a3; font-size: 10px; }
+.versions strong { color: #c9dce4; }
+.actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; }
+button { border: 0; border-radius: 12px; padding: 12px 16px; cursor: pointer; font-weight: 800; }
+button:disabled { opacity: .45; cursor: wait; }
+.primary { color: #061521; background: linear-gradient(135deg, #35d6bb, #49a7ef); }
+.secondary { color: #d9e8ef; background: #10283b; border: 1px solid rgba(134, 177, 202, .2); }
+details { flex: 1 1 100%; margin-top: 4px; }
+summary { color: #7897a8; cursor: pointer; font-size: 11px; }
+pre { max-height: 220px; overflow: auto; border-radius: 12px; padding: 13px; color: #a9c6d3; background: #04101a; font-size: 10px; }
+.loading { color: #91acb9; }
+.error { border-color: rgba(241, 100, 120, .4); color: #ffb2be; }
+.placeholder { text-align: left; }
+.placeholder p { color: #9cb2c0; line-height: 1.6; }
+
+@media (max-width: 760px) {
+  .app-shell { padding: 20px 16px 28px; }
+  .principle { display: none; }
+  .content-grid { grid-template-columns: 1fr; }
+  .status-row { grid-template-columns: 112px minmax(0, 1fr); }
+  h1 { font-size: 38px; }
+}

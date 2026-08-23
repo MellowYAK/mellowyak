@@ -1,0 +1,57 @@
+name: Phase 1 quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Tauri Linux prerequisites
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Install engine dependencies
+        run: |
+          python -m venv engine/.venv
+          engine/.venv/bin/python -m pip install -e './engine[dev]'
+      - name: Install desktop dependencies
+        run: npm ci
+        working-directory: apps/desktop
+      - name: Generate typed local API contract
+        run: |
+          engine/.venv/bin/python scripts/export_openapi.py
+          npm --prefix apps/desktop run contract:generate
+      - name: Python tests and lint
+        run: |
+          engine/.venv/bin/python -m pytest engine
+          engine/.venv/bin/python -m ruff check engine scripts
+          engine/.venv/bin/python -m ruff format --check engine scripts
+      - name: UI tests, types and build
+        run: |
+          npm test
+          npm run typecheck
+          npm run build
+        working-directory: apps/desktop
+      - name: Rust checks
+        run: |
+          engine/.venv/bin/python scripts/build_engine.py
+          cargo fmt --check
+          cargo check
+        working-directory: apps/desktop/src-tauri
