@@ -43,6 +43,8 @@ Final macOS package gate:
 
 The read-only DMG mount contains both executables. The packaged engine produced the expected local handshake, listened on a dynamic IPv4 loopback port, migrated a temporary database to `0002_project_git_impact`, and returned authenticated health with database ready, cloud disconnected, and outbound network disabled. PyInstaller cold startup took longer than the first ten-second probe; the bounded fifty-second package probe completed successfully.
 
+The first clean-checkout GitHub Actions run correctly exposed two workflow-only path gaps: the quality job invoked the engine builder relative to the Rust working directory, and the desktop matrix did not regenerate the intentionally ignored typed OpenAPI client. Both workflows now generate the local contract explicitly and use repository-root paths. Those failed attempts are retained in Actions history and are not relabeled as successful evidence.
+
 ## Explicit limits
 
 - Phase 2 relationships are direct static foundations, not a complete blast radius.

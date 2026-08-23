@@ -1,4 +1,4 @@
-name: Phase 1 quality
+name: MellowYak quality
 
 on:
   pull_request:
@@ -52,6 +52,5 @@ jobs:
       - name: Rust checks
         run: |
           engine/.venv/bin/python scripts/build_engine.py
-          cargo fmt --check
-          cargo check
-        working-directory: apps/desktop/src-tauri
+          cargo fmt --check --manifest-path apps/desktop/src-tauri/Cargo.toml
+          cargo check --manifest-path apps/desktop/src-tauri/Cargo.toml

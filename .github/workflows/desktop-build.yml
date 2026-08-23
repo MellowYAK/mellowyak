@@ -50,6 +50,18 @@ jobs:
           python -m venv engine/.venv
           engine/.venv/Scripts/python.exe -m pip install -e './engine[dev]'
           npm ci --prefix apps/desktop
+      - name: Generate local API client (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          engine/.venv/bin/python scripts/export_openapi.py
+          npm --prefix apps/desktop run contract:generate
+      - name: Generate local API client (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          engine/.venv/Scripts/python.exe scripts/export_openapi.py
+          npm --prefix apps/desktop run contract:generate
       - name: Build bundled engine and desktop package
         shell: bash
         run: |
