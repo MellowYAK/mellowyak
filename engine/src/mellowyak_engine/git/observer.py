@@ -1,0 +1,166 @@
+from __future__ import annotations
+
+import hashlib
+import json
+from dataclasses import asdict, dataclass
+from pathlib import Path
+
+from dulwich import porcelain
+from dulwich.errors import NotGitRepository
+from dulwich.repo import Repo
+
+
+@dataclass(frozen=True)
+class GitState:
+    available: bool
+    repository_root: str | None
+    branch: str | None
+    head_sha: str | None
+    is_detached: bool
+    is_dirty: bool
+    staged: tuple[str, ...]
+    unstaged: tuple[str, ...]
+    untracked: tuple[str, ...]
+    ignored_count: int
+    worktree_fingerprint: str
+    error: str | None = None
+
+    def public_dict(self) -> dict[str, object]:
+        value = asdict(self)
+        value.pop("repository_root", None)
+        return value
+
+
+def _text_path(value: bytes | str) -> str:
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="surrogateescape").replace("\\", "/")
+    return str(value).replace("\\", "/")
+
+
+def discover_repository(path: Path) -> Repo | None:
+    try:
+        return Repo.discover(str(path))
+    except (NotGitRepository, FileNotFoundError, PermissionError):
+        return None
+
+
+def _working_hash(root: Path, relative_path: str) -> str:
+    candidate = (root / relative_path).resolve(strict=False)
+    try:
+        candidate.relative_to(root)
+    except ValueError:
+        return "OUTSIDE_ROOT"
+    if not candidate.is_file():
+        return "DELETED"
+    digest = hashlib.sha256()
+    try:
+        with candidate.open("rb") as handle:
+            while chunk := handle.read(1024 * 1024):
+                digest.update(chunk)
+    except (OSError, PermissionError):
+        return "UNREADABLE"
+    return digest.hexdigest()
+
+
+def observe_git(path: Path) -> GitState:
+    selected = path.expanduser().resolve(strict=True)
+    repo = discover_repository(selected)
+    if repo is None:
+        fingerprint = hashlib.sha256(b"GIT_UNAVAILABLE").hexdigest()
+        return GitState(
+            available=False,
+            repository_root=None,
+            branch=None,
+            head_sha=None,
+            is_detached=False,
+            is_dirty=False,
+            staged=(),
+            unstaged=(),
+            untracked=(),
+            ignored_count=0,
+            worktree_fingerprint=fingerprint,
+            error="GIT_UNAVAILABLE",
+        )
+
+    root = Path(repo.path).resolve()
+    if repo.bare:
+        return GitState(
+            available=False,
+            repository_root=str(root),
+            branch=None,
+            head_sha=None,
+            is_detached=False,
+            is_dirty=False,
+            staged=(),
+            unstaged=(),
+            untracked=(),
+            ignored_count=0,
+            worktree_fingerprint=hashlib.sha256(b"BARE_REPOSITORY").hexdigest(),
+            error="BARE_REPOSITORY_UNSUPPORTED",
+        )
+
+    root = Path(repo.path).resolve()
+    status = porcelain.status(repo, ignored=True, untracked_files="all")
+    staged_by_class = {
+        change_class: tuple(sorted(_text_path(item) for item in items))
+        for change_class, items in status.staged.items()
+    }
+    staged = tuple(
+        sorted(
+            f"{change_class}:{path}"
+            for change_class, paths in staged_by_class.items()
+            for path in paths
+        )
+    )
+    unstaged = tuple(sorted(_text_path(item) for item in status.unstaged))
+    untracked = tuple(sorted(_text_path(item) for item in status.untracked))
+
+    try:
+        head_sha = repo.head().decode("ascii")
+    except KeyError:
+        head_sha = None
+    raw_head_ref = repo.refs.read_ref(b"HEAD")
+    head_ref = (
+        raw_head_ref.removeprefix(b"ref: ")
+        if raw_head_ref and raw_head_ref.startswith(b"ref: ")
+        else None
+    )
+    is_detached = bool(raw_head_ref and head_ref is None)
+    branch = None
+    if head_ref and head_ref.startswith(b"refs/heads/"):
+        branch = head_ref.removeprefix(b"refs/heads/").decode("utf-8", errors="replace")
+
+    index = repo.open_index()
+    fingerprint_items: list[dict[str, str]] = [
+        {"class": "HEAD", "path": "", "digest": head_sha or "UNBORN"}
+    ]
+    for item in staged:
+        change_class, relative = item.split(":", 1)
+        try:
+            index_entry = index[relative.encode()]
+        except KeyError:
+            index_entry = None
+        digest = index_entry.sha.decode("ascii") if index_entry else "DELETED"
+        fingerprint_items.append(
+            {"class": f"STAGED_{change_class.upper()}", "path": relative, "digest": digest}
+        )
+    for change_class, paths in (("UNSTAGED", unstaged), ("UNTRACKED", untracked)):
+        for relative in paths:
+            fingerprint_items.append(
+                {"class": change_class, "path": relative, "digest": _working_hash(root, relative)}
+            )
+    canonical = json.dumps(fingerprint_items, sort_keys=True, separators=(",", ":"))
+    fingerprint = hashlib.sha256(canonical.encode()).hexdigest()
+    return GitState(
+        available=True,
+        repository_root=str(root),
+        branch=branch,
+        head_sha=head_sha,
+        is_detached=is_detached,
+        is_dirty=bool(staged or unstaged or untracked),
+        staged=staged,
+        unstaged=unstaged,
+        untracked=untracked,
+        ignored_count=0,
+        worktree_fingerprint=fingerprint,
+    )

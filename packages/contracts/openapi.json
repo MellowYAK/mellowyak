@@ -1,6 +1,158 @@
 {
   "components": {
     "schemas": {
+      "ActionResponse": {
+        "properties": {
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "ActionResponse",
+        "type": "object"
+      },
+      "ChangeListResponse": {
+        "properties": {
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/ChangeObservationResponse"
+            },
+            "title": "Changes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "changes"
+        ],
+        "title": "ChangeListResponse",
+        "type": "object"
+      },
+      "ChangeObservationResponse": {
+        "properties": {
+          "changed_paths": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Changed Paths",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "observed_at": {
+            "title": "Observed At",
+            "type": "string"
+          },
+          "worktree_fingerprint": {
+            "title": "Worktree Fingerprint",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "observed_at",
+          "worktree_fingerprint",
+          "changed_paths"
+        ],
+        "title": "ChangeObservationResponse",
+        "type": "object"
+      },
+      "GitStateResponse": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "branch": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Branch"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "head_sha": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Head Sha"
+          },
+          "ignored_count": {
+            "title": "Ignored Count",
+            "type": "integer"
+          },
+          "is_detached": {
+            "title": "Is Detached",
+            "type": "boolean"
+          },
+          "is_dirty": {
+            "title": "Is Dirty",
+            "type": "boolean"
+          },
+          "staged": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Staged",
+            "type": "array"
+          },
+          "unstaged": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unstaged",
+            "type": "array"
+          },
+          "untracked": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Untracked",
+            "type": "array"
+          },
+          "worktree_fingerprint": {
+            "title": "Worktree Fingerprint",
+            "type": "string"
+          }
+        },
+        "required": [
+          "available",
+          "branch",
+          "head_sha",
+          "is_detached",
+          "is_dirty",
+          "staged",
+          "unstaged",
+          "untracked",
+          "ignored_count",
+          "worktree_fingerprint"
+        ],
+        "title": "GitStateResponse",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -95,6 +247,128 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "ImpactNodeResponse": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "relative_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relative Path"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "label",
+          "relative_path"
+        ],
+        "title": "ImpactNodeResponse",
+        "type": "object"
+      },
+      "ImpactSearchItem": {
+        "properties": {
+          "node": {
+            "$ref": "#/components/schemas/ImpactNodeResponse"
+          },
+          "relationships": {
+            "items": {
+              "$ref": "#/components/schemas/RelationshipResponse"
+            },
+            "title": "Relationships",
+            "type": "array"
+          }
+        },
+        "required": [
+          "node",
+          "relationships"
+        ],
+        "title": "ImpactSearchItem",
+        "type": "object"
+      },
+      "ImpactSearchResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/ImpactSearchItem"
+            },
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "title": "ImpactSearchResponse",
+        "type": "object"
+      },
+      "ImpactSummaryResponse": {
+        "properties": {
+          "direct_relationships": {
+            "title": "Direct Relationships",
+            "type": "integer"
+          },
+          "files_indexed": {
+            "title": "Files Indexed",
+            "type": "integer"
+          },
+          "language_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Language Counts",
+            "type": "object"
+          },
+          "languages": {
+            "title": "Languages",
+            "type": "integer"
+          },
+          "sensitive_files": {
+            "title": "Sensitive Files",
+            "type": "integer"
+          },
+          "stale_relationships": {
+            "title": "Stale Relationships",
+            "type": "integer"
+          },
+          "tests_found": {
+            "title": "Tests Found",
+            "type": "integer"
+          },
+          "unknown_references": {
+            "title": "Unknown References",
+            "type": "integer"
+          },
+          "unsupported_files": {
+            "title": "Unsupported Files",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "files_indexed",
+          "languages",
+          "language_counts",
+          "direct_relationships",
+          "tests_found",
+          "sensitive_files",
+          "unknown_references",
+          "unsupported_files",
+          "stale_relationships"
+        ],
+        "title": "ImpactSummaryResponse",
+        "type": "object"
+      },
       "InstallationResponse": {
         "properties": {
           "app_version": {
@@ -131,6 +405,76 @@
           "database_schema_version"
         ],
         "title": "InstallationResponse",
+        "type": "object"
+      },
+      "LocalEventListResponse": {
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/LocalEventResponse"
+            },
+            "title": "Events",
+            "type": "array"
+          }
+        },
+        "required": [
+          "events"
+        ],
+        "title": "LocalEventListResponse",
+        "type": "object"
+      },
+      "LocalEventResponse": {
+        "properties": {
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "occurred_at": {
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "title": "Payload",
+            "type": "object"
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Id"
+          },
+          "sequence": {
+            "title": "Sequence",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sequence",
+          "event_type",
+          "project_id",
+          "occurred_at",
+          "payload"
+        ],
+        "title": "LocalEventResponse",
+        "type": "object"
+      },
+      "MonitoringResponse": {
+        "properties": {
+          "monitoring_status": {
+            "title": "Monitoring Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "monitoring_status"
+        ],
+        "title": "MonitoringResponse",
         "type": "object"
       },
       "OpenDataFolderResponse": {
@@ -189,6 +533,281 @@
         "title": "PrivacySettingsResponse",
         "type": "object"
       },
+      "ProjectCreateRequest": {
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "monitoring_mode": {
+            "default": "passive",
+            "title": "Monitoring Mode",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "display_name"
+        ],
+        "title": "ProjectCreateRequest",
+        "type": "object"
+      },
+      "ProjectDetectRequest": {
+        "properties": {
+          "path": {
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "title": "ProjectDetectRequest",
+        "type": "object"
+      },
+      "ProjectDetectionResponse": {
+        "properties": {
+          "candidate_files": {
+            "title": "Candidate Files",
+            "type": "integer"
+          },
+          "frameworks": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Frameworks",
+            "type": "array"
+          },
+          "git": {
+            "$ref": "#/components/schemas/GitStateResponse"
+          },
+          "ignored_paths": {
+            "title": "Ignored Paths",
+            "type": "integer"
+          },
+          "language_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Language Counts",
+            "type": "object"
+          },
+          "languages": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Languages",
+            "type": "array"
+          },
+          "relationship_coverage": {
+            "title": "Relationship Coverage",
+            "type": "string"
+          },
+          "repository_path": {
+            "title": "Repository Path",
+            "type": "string"
+          },
+          "runtime_hints": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Runtime Hints",
+            "type": "array"
+          },
+          "selected_path": {
+            "title": "Selected Path",
+            "type": "string"
+          },
+          "source_remains_local": {
+            "title": "Source Remains Local",
+            "type": "boolean"
+          },
+          "suggested_name": {
+            "title": "Suggested Name",
+            "type": "string"
+          },
+          "tests": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tests",
+            "type": "array"
+          },
+          "unsupported_coverage": {
+            "title": "Unsupported Coverage",
+            "type": "string"
+          }
+        },
+        "required": [
+          "selected_path",
+          "repository_path",
+          "suggested_name",
+          "git",
+          "languages",
+          "language_counts",
+          "frameworks",
+          "tests",
+          "runtime_hints",
+          "candidate_files",
+          "ignored_paths",
+          "relationship_coverage",
+          "unsupported_coverage",
+          "source_remains_local"
+        ],
+        "title": "ProjectDetectionResponse",
+        "type": "object"
+      },
+      "ProjectListResponse": {
+        "properties": {
+          "projects": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectResponse"
+            },
+            "title": "Projects",
+            "type": "array"
+          }
+        },
+        "required": [
+          "projects"
+        ],
+        "title": "ProjectListResponse",
+        "type": "object"
+      },
+      "ProjectResponse": {
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "display_path": {
+            "title": "Display Path",
+            "type": "string"
+          },
+          "frameworks": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Frameworks",
+            "type": "array"
+          },
+          "git": {
+            "$ref": "#/components/schemas/GitStateResponse"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "languages": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Languages",
+            "type": "array"
+          },
+          "last_scan_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Scan At"
+          },
+          "last_scan_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Scan Status"
+          },
+          "monitoring_mode": {
+            "title": "Monitoring Mode",
+            "type": "string"
+          },
+          "monitoring_status": {
+            "title": "Monitoring Status",
+            "type": "string"
+          },
+          "repository_path": {
+            "title": "Repository Path",
+            "type": "string"
+          },
+          "runtime_hints": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Runtime Hints",
+            "type": "array"
+          },
+          "scan": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScanRunResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_remains_local": {
+            "title": "Source Remains Local",
+            "type": "boolean"
+          },
+          "tests": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tests",
+            "type": "array"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "id",
+          "display_name",
+          "display_path",
+          "repository_path",
+          "monitoring_mode",
+          "monitoring_status",
+          "last_scan_status",
+          "last_scan_at",
+          "created_at",
+          "updated_at",
+          "languages",
+          "frameworks",
+          "tests",
+          "runtime_hints",
+          "git",
+          "scan",
+          "source_remains_local"
+        ],
+        "title": "ProjectResponse",
+        "type": "object"
+      },
       "ReadinessResponse": {
         "properties": {
           "checks": {
@@ -208,6 +827,221 @@
           "checks"
         ],
         "title": "ReadinessResponse",
+        "type": "object"
+      },
+      "RelationshipResponse": {
+        "properties": {
+          "parser_adapter": {
+            "title": "Parser Adapter",
+            "type": "string"
+          },
+          "provenance": {
+            "title": "Provenance",
+            "type": "string"
+          },
+          "target": {
+            "title": "Target",
+            "type": "string"
+          },
+          "target_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Path"
+          },
+          "target_type": {
+            "title": "Target Type",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "target_type",
+          "target",
+          "target_path",
+          "provenance",
+          "parser_adapter"
+        ],
+        "title": "RelationshipResponse",
+        "type": "object"
+      },
+      "ScanFindingListResponse": {
+        "properties": {
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/ScanFindingResponse"
+            },
+            "title": "Findings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "findings"
+        ],
+        "title": "ScanFindingListResponse",
+        "type": "object"
+      },
+      "ScanFindingResponse": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "relative_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relative Path"
+          },
+          "severity": {
+            "title": "Severity",
+            "type": "string"
+          }
+        },
+        "required": [
+          "severity",
+          "code",
+          "relative_path",
+          "message"
+        ],
+        "title": "ScanFindingResponse",
+        "type": "object"
+      },
+      "ScanRunResponse": {
+        "properties": {
+          "binary_files": {
+            "title": "Binary Files",
+            "type": "integer"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "duration_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Seconds"
+          },
+          "error_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Summary"
+          },
+          "excluded_files": {
+            "title": "Excluded Files",
+            "type": "integer"
+          },
+          "failed_files": {
+            "title": "Failed Files",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "included_files": {
+            "title": "Included Files",
+            "type": "integer"
+          },
+          "processed_files": {
+            "title": "Processed Files",
+            "type": "integer"
+          },
+          "relationship_count": {
+            "title": "Relationship Count",
+            "type": "integer"
+          },
+          "scan_version": {
+            "title": "Scan Version",
+            "type": "string"
+          },
+          "sensitive_files": {
+            "title": "Sensitive Files",
+            "type": "integer"
+          },
+          "started_at": {
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "test_files": {
+            "title": "Test Files",
+            "type": "integer"
+          },
+          "total_candidates": {
+            "title": "Total Candidates",
+            "type": "integer"
+          },
+          "unknown_items": {
+            "title": "Unknown Items",
+            "type": "integer"
+          },
+          "unsupported_files": {
+            "title": "Unsupported Files",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "scan_version",
+          "started_at",
+          "completed_at",
+          "total_candidates",
+          "processed_files",
+          "included_files",
+          "excluded_files",
+          "binary_files",
+          "sensitive_files",
+          "failed_files",
+          "unknown_items",
+          "unsupported_files",
+          "test_files",
+          "relationship_count",
+          "duration_seconds",
+          "error_summary"
+        ],
+        "title": "ScanRunResponse",
         "type": "object"
       },
       "StoragePathsResponse": {
@@ -307,6 +1141,63 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/events": {
+      "get": {
+        "operationId": "local_events_events_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "After",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocalEventListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Local Events"
+      }
+    },
     "/handshake": {
       "get": {
         "operationId": "handshake_handshake_get",
@@ -415,6 +1306,839 @@
           }
         },
         "summary": "Installation Info"
+      }
+    },
+    "/projects": {
+      "get": {
+        "operationId": "list_projects_projects_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Projects"
+      },
+      "post": {
+        "operationId": "create_project_projects_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Project"
+      }
+    },
+    "/projects/detect": {
+      "post": {
+        "operationId": "detect_project_projects_detect_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectDetectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectDetectionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Detect Project"
+      }
+    },
+    "/projects/{project_id}": {
+      "get": {
+        "operationId": "get_project_projects__project_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Project"
+      }
+    },
+    "/projects/{project_id}/changes": {
+      "get": {
+        "operationId": "project_changes_projects__project_id__changes_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Project Changes"
+      }
+    },
+    "/projects/{project_id}/findings": {
+      "get": {
+        "operationId": "scan_findings_projects__project_id__findings_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanFindingListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Scan Findings"
+      }
+    },
+    "/projects/{project_id}/git": {
+      "get": {
+        "operationId": "git_status_projects__project_id__git_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitStateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Git Status"
+      }
+    },
+    "/projects/{project_id}/impact/search": {
+      "get": {
+        "operationId": "impact_search_projects__project_id__impact_search_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "query",
+            "required": false,
+            "schema": {
+              "default": "",
+              "maxLength": 240,
+              "title": "Query",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImpactSearchResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Impact Search"
+      }
+    },
+    "/projects/{project_id}/impact/summary": {
+      "get": {
+        "operationId": "impact_summary_projects__project_id__impact_summary_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImpactSummaryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Impact Summary"
+      }
+    },
+    "/projects/{project_id}/monitoring/pause": {
+      "post": {
+        "operationId": "pause_monitoring_projects__project_id__monitoring_pause_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonitoringResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Pause Monitoring"
+      }
+    },
+    "/projects/{project_id}/monitoring/resume": {
+      "post": {
+        "operationId": "resume_monitoring_projects__project_id__monitoring_resume_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonitoringResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Resume Monitoring"
+      }
+    },
+    "/projects/{project_id}/open-folder": {
+      "post": {
+        "operationId": "open_project_folder_projects__project_id__open_folder_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenDataFolderResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Open Project Folder"
+      }
+    },
+    "/projects/{project_id}/scan": {
+      "get": {
+        "operationId": "scan_status_projects__project_id__scan_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ScanRunResponse"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Scan Status Projects  Project Id  Scan Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Scan Status"
+      },
+      "post": {
+        "operationId": "start_scan_projects__project_id__scan_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Scan"
+      }
+    },
+    "/projects/{project_id}/scan/cancel": {
+      "post": {
+        "operationId": "cancel_scan_projects__project_id__scan_cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Scan"
       }
     },
     "/readiness": {

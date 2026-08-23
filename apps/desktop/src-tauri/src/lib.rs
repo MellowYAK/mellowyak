@@ -50,6 +50,7 @@ fn stop_engine(app: &tauri::AppHandle) {
 pub fn run() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![engine_bootstrap])
         .setup(|app| {
             let token = random_session_token();

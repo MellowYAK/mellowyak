@@ -1,0 +1,72 @@
+name: Desktop builds from one commit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            target: macos
+            bundles: app,dmg
+          - os: windows-2025
+            target: windows
+            bundles: nsis
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install dependencies (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          python -m venv engine/.venv
+          engine/.venv/bin/python -m pip install -e './engine[dev]'
+          npm ci --prefix apps/desktop
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          python -m venv engine/.venv
+          engine/.venv/Scripts/python.exe -m pip install -e './engine[dev]'
+          npm ci --prefix apps/desktop
+      - name: Build bundled engine and desktop package
+        shell: bash
+        run: |
+          python scripts/build_engine.py
+          npm --prefix apps/desktop run tauri build -- --bundles ${{ matrix.bundles }}
+      - name: Record immutable source identity
+        shell: bash
+        run: |
+          mkdir -p build-manifest
+          printf '{"repository":"%s","commit":"%s","ref":"%s","target":"%s"}\n' \
+            "$GITHUB_REPOSITORY" "$GITHUB_SHA" "$GITHUB_REF" "${{ matrix.target }}" \
+            > "build-manifest/${{ matrix.target }}.json"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mellowyak-${{ matrix.target }}-${{ github.sha }}
+          if-no-files-found: error
+          path: |
+            build-manifest/${{ matrix.target }}.json
+            apps/desktop/src-tauri/target/release/bundle/**

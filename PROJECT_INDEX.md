@@ -1,6 +1,6 @@
 # MellowYak project index
 
-Phase 1 source-of-truth pointers:
+Phase 2 source-of-truth pointers:
 
 ## Product and policy
 
@@ -24,6 +24,11 @@ Phase 1 source-of-truth pointers:
 - Local API: [`engine/src/mellowyak_engine/api/app.py`](engine/src/mellowyak_engine/api/app.py)
 - Database layer: [`engine/src/mellowyak_engine/db/database.py`](engine/src/mellowyak_engine/db/database.py)
 - Initial migration: [`engine/alembic/versions/0001_local_core.py`](engine/alembic/versions/0001_local_core.py)
+- Project/Git/Impact migration: [`engine/alembic/versions/0002_project_git_impact.py`](engine/alembic/versions/0002_project_git_impact.py)
+- Project service: [`engine/src/mellowyak_engine/projects/service.py`](engine/src/mellowyak_engine/projects/service.py)
+- Git observer: [`engine/src/mellowyak_engine/git/observer.py`](engine/src/mellowyak_engine/git/observer.py)
+- Source scan and Impact graph: [`engine/src/mellowyak_engine/scanning/service.py`](engine/src/mellowyak_engine/scanning/service.py)
+- Passive monitoring: [`engine/src/mellowyak_engine/monitoring/service.py`](engine/src/mellowyak_engine/monitoring/service.py)
 - React UI: [`apps/desktop/src/App.tsx`](apps/desktop/src/App.tsx)
 - Typed API bridge: [`apps/desktop/src/api.ts`](apps/desktop/src/api.ts)
 - Tauri process manager: [`apps/desktop/src-tauri/src/lib.rs`](apps/desktop/src-tauri/src/lib.rs)
@@ -37,6 +42,8 @@ Phase 1 source-of-truth pointers:
 - Cross-platform developer commands: [`scripts/dev.py`](scripts/dev.py)
 - Quality workflow: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
 - Unpublished package matrix: [`.github/workflows/package-smoke.yml`](.github/workflows/package-smoke.yml)
+- Commit-aligned macOS/Windows builds: [`.github/workflows/desktop-build.yml`](.github/workflows/desktop-build.yml)
 - Phase 1 evidence: [`docs/validation/PHASE_1_LOCAL_CORE_VALIDATION_REPORT.md`](docs/validation/PHASE_1_LOCAL_CORE_VALIDATION_REPORT.md)
+- Phase 2 evidence: [`docs/validation/PHASE_2_PROJECT_GIT_IMPACT_VALIDATION_REPORT.md`](docs/validation/PHASE_2_PROJECT_GIT_IMPACT_VALIDATION_REPORT.md)
 
-Phase 2 modules are intentionally absent. No listed placeholder should be interpreted as source scanning, impact analysis, regression protection or connector support.
+Phase 2 provides direct, deterministic relationship foundations only. No listed module should be interpreted as complete impact analysis, regression protection, behavior verification, connector execution, or cloud support.

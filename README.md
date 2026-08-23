@@ -663,7 +663,7 @@ The intended principle is:
 
 ## Project status
 
-MellowYak Phase 1 has a working local-core foundation on the local development branch. It is not a released product. The macOS `.app`, managed engine, secure handshake, SQLite persistence and First Setup UI have been exercised locally; Windows and Linux packaging are CI configurations and have not yet been run for this revision.
+MellowYak Phase 2 now has a working local Project, Git, Source Scan, and Impact foundation. It is not a released product. The desktop can select a real folder through the native OS picker, persist the project locally, observe Git without modifying it, run a bounded source scan, and show honest readiness and relationship coverage. Windows builds remain CI-configured rather than locally runtime-verified on this macOS revision.
 
 The complete workflow described in this README is the product direction. Implementation must advance through verified stages.
 
@@ -678,21 +678,26 @@ The complete workflow described in this README is the product direction. Impleme
 - macOS build evidence plus Windows/Linux packaging workflows;
 - privacy, security, architecture and APC migration documentation.
 
-Phase 1 does **not** protect regressions yet. Add Project is an honest Phase 2 placeholder; there is no source scanner, Git watcher, Impact Map, recorder, verification engine, connector or cloud service.
+Phase 1 remains the security and storage boundary. Phase 2 extends it without adding a cloud service, account requirement, source upload, recorder, behavior verification, completion gate, or connector execution.
 
 ### Phase 2 — Projects and Git
 
-- Add Project;
-- Git repository detection;
-- exact base/head change identity;
-- passive file and Git observation;
-- initial project readiness.
+- implemented native-folder Add Project and restart-persistent project list;
+- implemented read-only Git repository, branch, HEAD, staged, unstaged and untracked observation;
+- implemented passive debounced file/Git observation with pause/resume and polling fallback;
+- implemented bounded local source inventory with ignore, artifact, binary, sensitive, oversized and escaping-symlink boundaries;
+- implemented deterministic Python AST and conservative JavaScript/TypeScript/TSX/PHP relationship adapters;
+- implemented scan progress/cancellation, findings, provenance, staleness, unknown/unsupported counts, relationship search and honest readiness;
+- implemented SQLite migration `0002_project_git_impact` without storing source contents;
+- configured macOS and Windows artifacts to build from the exact same Git commit in `.github/workflows/desktop-build.yml`.
 
-### Phase 3 — Impact and context
+Phase 2 does **not** claim complete blast-radius knowledge or regression protection. It establishes the local evidence graph on which later Protected Behaviors and verification gates can operate.
 
-- source scanning;
-- selected APC Project MAP extraction;
-- revisioned Impact Map foundation;
+### Phase 3 — Impact expansion and context
+
+- deeper framework/runtime relationship adapters;
+- selected, reviewed APC Project MAP concepts without copied APC source;
+- revision-aware impact traversal beyond the Phase 2 direct relationship foundation;
 - explainable context selection;
 - explicit unknown coverage.
 
@@ -821,6 +826,8 @@ scripts/
 ```
 
 Generated installers, local databases, evidence files, virtual environments, `node_modules`, Rust build output, and secrets must not be committed.
+
+The canonical source may be Git-backed, as it is for MellowYak, but Git is not a requirement for every future APC-managed project. MellowYak desktop artifacts are generated from source and uploaded as CI artifacts; built binaries are not committed to source history. The optional future APC integration is an authenticated, project-scoped API adapter. MellowYak does not copy APC PHP, MariaDB, tenant, task, or UI code and does not require an APC server to run.
 
 ---
 
