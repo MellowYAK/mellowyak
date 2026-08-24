@@ -1,6 +1,6 @@
 # MellowYak project index
 
-Phase 4 source-of-truth pointers:
+Phase 5 source-of-truth pointers:
 
 ## Product and policy
 
@@ -24,10 +24,16 @@ Phase 4 source-of-truth pointers:
 - [`docs/architecture/ADR-0010-evidence-store-and-lineage.md`](docs/architecture/ADR-0010-evidence-store-and-lineage.md)
 - [`docs/architecture/ADR-0011-local-browser-runtime.md`](docs/architecture/ADR-0011-local-browser-runtime.md)
 - [`docs/architecture/ADR-0012-browser-capture-privacy.md`](docs/architecture/ADR-0012-browser-capture-privacy.md)
+- [`docs/architecture/ADR-0013-protection-plan-selection.md`](docs/architecture/ADR-0013-protection-plan-selection.md)
+- [`docs/architecture/ADR-0014-verification-adapters.md`](docs/architecture/ADR-0014-verification-adapters.md)
+- [`docs/architecture/ADR-0015-regression-decision.md`](docs/architecture/ADR-0015-regression-decision.md)
+- [`docs/architecture/ADR-0016-completion-gate.md`](docs/architecture/ADR-0016-completion-gate.md)
+- [`docs/architecture/ADR-0017-repair-context.md`](docs/architecture/ADR-0017-repair-context.md)
 - [`docs/migration/APC_TO_MELLOWYAK_MATRIX.md`](docs/migration/APC_TO_MELLOWYAK_MATRIX.md)
 - [`docs/migration/APC_EXTRACTION_BOUNDARY.md`](docs/migration/APC_EXTRACTION_BOUNDARY.md)
 - [`docs/migration/PHASE_3_APC_IMPACT_CONTEXT_EXTRACTION.md`](docs/migration/PHASE_3_APC_IMPACT_CONTEXT_EXTRACTION.md)
 - [`docs/migration/PHASE_4_APC_BEHAVIOR_BROWSER_EVIDENCE_EXTRACTION.md`](docs/migration/PHASE_4_APC_BEHAVIOR_BROWSER_EVIDENCE_EXTRACTION.md)
+- [`docs/migration/PHASE_5_APC_VERIFICATION_GATE_REPAIR_EXTRACTION.md`](docs/migration/PHASE_5_APC_VERIFICATION_GATE_REPAIR_EXTRACTION.md)
 
 ## Working entry points
 
@@ -38,6 +44,12 @@ Phase 4 source-of-truth pointers:
 - Project/Git/Impact migration: [`engine/alembic/versions/0002_project_git_impact.py`](engine/alembic/versions/0002_project_git_impact.py)
 - Reverse-impact/context migration: [`engine/alembic/versions/0003_reverse_impact_context.py`](engine/alembic/versions/0003_reverse_impact_context.py)
 - Behavior/evidence/browser migration: [`engine/alembic/versions/0004_behavior_evidence_browser.py`](engine/alembic/versions/0004_behavior_evidence_browser.py)
+- Verification/regression/gate migration: [`engine/alembic/versions/0005_verification_regression_gate.py`](engine/alembic/versions/0005_verification_regression_gate.py)
+- Protection Plan selection: [`engine/src/mellowyak_engine/protection/`](engine/src/mellowyak_engine/protection/)
+- Verification adapters and assertions: [`engine/src/mellowyak_engine/verification/`](engine/src/mellowyak_engine/verification/)
+- Regression decisions: [`engine/src/mellowyak_engine/regression/`](engine/src/mellowyak_engine/regression/)
+- Completion Gate: [`engine/src/mellowyak_engine/gate/`](engine/src/mellowyak_engine/gate/)
+- Repair Context: [`engine/src/mellowyak_engine/repair/`](engine/src/mellowyak_engine/repair/)
 - Behavior lifecycle: [`engine/src/mellowyak_engine/behaviors/`](engine/src/mellowyak_engine/behaviors/)
 - Evidence store and lineage: [`engine/src/mellowyak_engine/evidence/`](engine/src/mellowyak_engine/evidence/)
 - Browser capture arm: [`engine/src/mellowyak_engine/browser/`](engine/src/mellowyak_engine/browser/)
@@ -48,6 +60,7 @@ Phase 4 source-of-truth pointers:
 - Reverse-impact and Context Receipt: [`engine/src/mellowyak_engine/impact/`](engine/src/mellowyak_engine/impact/)
 - Passive monitoring: [`engine/src/mellowyak_engine/monitoring/service.py`](engine/src/mellowyak_engine/monitoring/service.py)
 - React UI: [`apps/desktop/src/App.tsx`](apps/desktop/src/App.tsx)
+- Change Cockpit: [`apps/desktop/src/ChangeCockpit.tsx`](apps/desktop/src/ChangeCockpit.tsx)
 - Protected Behaviors UI: [`apps/desktop/src/BehaviorsScreen.tsx`](apps/desktop/src/BehaviorsScreen.tsx)
 - English/Hebrew translation keys and RTL policy: [`apps/desktop/src/i18n.ts`](apps/desktop/src/i18n.ts)
 - Typed mascot asset mapping: [`apps/desktop/src/mascots.ts`](apps/desktop/src/mascots.ts)
@@ -65,6 +78,7 @@ Phase 4 source-of-truth pointers:
 - Sidecar builder: [`scripts/build_engine.py`](scripts/build_engine.py)
 - Packaged Phase 3 fixture validator: [`scripts/validate_packaged_phase3.py`](scripts/validate_packaged_phase3.py)
 - Packaged Phase 4 fixture validator: [`scripts/validate_packaged_phase4.py`](scripts/validate_packaged_phase4.py)
+- Packaged Phase 5 regression/repair validator: [`scripts/validate_packaged_phase5.py`](scripts/validate_packaged_phase5.py)
 - Browser staging: [`scripts/stage_browser.py`](scripts/stage_browser.py)
 - UI translation-key policy check: [`scripts/check_ui_translation_keys.py`](scripts/check_ui_translation_keys.py)
 - Deterministic mascot sheet extractor: [`scripts/extract_mascot_sheet.py`](scripts/extract_mascot_sheet.py)
@@ -81,5 +95,9 @@ Phase 4 source-of-truth pointers:
 - Phase 4 evidence: [`docs/validation/PHASE_4_BEHAVIOR_EVIDENCE_BROWSER_VALIDATION_REPORT.md`](docs/validation/PHASE_4_BEHAVIOR_EVIDENCE_BROWSER_VALIDATION_REPORT.md)
 - Phase 4 Hebrew summary: [`docs/validation/PHASE_4_SUMMARY_HE.md`](docs/validation/PHASE_4_SUMMARY_HE.md)
 - Phase 4 UI review map: [`docs/ui-review/PHASE_4_UI_SCREENS.md`](docs/ui-review/PHASE_4_UI_SCREENS.md)
+- Phase 5 execution plan: [`docs/implementation/PHASE_5_EXECUTION_PLAN.md`](docs/implementation/PHASE_5_EXECUTION_PLAN.md)
+- Phase 5 validation: [`docs/validation/PHASE_5_VERIFICATION_REGRESSION_GATE_VALIDATION_REPORT.md`](docs/validation/PHASE_5_VERIFICATION_REGRESSION_GATE_VALIDATION_REPORT.md)
+- Phase 5 Hebrew summary: [`docs/validation/PHASE_5_SUMMARY_HE.md`](docs/validation/PHASE_5_SUMMARY_HE.md)
+- Phase 5 UI screen map: [`docs/ui/PHASE_5_UI_SCREENS.md`](docs/ui/PHASE_5_UI_SCREENS.md)
 
-Phase 4 adds human-reviewed browser evidence and revision-bound Last Known Good lineage. It does not perform fresh verification, PASS/FAIL decisions, regression detection, required-check selection, Completion Gate, Repair Context, connector execution, or cloud support.
+Phase 5 adds selective current verification, evidence-supported regression decisions, an immutable local Completion Gate, deterministic Repair Context and re-verification history. It does not add connector execution, arbitrary local commands, automatic code repair, external gate enforcement, cloud support, signing, notarization, or public release.

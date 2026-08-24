@@ -48,7 +48,9 @@ def git(repository: Path, *arguments: str) -> None:
     subprocess.run(["git", *arguments], cwd=repository, check=True, capture_output=True)
 
 
-def start_engine(engine: Path, environment: dict[str, str]) -> tuple[subprocess.Popen[str], str]:
+def start_engine(
+    engine: Path, environment: dict[str, str]
+) -> tuple[subprocess.Popen[str], str]:
     process = subprocess.Popen(
         [str(engine)],
         stdout=subprocess.PIPE,
@@ -214,7 +216,9 @@ def main() -> None:
             )
             assert bundle["status"] == "ACCEPTED"
             assert len(bundle["items"]) == 4
-            assert all(item["artifact"]["integrity_verified"] for item in bundle["items"])
+            assert all(
+                item["artifact"]["integrity_verified"] for item in bundle["items"]
+            )
             behavior_id = behavior["id"]
             bundle_id = baseline["evidence_bundle_id"]
             artifact_id = bundle["items"][0]["artifact"]["id"]
@@ -250,7 +254,10 @@ def main() -> None:
             )
             with urllib.request.urlopen(artifact_content, timeout=60) as response:
                 assert response.read()
-            assert restart_health["database_schema_version"] == "0004_behavior_evidence_browser"
+            assert (
+                restart_health["database_schema_version"]
+                == "0004_behavior_evidence_browser"
+            )
             assert reloaded_behavior["last_accepted_baseline_id"] == baseline["id"]
             assert reloaded_baseline["id"] == baseline["id"]
             assert reloaded_bundle["manifest_sha256"] == bundle["manifest_sha256"]

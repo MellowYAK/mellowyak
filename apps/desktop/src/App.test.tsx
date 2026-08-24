@@ -16,9 +16,9 @@ vi.mock("@tauri-apps/plugin-process", () => ({ relaunch: (...args: unknown[]) =>
 configure({ asyncUtilTimeout: 3_000 });
 
 const responses: Record<string, unknown> = {
-  "/health": { status: "ready", mode: "local", engine_version: "0.1.0", app_version: "0.1.0", database_status: "ready", database_schema_version: "0004_behavior_evidence_browser", data_root: "/local/MellowYak", cloud_connected: false, outbound_network_enabled: false, uptime_seconds: 1 },
+  "/health": { status: "ready", mode: "local", engine_version: "0.1.0", app_version: "0.1.0", database_status: "ready", database_schema_version: "0005_verification_regression_gate", data_root: "/local/MellowYak", cloud_connected: false, outbound_network_enabled: false, uptime_seconds: 1 },
   "/readiness": { ready: true, checks: { local_only: true, database_ready: true } },
-  "/installation": { installation_id: "install-1", created_at: "2026-08-23T00:00:00Z", last_started_at: "2026-08-23T00:00:00Z", app_version: "0.1.0", engine_version: "0.1.0", database_schema_version: "0004_behavior_evidence_browser" },
+  "/installation": { installation_id: "install-1", created_at: "2026-08-23T00:00:00Z", last_started_at: "2026-08-23T00:00:00Z", app_version: "0.1.0", engine_version: "0.1.0", database_schema_version: "0005_verification_regression_gate" },
   "/settings/privacy": { mode: "local", cloud_connected: false, outbound_network_enabled: false, source_upload_enabled: false, telemetry_upload_enabled: false, account_required: false },
   "/storage/paths": { data_root: "/local/MellowYak", database: "/local/MellowYak/database", evidence: "/local/MellowYak/evidence", projects: "/local/MellowYak/projects", cache: "/local/MellowYak/cache", logs: "/local/MellowYak/logs", runtime: "/local/MellowYak/runtime", backups: "/local/MellowYak/backups" },
   "/projects": { projects: [] },
@@ -74,7 +74,7 @@ test("renders real engine values and local privacy status", async () => {
   expect(screen.getByText("Not connected")).toBeInTheDocument();
   expect(screen.getByText("Your code stays local.")).toBeInTheDocument();
   expect(screen.getByText("No Docker.")).toBeInTheDocument();
-  expect(screen.getByText("0004_behavior_evidence_browser")).toBeInTheDocument();
+  expect(screen.getByText("0005_verification_regression_gate")).toBeInTheDocument();
 });
 
 test("does not report ready or render projects before real project discovery completes", async () => {
@@ -168,6 +168,11 @@ test("shows explainable change impact, context receipt, and behavior candidate c
   fireEvent.click(await screen.findByRole("button", { name: /demo/i }));
   fireEvent.click(await screen.findByRole("button", { name: "Changes" }));
   expect(await screen.findByText("Changed Files")).toBeInTheDocument();
+  expect(screen.getByRole("region", { name: "Change Cockpit" })).toBeInTheDocument();
+  expect(screen.getByText("Protection Plan")).toBeInTheDocument();
+  expect(screen.getByText("Verification Runner")).toBeInTheDocument();
+  expect(screen.getByText("Repair Context")).toBeInTheDocument();
+  expect(screen.getByText("Gate Decision")).toBeInTheDocument();
   expect(screen.getByText("Unknown / Stale Boundaries")).toBeInTheDocument();
   expect(screen.getByText("unresolved import")).toBeInTheDocument();
   expect(screen.getByText("Impact Paths")).toBeInTheDocument();

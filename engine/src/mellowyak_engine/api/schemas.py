@@ -368,6 +368,7 @@ class BehaviorDraftRequest(BaseModel):
     starting_state: str = Field(default="", max_length=4000)
     expected_assertions: list[dict[str, object]] = Field(default_factory=list, max_length=50)
     links: list[dict[str, str]] = Field(default_factory=list, max_length=50)
+    always_recheck: bool = False
 
 
 class BehaviorVersionResponse(BaseModel):
@@ -407,6 +408,7 @@ class ProtectedBehaviorResponse(BaseModel):
     lifecycle_state: str
     current_version_id: str
     last_accepted_baseline_id: str | None
+    always_recheck: bool
     current_version: BehaviorVersionResponse
     versions: list[BehaviorVersionResponse]
     links: list[dict[str, str]]
@@ -568,5 +570,96 @@ class EvidenceBundleResponse(BaseModel):
     capture_id: str
     manifest_sha256: str
     status: str
+    bundle_type: str
+    verification_run_id: str | None
     items: list[dict[str, object]]
     created_at: datetime
+
+
+class ProtectionPlanResponse(BaseModel):
+    id: str
+    project_id: str
+    change_id: str
+    impact_analysis_id: str
+    source_identity: dict[str, object]
+    binding_digest: str
+    algorithm_version: str
+    policy_version: str
+    status: str
+    created_at: datetime
+    stale_at: datetime | None
+    counts: dict[str, int]
+    truncated: bool
+    items: list[dict[str, object]]
+
+
+class VerificationRunResponse(BaseModel):
+    id: str
+    project_id: str
+    change_id: str
+    plan_id: str
+    source_identity: dict[str, object]
+    status: str
+    started_at: datetime | None
+    completed_at: datetime | None
+    cancelled_at: datetime | None
+    error_code: str | None
+    created_at: datetime
+    items: list[dict[str, object]]
+
+
+class VerificationStartRequest(BaseModel):
+    plan_id: str = Field(min_length=1, max_length=36)
+    item_ids: list[str] = Field(default_factory=list, max_length=50)
+
+
+class HumanVerificationRequest(BaseModel):
+    run_item_id: str = Field(min_length=1, max_length=36)
+    result: str = Field(min_length=1, max_length=40)
+    note: str = Field(min_length=1, max_length=4000)
+    confirmed: bool = False
+    evidence_reference: str | None = Field(default=None, max_length=1000)
+
+
+class GateDecisionResponse(BaseModel):
+    id: str
+    project_id: str
+    change_id: str
+    plan_id: str
+    verification_run_id: str | None
+    state: str
+    reason: str
+    source_identity: dict[str, object]
+    limitations: list[str]
+    decision_digest: str
+    created_at: datetime
+
+
+class RegressionListResponse(BaseModel):
+    regressions: list[dict[str, object]]
+
+
+class RepairContextResponse(BaseModel):
+    id: str
+    project_id: str
+    change_id: str
+    regression_id: str
+    schema_version: str
+    source_identity: dict[str, object]
+    payload: dict[str, object]
+    digest: str
+    size_bytes: int
+    saved_relative_path: str | None
+    created_at: datetime
+
+
+class RepairContextCopyResponse(BaseModel):
+    context_id: str
+    text: str
+    transmitted: bool
+
+
+class RepairContextSaveResponse(BaseModel):
+    context_id: str
+    relative_path: str
+    saved: bool

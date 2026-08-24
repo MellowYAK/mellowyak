@@ -117,6 +117,7 @@ class BehaviorService:
         preconditions: str = "",
         starting_state: str = "",
         expected_assertions: list[dict[str, Any]] | None = None,
+        always_recheck: bool = False,
         created_by_type: str = "HUMAN",
         source_candidate_id: str | None = None,
     ) -> dict[str, Any]:
@@ -144,6 +145,7 @@ class BehaviorService:
                 display_name=title,
                 lifecycle_state="DRAFT",
                 current_version_id=version_id,
+                always_recheck=always_recheck,
                 created_at=now,
                 updated_at=now,
             )
@@ -244,6 +246,7 @@ class BehaviorService:
         preconditions: str = "",
         starting_state: str = "",
         expected_assertions: list[dict[str, Any]] | None = None,
+        always_recheck: bool = False,
     ) -> dict[str, Any]:
         title = title.strip()
         if not title or len(title) > 240:
@@ -307,6 +310,7 @@ class BehaviorService:
             )
             behavior.current_version_id = version_id
             behavior.display_name = title
+            behavior.always_recheck = always_recheck
             if behavior.lifecycle_state == "PROTECTED":
                 behavior.lifecycle_state = "DRAFT"
                 if behavior.last_accepted_baseline_id:
@@ -477,6 +481,7 @@ class BehaviorService:
                 "lifecycle_state": behavior.lifecycle_state,
                 "current_version_id": behavior.current_version_id,
                 "last_accepted_baseline_id": behavior.last_accepted_baseline_id,
+                "always_recheck": behavior.always_recheck,
                 "current_version": self._version_public(current),
                 "versions": [self._version_public(row) for row in versions],
                 "links": [

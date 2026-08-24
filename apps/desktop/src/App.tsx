@@ -37,6 +37,7 @@ import {
 import { useI18n, type Locale } from "./i18n";
 import { mascotAssets, type MascotId } from "./mascots";
 import { BehaviorsScreen } from "./BehaviorsScreen";
+import { ChangeCockpit } from "./ChangeCockpit";
 import { StartupAnimation, startupStepKeys } from "./StartupAnimation";
 import { useDesktopUpdater, type UpdaterState } from "./updater";
 
@@ -371,6 +372,7 @@ export function App() {
           <section className="panel behavior-panel"><div className="section-head"><h2>{t("candidate.title")}</h2><span>{candidates.length}</span></div><p className="muted">{t("candidate.description")}</p>{candidates.length ? <div className="candidate-list">{candidates.map((candidate) => <article key={candidate.id}><div><strong>{candidate.title ?? candidate.source_key ?? t("candidate.observed")}</strong><small>{t("candidate.meta", { status: status(candidate.status) })}</small></div><div className="mini-actions"><button onClick={() => void changeCandidate(candidate, "keep")}>{t("candidate.keep")}</button><button onClick={() => void changeCandidate(candidate, "dismiss")}>{t("candidate.dismiss")}</button><button onClick={() => void changeCandidate(candidate, "prepare")}>{t("candidate.prepare")}</button></div></article>)}</div> : <p className="muted">{t("candidate.none")}</p>}</section>
           <section className="panel behavior-panel"><div className="section-head"><h2>{t("change.knownBehaviorLinks")}</h2><span>{linkedBehaviors.length}</span></div><p className="muted">{t("change.behaviorLinkCaution")}</p>{linkedBehaviors.length ? <ul className="compact-list">{linkedBehaviors.map((behavior) => <li key={behavior.id}><strong>{behavior.current_version.title}</strong><span>{t(`behavior.state.${behavior.lifecycle_state}`)}</span></li>)}</ul> : <p className="muted">{t("change.noKnownBehaviorLinks")}</p>}</section>
         </div>
+        <ChangeCockpit projectId={selected.id} changeId={currentChange.id} impactReady={Boolean(changeImpact && !changeImpact.analysis.stale)} t={t} onError={setError} />
       </>}
     </main>;
   }

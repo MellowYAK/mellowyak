@@ -53,7 +53,9 @@ def upgrade() -> None:
         sa.Column("runtime_configuration_id", sa.String(36), nullable=True),
         sa.Column("expected_assertions_json", sa.Text(), nullable=False, server_default="[]"),
         sa.Column("limitations_json", sa.Text(), nullable=False, server_default="[]"),
-        sa.Column("verification_not_configured", sa.Boolean(), nullable=False, server_default=sa.true()),
+        sa.Column(
+            "verification_not_configured", sa.Boolean(), nullable=False, server_default=sa.true()
+        ),
         sa.Column("created_by_type", sa.String(40), nullable=False, server_default="HUMAN"),
         sa.Column("source_candidate_id", sa.String(36), nullable=True),
         sa.Column("content_digest", sa.String(64), nullable=False),

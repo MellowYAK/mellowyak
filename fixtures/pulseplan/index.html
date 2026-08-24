@@ -16,7 +16,7 @@
     <script>
       const root = document.querySelector('[data-testid="pulseplan-app"]');
       const eventId = 'planning-sync';
-      const storedTime = () => sessionStorage.getItem('pulseplan-time') || '13:00';
+      const storedTime = () => sessionStorage.getItem('pulseplan-display-time') || sessionStorage.getItem('pulseplan-time') || '13:00';
       const link = (path, label, testid) => `<button data-path="${path}" data-testid="${testid}">${label}</button>`;
       function render() {
         const path = location.pathname;
@@ -31,7 +31,9 @@
             const time = document.querySelector('[data-testid="time-select"]').value;
             const response = await fetch(`/api/events/${eventId}/reschedule`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({time})});
             if (!response.ok) throw new Error('fixture request failed');
-            sessionStorage.setItem('pulseplan-time', time);
+            const result = await response.json();
+            sessionStorage.setItem('pulseplan-time', result.time);
+            sessionStorage.setItem('pulseplan-display-time', result.display_time);
             history.pushState({}, '', `/events/${eventId}`); render();
           });
         } else if (path === '/events/new') {

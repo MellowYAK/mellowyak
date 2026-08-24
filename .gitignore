@@ -43,3 +43,9 @@ apps/desktop/src-tauri/icons/64x64.png
 /evidence/
 /browser-data/
 /captures/
+/repair-contexts/
+/screenshots/
+/traces/
+/videos/
+/browser-profiles/
+/runtime-data/

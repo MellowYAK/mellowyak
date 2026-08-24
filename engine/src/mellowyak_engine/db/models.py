@@ -397,6 +397,7 @@ class ProtectedBehavior(Base):
     lifecycle_state: Mapped[str] = mapped_column(String(40), nullable=False, default="DRAFT")
     current_version_id: Mapped[str] = mapped_column(String(36), nullable=False)
     last_accepted_baseline_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    always_recheck: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -566,6 +567,8 @@ class EvidenceBundle(Base):
     )
     manifest_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
     status: Mapped[str] = mapped_column(String(40), nullable=False)
+    bundle_type: Mapped[str] = mapped_column(String(40), nullable=False, default="BASELINE_CAPTURE")
+    verification_run_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
@@ -625,6 +628,260 @@ class BehaviorBaseline(Base):
 
 class EvidenceAuditEvent(Base):
     __tablename__ = "evidence_audit_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    event_type: Mapped[str] = mapped_column(String(120), nullable=False)
+    subject_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    subject_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    details_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class ProtectionPlan(Base):
+    __tablename__ = "protection_plans"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    change_id: Mapped[str] = mapped_column(
+        String(64), ForeignKey("project_changes.id"), nullable=False
+    )
+    impact_analysis_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("impact_analyses.id"), nullable=False
+    )
+    source_identity_json: Mapped[str] = mapped_column(Text, nullable=False)
+    binding_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    algorithm_version: Mapped[str] = mapped_column(String(40), nullable=False)
+    policy_version: Mapped[str] = mapped_column(String(40), nullable=False)
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    stale_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    required_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    suggested_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    skipped_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    needs_review_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    unknown_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    truncated: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+
+class ProtectionPlanItem(Base):
+    __tablename__ = "protection_plan_items"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    plan_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("protection_plans.id"), nullable=False
+    )
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    behavior_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("protected_behaviors.id"), nullable=False
+    )
+    behavior_version_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("behavior_versions.id"), nullable=False
+    )
+    baseline_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    selection_class: Mapped[str] = mapped_column(String(40), nullable=False)
+    selection_reason: Mapped[str] = mapped_column(Text, nullable=False)
+    impact_path_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    strongest_provenance: Mapped[str] = mapped_column(String(40), nullable=False)
+    relation_depth: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    stale_relation: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    unknown_boundary: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    criticality: Mapped[str] = mapped_column(String(20), nullable=False)
+    verification_method: Mapped[str] = mapped_column(String(40), nullable=False)
+    current_result_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+    __table_args__ = (UniqueConstraint("plan_id", "behavior_id"),)
+
+
+class VerificationRun(Base):
+    __tablename__ = "verification_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    change_id: Mapped[str] = mapped_column(
+        String(64), ForeignKey("project_changes.id"), nullable=False
+    )
+    plan_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("protection_plans.id"), nullable=False
+    )
+    source_identity_json: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    error_code: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class VerificationRunItem(Base):
+    __tablename__ = "verification_run_items"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    run_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("verification_runs.id"), nullable=False
+    )
+    plan_item_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("protection_plan_items.id"), nullable=False
+    )
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    behavior_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("protected_behaviors.id"), nullable=False
+    )
+    behavior_version_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("behavior_versions.id"), nullable=False
+    )
+    result: Mapped[str] = mapped_column(String(40), nullable=False, default="NOT_RUN")
+    adapter: Mapped[str] = mapped_column(String(80), nullable=False)
+    adapter_version: Mapped[str] = mapped_column(String(40), nullable=False)
+    evidence_bundle_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    duration_ms: Mapped[float] = mapped_column(Float, nullable=False, default=0)
+    limitations_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    failure_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (UniqueConstraint("run_id", "plan_item_id"),)
+
+
+class AssertionResult(Base):
+    __tablename__ = "assertion_results"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    verification_run_item_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("verification_run_items.id"), nullable=False
+    )
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    assertion_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    expected_json: Mapped[str] = mapped_column(Text, nullable=False)
+    observed_json: Mapped[str] = mapped_column(Text, nullable=False)
+    result: Mapped[str] = mapped_column(String(40), nullable=False)
+    evidence_references_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    failure_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    adapter_version: Mapped[str] = mapped_column(String(40), nullable=False)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    completed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (UniqueConstraint("verification_run_item_id", "ordinal"),)
+
+
+class HumanVerificationAttestation(Base):
+    __tablename__ = "human_verification_attestations"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    verification_run_item_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("verification_run_items.id"), nullable=False, unique=True
+    )
+    installation_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("installations.id"), nullable=False
+    )
+    result: Mapped[str] = mapped_column(String(40), nullable=False)
+    note: Mapped[str] = mapped_column(Text, nullable=False)
+    evidence_reference: Mapped[str | None] = mapped_column(Text, nullable=True)
+    confirmed: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    source_identity_json: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class RegressionFinding(Base):
+    __tablename__ = "regression_findings"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    change_id: Mapped[str] = mapped_column(
+        String(64), ForeignKey("project_changes.id"), nullable=False
+    )
+    behavior_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("protected_behaviors.id"), nullable=False
+    )
+    behavior_version_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("behavior_versions.id"), nullable=False
+    )
+    baseline_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    verification_run_item_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("verification_run_items.id"), nullable=False
+    )
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    decision_reason: Mapped[str] = mapped_column(Text, nullable=False)
+    source_identity_json: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    resolving_run_item_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+
+class CompletionGateDecision(Base):
+    __tablename__ = "completion_gate_decisions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    change_id: Mapped[str] = mapped_column(
+        String(64), ForeignKey("project_changes.id"), nullable=False
+    )
+    plan_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("protection_plans.id"), nullable=False
+    )
+    verification_run_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    state: Mapped[str] = mapped_column(String(40), nullable=False)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    source_identity_json: Mapped[str] = mapped_column(Text, nullable=False)
+    limitations_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    decision_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class RepairContext(Base):
+    __tablename__ = "repair_contexts"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    change_id: Mapped[str] = mapped_column(
+        String(64), ForeignKey("project_changes.id"), nullable=False
+    )
+    regression_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("regression_findings.id"), nullable=False
+    )
+    schema_version: Mapped[str] = mapped_column(String(80), nullable=False)
+    source_identity_json: Mapped[str] = mapped_column(Text, nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    saved_relative_path: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class RepairContextItem(Base):
+    __tablename__ = "repair_context_items"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    repair_context_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("repair_contexts.id"), nullable=False
+    )
+    ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    item_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    relative_reference: Mapped[str] = mapped_column(Text, nullable=False)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class ReverificationLink(Base):
+    __tablename__ = "reverification_links"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    regression_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("regression_findings.id"), nullable=False
+    )
+    previous_run_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("verification_runs.id"), nullable=False
+    )
+    current_run_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("verification_runs.id"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class VerificationAuditEvent(Base):
+    __tablename__ = "verification_audit_events"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)

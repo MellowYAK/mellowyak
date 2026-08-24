@@ -21,11 +21,17 @@ jobs:
           - os: windows-2025
             target: windows
             bundles: nsis
+          - os: ubuntu-24.04
+            target: linux
+            bundles: appimage,deb
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
+      - name: Install Linux prerequisites
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -68,10 +74,10 @@ jobs:
           python scripts/stage_browser.py
           python scripts/build_engine.py
           npm --prefix apps/desktop run tauri build -- --bundles ${{ matrix.bundles }}
-      - name: Validate packaged Phase 4 flow (macOS)
+      - name: Validate packaged Phase 5 flow (macOS)
         if: runner.os == 'macOS'
         run: >-
-          python scripts/validate_packaged_phase4.py
+          python scripts/validate_packaged_phase5.py
           apps/desktop/src-tauri/target/release/bundle/macos/MellowYak.app/Contents/MacOS/mellowyak-engine
       - name: Record immutable source identity
         shell: bash

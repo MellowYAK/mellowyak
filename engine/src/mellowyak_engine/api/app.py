@@ -30,9 +30,11 @@ from mellowyak_engine.api.schemas import (
     EvidenceArtifactResponse,
     EvidenceBundleResponse,
     EvidenceListResponse,
+    GateDecisionResponse,
     GitStateResponse,
     HandshakeResponse,
     HealthResponse,
+    HumanVerificationRequest,
     ImpactAnalyzeRequest,
     ImpactPathListResponse,
     ImpactSearchResponse,
@@ -50,13 +52,20 @@ from mellowyak_engine.api.schemas import (
     ProjectResponse,
     ProtectedBehaviorListResponse,
     ProtectedBehaviorResponse,
+    ProtectionPlanResponse,
     ReadinessResponse,
+    RegressionListResponse,
+    RepairContextCopyResponse,
+    RepairContextResponse,
+    RepairContextSaveResponse,
     RuntimeConfigurationListResponse,
     RuntimeConfigurationRequest,
     RuntimeConfigurationResponse,
     ScanFindingListResponse,
     ScanRunResponse,
     StoragePathsResponse,
+    VerificationRunResponse,
+    VerificationStartRequest,
 )
 from mellowyak_engine.behaviors.service import BehaviorService, BehaviorServiceError
 from mellowyak_engine.browser.service import BrowserCaptureError, BrowserCaptureService
@@ -65,14 +74,19 @@ from mellowyak_engine.core.logging import configure_logging
 from mellowyak_engine.db.database import LocalDatabase
 from mellowyak_engine.evidence.service import EvidenceService, EvidenceServiceError
 from mellowyak_engine.evidence.store import EvidenceStore
+from mellowyak_engine.gate.service import GateError, GateService
 from mellowyak_engine.impact.models import TraversalPolicy
 from mellowyak_engine.impact.service import ImpactService, ImpactServiceError
 from mellowyak_engine.monitoring.service import MonitoringService
 from mellowyak_engine.projects.service import ProjectError, ProjectService
+from mellowyak_engine.protection.service import ProtectionPlanError, ProtectionPlanService
+from mellowyak_engine.regression.service import RegressionService
+from mellowyak_engine.repair.service import RepairContextError, RepairContextService
 from mellowyak_engine.scanning.service import ScanCoordinator, SourceScanner
 from mellowyak_engine.security.auth import SessionTokenGuard
 from mellowyak_engine.settings.config import EngineSettings
 from mellowyak_engine.storage.paths import StoragePaths
+from mellowyak_engine.verification.service import VerificationError, VerificationService
 
 
 @dataclass
@@ -92,6 +106,11 @@ class EngineRuntime:
     behaviors: BehaviorService
     evidence: EvidenceService
     browser: BrowserCaptureService
+    protection: ProtectionPlanService
+    gate: GateService
+    regressions: RegressionService
+    repair: RepairContextService
+    verification: VerificationService
 
 
 def _open_folder(path: str) -> str:
@@ -130,6 +149,18 @@ def create_app(settings: EngineSettings) -> FastAPI:
     behaviors = BehaviorService(database.sessions, events)
     evidence = EvidenceService(database.sessions, EvidenceStore(paths.evidence), events)
     browser = BrowserCaptureService(database.sessions, evidence, events)
+    protection = ProtectionPlanService(database.sessions, events)
+    gate = GateService(database.sessions, events, evidence)
+    regressions = RegressionService(database.sessions, events)
+    repair = RepairContextService(database.sessions, paths.root, events)
+    verification = VerificationService(
+        database.sessions,
+        evidence,
+        events,
+        gate,
+        regressions,
+        installation.id,
+    )
     runtime = EngineRuntime(
         settings=settings,
         paths=paths,
@@ -146,6 +177,11 @@ def create_app(settings: EngineSettings) -> FastAPI:
         behaviors=behaviors,
         evidence=evidence,
         browser=browser,
+        protection=protection,
+        gate=gate,
+        regressions=regressions,
+        repair=repair,
+        verification=verification,
     )
 
     app = FastAPI(
@@ -198,6 +234,17 @@ def create_app(settings: EngineSettings) -> FastAPI:
         }:
             status = 400
         elif code in {"BROWSER_RUNTIME_UNAVAILABLE"}:
+            status = 503
+        return HTTPException(status_code=status, detail=code)
+
+    def phase5_error(error: Exception) -> HTTPException:
+        code = str(getattr(error, "code", str(error) or "PHASE5_OPERATION_FAILED"))
+        status = 409
+        if code.endswith("_NOT_FOUND"):
+            status = 404
+        elif code.endswith("_INVALID") or code.endswith("_LIMIT_EXCEEDED"):
+            status = 400
+        elif code in {"PLAYWRIGHT_UNAVAILABLE", "CHROMIUM_UNAVAILABLE"}:
             status = 503
         return HTTPException(status_code=status, detail=code)
 
@@ -618,6 +665,7 @@ def create_app(settings: EngineSettings) -> FastAPI:
                     request.preconditions,
                     request.starting_state,
                     request.expected_assertions,
+                    request.always_recheck,
                 )
             )
         except BehaviorServiceError as error:
@@ -655,6 +703,7 @@ def create_app(settings: EngineSettings) -> FastAPI:
                     request.preconditions,
                     request.starting_state,
                     request.expected_assertions,
+                    request.always_recheck,
                 )
             )
         except BehaviorServiceError as error:
@@ -989,6 +1038,192 @@ def create_app(settings: EngineSettings) -> FastAPI:
             return ActionResponse(status="opened")
         except EvidenceServiceError as error:
             raise phase4_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/changes/{change_id}/protection-plan",
+        response_model=ProtectionPlanResponse,
+        dependencies=[Depends(guard)],
+    )
+    def create_protection_plan(project_id: str, change_id: str) -> ProtectionPlanResponse:
+        try:
+            return ProtectionPlanResponse(**protection.create(project_id, change_id))
+        except ProtectionPlanError as error:
+            raise phase5_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/changes/{change_id}/protection-plan",
+        response_model=ProtectionPlanResponse,
+        dependencies=[Depends(guard)],
+    )
+    def get_protection_plan(project_id: str, change_id: str) -> ProtectionPlanResponse:
+        try:
+            return ProtectionPlanResponse(**protection.get(project_id, change_id))
+        except ProtectionPlanError as error:
+            raise phase5_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/changes/{change_id}/verify",
+        response_model=VerificationRunResponse,
+        dependencies=[Depends(guard)],
+    )
+    def verify_required(
+        project_id: str, change_id: str, request: VerificationStartRequest
+    ) -> VerificationRunResponse:
+        try:
+            return VerificationRunResponse(
+                **verification.start(project_id, change_id, request.plan_id, request.item_ids)
+            )
+        except (VerificationError, GateError) as error:
+            raise phase5_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/verification-runs/{run_id}",
+        response_model=VerificationRunResponse,
+        dependencies=[Depends(guard)],
+    )
+    def get_verification_run(project_id: str, run_id: str) -> VerificationRunResponse:
+        try:
+            return VerificationRunResponse(**verification.get_for_project(project_id, run_id))
+        except VerificationError as error:
+            raise phase5_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/verification-runs/{run_id}/cancel",
+        response_model=VerificationRunResponse,
+        dependencies=[Depends(guard)],
+    )
+    def cancel_verification(project_id: str, run_id: str) -> VerificationRunResponse:
+        try:
+            run = verification.get_for_project(project_id, run_id)
+            return VerificationRunResponse(
+                **verification.cancel(project_id, run["change_id"], run_id)
+            )
+        except VerificationError as error:
+            raise phase5_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/verification-runs/{run_id}/retry",
+        response_model=VerificationRunResponse,
+        dependencies=[Depends(guard)],
+    )
+    def retry_verification(project_id: str, run_id: str) -> VerificationRunResponse:
+        try:
+            return VerificationRunResponse(**verification.retry(project_id, run_id))
+        except VerificationError as error:
+            raise phase5_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/verification-runs/{run_id}/human-result",
+        response_model=VerificationRunResponse,
+        dependencies=[Depends(guard)],
+    )
+    def human_verification_result(
+        project_id: str,
+        run_id: str,
+        request: HumanVerificationRequest,
+    ) -> VerificationRunResponse:
+        try:
+            run = verification.get_for_project(project_id, run_id)
+            return VerificationRunResponse(
+                **verification.attest(
+                    project_id,
+                    run["change_id"],
+                    run_id,
+                    request.run_item_id,
+                    request.result,
+                    request.note,
+                    request.confirmed,
+                    request.evidence_reference,
+                )
+            )
+        except (VerificationError, GateError) as error:
+            raise phase5_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/changes/{change_id}/gate",
+        response_model=GateDecisionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def get_gate(project_id: str, change_id: str) -> GateDecisionResponse:
+        try:
+            return GateDecisionResponse(**gate.latest(project_id, change_id))
+        except GateError as error:
+            raise phase5_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/changes/{change_id}/gate/evaluate",
+        response_model=GateDecisionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def evaluate_gate(
+        project_id: str, change_id: str, request: VerificationStartRequest
+    ) -> GateDecisionResponse:
+        try:
+            return GateDecisionResponse(**gate.evaluate(project_id, change_id, request.plan_id))
+        except GateError as error:
+            raise phase5_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/regressions",
+        response_model=RegressionListResponse,
+        dependencies=[Depends(guard)],
+    )
+    def list_regressions(project_id: str) -> RegressionListResponse:
+        return RegressionListResponse(regressions=regressions.list(project_id))
+
+    @app.get(
+        "/projects/{project_id}/regressions/{regression_id}",
+        dependencies=[Depends(guard)],
+    )
+    def get_regression(project_id: str, regression_id: str) -> dict[str, object]:
+        try:
+            return regressions.get(project_id, regression_id)
+        except RuntimeError as error:
+            raise phase5_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/regressions/{regression_id}/repair-context",
+        response_model=RepairContextResponse,
+        dependencies=[Depends(guard)],
+    )
+    def create_repair_context(project_id: str, regression_id: str) -> RepairContextResponse:
+        try:
+            return RepairContextResponse(**repair.create(project_id, regression_id))
+        except RepairContextError as error:
+            raise phase5_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/repair-contexts/{context_id}",
+        response_model=RepairContextResponse,
+        dependencies=[Depends(guard)],
+    )
+    def get_repair_context(project_id: str, context_id: str) -> RepairContextResponse:
+        try:
+            return RepairContextResponse(**repair.get(project_id, context_id))
+        except RepairContextError as error:
+            raise phase5_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/repair-contexts/{context_id}/copy",
+        response_model=RepairContextCopyResponse,
+        dependencies=[Depends(guard)],
+    )
+    def copy_repair_context(project_id: str, context_id: str) -> RepairContextCopyResponse:
+        try:
+            return RepairContextCopyResponse(**repair.copy_payload(project_id, context_id))
+        except RepairContextError as error:
+            raise phase5_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/repair-contexts/{context_id}/save-local",
+        response_model=RepairContextSaveResponse,
+        dependencies=[Depends(guard)],
+    )
+    def save_repair_context(project_id: str, context_id: str) -> RepairContextSaveResponse:
+        try:
+            return RepairContextSaveResponse(**repair.save_local(project_id, context_id))
+        except RepairContextError as error:
+            raise phase5_error(error) from error
 
     @app.get("/events", response_model=LocalEventListResponse, dependencies=[Depends(guard)])
     def local_events(after: int = Query(default=0, ge=0)) -> LocalEventListResponse:

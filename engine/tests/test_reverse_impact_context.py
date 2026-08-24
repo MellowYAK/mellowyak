@@ -58,11 +58,17 @@ def headers() -> dict[str, str]:
     return {"Authorization": f"Bearer {TOKEN}"}
 
 
-def wait_for_scan(client: TestClient, project_id: str) -> dict[str, object]:
+def wait_for_scan(
+    client: TestClient, project_id: str, previous_scan_id: str | None = None
+) -> dict[str, object]:
     deadline = time.monotonic() + 10
     while time.monotonic() < deadline:
         project = client.get(f"/projects/{project_id}", headers=headers()).json()
-        if project.get("scan") and project["scan"]["status"] != "running":
+        if (
+            project.get("scan")
+            and project["scan"]["status"] != "running"
+            and (previous_scan_id is None or project["scan"]["id"] != previous_scan_id)
+        ):
             return project
         time.sleep(0.05)
     raise AssertionError("scan timeout")
@@ -315,9 +321,12 @@ def test_new_scan_revision_marks_prior_analysis_stale(tmp_path: Path) -> None:
         analysis = client.post(
             f"/projects/{project_id}/changes/{change['id']}/analyze", headers=headers(), json={}
         ).json()
+        previous_scan_id = client.get(
+            f"/projects/{project_id}", headers=headers()
+        ).json()["scan"]["id"]
         scan_response = client.post(f"/projects/{project_id}/scan", headers=headers(), json={})
         assert scan_response.status_code == 200
-        wait_for_scan(client, project_id)
+        wait_for_scan(client, project_id, previous_scan_id)
         stale = client.get(
             f"/projects/{project_id}/changes/{change['id']}/impact", headers=headers()
         ).json()
@@ -572,8 +581,16 @@ def test_medium_graph_analysis_is_bounded_and_fast() -> None:
     assert elapsed < 2.0
 
 
-@pytest.mark.parametrize("starting_revision", ["0001_local_core", "0002_project_git_impact"])
-def test_phase3_migration_preserves_existing_project_rows(
+@pytest.mark.parametrize(
+    "starting_revision",
+    [
+        "0001_local_core",
+        "0002_project_git_impact",
+        "0003_reverse_impact_context",
+        "0004_behavior_evidence_browser",
+    ],
+)
+def test_phase5_migration_preserves_existing_project_rows(
     tmp_path: Path, starting_revision: str
 ) -> None:
     paths = StoragePaths.create(tmp_path / starting_revision)
@@ -593,7 +610,7 @@ def test_phase3_migration_preserves_existing_project_rows(
             (project_id, "Preserved Phase Project", str(tmp_path / "source"), now),
         )
     upgraded = LocalDatabase(paths)
-    assert upgraded.migrate() == "0004_behavior_evidence_browser"
+    assert upgraded.migrate() == "0005_verification_regression_gate"
     with upgraded.engine.connect() as connection:
         row = connection.execute(
             text("SELECT display_name, root_path FROM projects WHERE id = :id"), {"id": project_id}

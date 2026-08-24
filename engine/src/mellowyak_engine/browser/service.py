@@ -319,6 +319,11 @@ class _BrowserWorker:
                         "tag": str(event.get("tag", ""))[:80],
                         "role": str(event.get("role", ""))[:80],
                         "accessible_name": str(event.get("accessibleName", ""))[:240],
+                        "selected_index": (
+                            int(event["selectedIndex"])
+                            if isinstance(event.get("selectedIndex"), int)
+                            else None
+                        ),
                     },
                 }
             )
@@ -357,7 +362,9 @@ class _BrowserWorker:
                     selector: selectorFor(event.target),
                     tag: event.target?.tagName || '',
                     role: event.target?.getAttribute?.('role') || '',
-                    accessibleName: event.target?.getAttribute?.('aria-label') || ''
+                    accessibleName: event.target?.getAttribute?.('aria-label') || '',
+                    selectedIndex: event.target?.tagName === 'SELECT'
+                      ? event.target.selectedIndex : null
                   });
                 }, true);
               }

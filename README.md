@@ -666,7 +666,7 @@ The intended principle is:
 
 ## Project status
 
-MellowYak Phase 4 now adds versioned Behavior Drafts, explicitly local runtime configuration, bounded Playwright browser capture, reviewable content-addressed evidence, human-accepted baselines, and a revision-bound Last Known Good pointer to the Phase 1–3 local foundation. It is not a released product. A capture is evidence, not a current PASS/FAIL result: automatic verification, regression decisions, required-check selection, Completion Gate, and Repair Context remain unimplemented. Windows and Linux remain CI-configured rather than runtime-verified on this macOS revision.
+MellowYak Phase 5 now adds deterministic Protection Plans, selective local Browser Replay, deterministic assertion execution, explicit human verification, separate current evidence, supported regression decisions, an immutable local Completion Gate, model-neutral Repair Context, and re-verification for a repaired exact source identity to the Phase 1–4 foundation. It is not a released product. `VERIFIED COMPLETE` covers only checks required by the current known Protection Plan; it is not complete blast-radius knowledge or a deployment guarantee. Windows, Linux, and Apple Silicon remain CI-configured or unverified rather than runtime-verified on this Intel macOS revision.
 
 The complete workflow described in this README is the product direction. Implementation must advance through verified stages.
 
@@ -728,12 +728,16 @@ Phase 4 does **not** run stored assertions as verification, replay captures auth
 
 ### Phase 5 — Verification, gate, and repair
 
-- required-check selection;
-- selective verification;
-- Completion Gate;
-- Regression & Repair;
-- model-neutral repair context;
-- re-verification of repaired HEAD.
+- implemented source-bound REQUIRED/SUGGESTED/SKIPPED/NEEDS_REVIEW/UNKNOWN selection with explainable paths and bounded policy;
+- implemented selective replay of accepted browser behaviors in a fresh ephemeral loopback-only context;
+- implemented URL, DOM, attribute, API-call and HTTP-status assertions plus explicit human attestation;
+- implemented separate current verification evidence without mutating Last Known Good;
+- implemented evidence-supported regression decisions and an immutable local Completion Gate;
+- implemented deterministic `mellowyak.repair_context.v1` with KEEP, RESTORE, relative references, local copy/save and no source contents;
+- implemented source-change invalidation, re-verification, regression resolution and preserved failure history;
+- package-verified the complete seeded PulsePlan regression and repair loop on Intel macOS.
+
+Phase 5 does **not** provide complete blast-radius knowledge, zero-regression guarantees, automatic code repair, automatic baseline replacement, Codex/Claude/Cursor/VS Code integration, provider token or financial savings, cloud/team operation, signing, notarization, public release, or safe-deployment certification.
 
 ### Phase 6 — Connectors, value, and release
 

@@ -44,6 +44,15 @@ Updated: 2026-08-24. The local APC checkout was inspected read-only; paths below
 - Phase 4 destinations are `engine/.../browser/`, `engine/.../evidence/`, `engine/.../behaviors/`, migration `0004_behavior_evidence_browser`, and `BehaviorsScreen.tsx`.
 - APC runtime credentials, accounts, tenants, cookies, Bridge transport, PHP/MariaDB persistence, backup/restore, broad readers, and model/ingest routes remain `DO_NOT_USE` or `SECURITY_BLOCKER`.
 
+## Phase 5 update
+
+- Completion/Result Capsule proof normalization and exact binding informed clean immutable verification/gate records; no APC PHP was copied.
+- Verified Solution Memory informed the strict distinction between active Last Known Good and separate current verification evidence.
+- Source-history and selective-restore concepts are `REFERENCE_ONLY` or `REWRITE`: MellowYak preserves failure/re-verification lineage and emits Repair Context constraints but performs no restore.
+- Browser proof execution is a clean Python `REWRITE` with ephemeral loopback-only replay, deterministic assertions and packaged cleanup validation.
+- Phase 5 destinations are `engine/.../protection/`, `verification/`, `regression/`, `gate/`, `repair/`, migration `0005_verification_regression_gate`, and `ChangeCockpit.tsx`.
+- APC Bridge, PLAY, queue, tenant, credentials, PHP/MariaDB, broad reader, model, ingest and server deployment code remain excluded or security-blocked.
+
 - `PORT` means only the independently reviewable concept, contract, algorithm or fixture may later cross the boundary with provenance and tests.
 - `REWRITE` means no code copy: implement against MellowYak's local contracts.
 - `SECURITY_BLOCKER` overrides all historical evidence and permanently blocks direct reuse.

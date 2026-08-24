@@ -55,7 +55,11 @@ def ensure_browser() -> None:
         ROOT
         / "engine"
         / ".venv"
-        / ("Scripts/python.exe" if platform.system().lower() == "windows" else "bin/python")
+        / (
+            "Scripts/python.exe"
+            if platform.system().lower() == "windows"
+            else "bin/python"
+        )
     )
     if not python.is_file():
         raise SystemExit("Engine virtual environment is missing.")

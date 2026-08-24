@@ -25,4 +25,12 @@ Phase 4 contract groups include:
 - mandatory capture review and explicit baseline acceptance;
 - evidence artifact/bundle listing, content retrieval, local opening and reference-safe deletion.
 
-All routes remain loopback-authenticated and project-scoped. The contract has no source-content response, connector delivery, assertion execution, fresh PASS/FAIL behavior verification, regression decision or Completion Gate endpoint.
+Phase 5 contract groups include:
+
+- source-bound Protection Plan create/read;
+- required selective verification run/read/cancel/retry and explicit human result;
+- assertion results and separate CURRENT_VERIFICATION evidence bundles;
+- immutable Completion Gate evaluation/read;
+- regression list/detail and deterministic Repair Context create/read/copy/save-local.
+
+All routes remain loopback-authenticated and project-scoped. The contract has no source-content response, connector delivery, model call, arbitrary local-command execution, automatic repair, external gate enforcement, or upload endpoint.

@@ -9,6 +9,13 @@ class PulsePlanHandler(SimpleHTTPRequestHandler):
     """Serve the SPA routes and one deterministic local API endpoint."""
 
     fixture_root = Path(__file__).resolve().parent
+    mode = "baseline"
+
+    @classmethod
+    def set_mode(cls, mode: str) -> None:
+        if mode not in {"baseline", "regression", "repaired"}:
+            raise ValueError("unsupported fixture mode")
+        cls.mode = mode
 
     def __init__(self, *args, **kwargs):  # type: ignore[no-untyped-def]
         super().__init__(*args, directory=str(self.fixture_root), **kwargs)
@@ -40,7 +47,17 @@ class PulsePlanHandler(SimpleHTTPRequestHandler):
         if body != {"time": "14:00"}:
             self.send_error(422)
             return
-        payload = b'{"event_id":"planning-sync","time":"14:00"}'
+        saved_time = "15:00" if self.mode == "regression" else "14:00"
+        suffix = " IDT" if self.mode in {"regression", "repaired"} else ""
+        payload = json.dumps(
+            {
+                "event_id": "planning-sync",
+                "time": saved_time,
+                "display_time": f"{saved_time}{suffix}",
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(payload)))

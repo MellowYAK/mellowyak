@@ -256,6 +256,7 @@ export interface ProtectedBehavior {
   lifecycle_state: "DRAFT" | "PROTECTED" | "ARCHIVED";
   current_version_id: string;
   last_accepted_baseline_id: string | null;
+  always_recheck: boolean;
   current_version: BehaviorVersion;
   versions: BehaviorVersion[];
   links: Array<{ id: string; link_type: string; link_key: string; provenance: string }>;
@@ -344,12 +345,14 @@ export interface EvidenceBundle {
   capture_id: string;
   manifest_sha256: string;
   status: string;
+  bundle_type: string;
+  verification_run_id: string | null;
   items: Array<{ ordinal: number; item_type: string; artifact: EvidenceArtifact }>;
   created_at: string;
 }
 
 export interface EvidenceList {
-  bundles: Array<{ id: string; capture_id: string; manifest_sha256: string; status: string; created_at: string }>;
+  bundles: Array<{ id: string; capture_id: string; manifest_sha256: string; status: string; bundle_type: string; verification_run_id: string | null; created_at: string }>;
   artifacts: EvidenceArtifact[];
 }
 
@@ -367,6 +370,80 @@ export interface ImpactExplorerItem {
     stale: boolean;
   }>;
   recent_changes: string[];
+}
+
+export interface ProtectionPlanItem {
+  id: string;
+  behavior_id: string;
+  behavior_name: string;
+  behavior_version_id: string;
+  baseline_id: string | null;
+  selection_class: "REQUIRED" | "SUGGESTED" | "SKIPPED" | "NEEDS_REVIEW" | "UNKNOWN";
+  selection_reason: string;
+  impact_path: Array<Record<string, unknown>>;
+  criticality: string;
+  verification_method: "BROWSER_REPLAY" | "HUMAN_ATTESTATION";
+  current_result_id: string | null;
+}
+
+export interface ProtectionPlan {
+  id: string;
+  project_id: string;
+  change_id: string;
+  source_identity: Record<string, unknown>;
+  status: string;
+  counts: { required: number; suggested: number; skipped: number; needs_review: number; unknown: number };
+  items: ProtectionPlanItem[];
+}
+
+export interface VerificationRunItem {
+  id: string;
+  behavior_id: string;
+  result: string;
+  adapter: string;
+  evidence_bundle_id: string | null;
+  duration_ms: number;
+  failure_reason: string | null;
+  assertions: Array<Record<string, unknown>>;
+}
+
+export interface VerificationRun {
+  id: string;
+  project_id: string;
+  change_id: string;
+  plan_id: string;
+  source_identity: Record<string, unknown>;
+  status: string;
+  items: VerificationRunItem[];
+}
+
+export interface GateDecision {
+  id: string;
+  state: string;
+  reason: string;
+  source_identity: Record<string, unknown>;
+  limitations: string[];
+  decision_digest: string;
+}
+
+export interface RegressionFinding {
+  id: string;
+  change_id: string;
+  behavior_id: string;
+  baseline_id: string | null;
+  verification_run_item_id: string;
+  status: string;
+  decision_reason: string;
+  source_identity: Record<string, unknown>;
+}
+
+export interface RepairContext {
+  id: string;
+  schema_version: string;
+  digest: string;
+  size_bytes: number;
+  payload: Record<string, unknown>;
+  saved_relative_path: string | null;
 }
 
 let bootstrapPromise: Promise<EngineBootstrap> | undefined;
@@ -680,6 +757,57 @@ export async function openProjectFolder(projectId: string): Promise<void> {
     method: "POST",
     body: "{}",
   });
+}
+
+export async function createProtectionPlan(projectId: string, changeId: string): Promise<ProtectionPlan> {
+  return engineFetch<ProtectionPlan>(`/projects/${encodeURIComponent(projectId)}/changes/${encodeURIComponent(changeId)}/protection-plan`, { method: "POST", body: "{}" });
+}
+
+export async function getProtectionPlan(projectId: string, changeId: string): Promise<ProtectionPlan> {
+  return engineFetch<ProtectionPlan>(`/projects/${encodeURIComponent(projectId)}/changes/${encodeURIComponent(changeId)}/protection-plan`);
+}
+
+export async function verifyRequired(projectId: string, changeId: string, planId: string, itemIds: string[] = []): Promise<VerificationRun> {
+  return engineFetch<VerificationRun>(`/projects/${encodeURIComponent(projectId)}/changes/${encodeURIComponent(changeId)}/verify`, { method: "POST", body: JSON.stringify({ plan_id: planId, item_ids: itemIds }) });
+}
+
+export async function cancelVerification(projectId: string, runId: string): Promise<VerificationRun> {
+  return engineFetch<VerificationRun>(`/projects/${encodeURIComponent(projectId)}/verification-runs/${encodeURIComponent(runId)}/cancel`, { method: "POST", body: "{}" });
+}
+
+export async function openEvidenceArtifact(projectId: string, artifactId: string): Promise<void> {
+  await engineFetch(`/projects/${encodeURIComponent(projectId)}/evidence/${encodeURIComponent(artifactId)}/open-local`, { method: "POST", body: "{}" });
+}
+
+export async function retryVerification(projectId: string, runId: string): Promise<VerificationRun> {
+  return engineFetch<VerificationRun>(`/projects/${encodeURIComponent(projectId)}/verification-runs/${encodeURIComponent(runId)}/retry`, { method: "POST", body: "{}" });
+}
+
+export async function submitHumanResult(projectId: string, runId: string, runItemId: string, result: string, note: string): Promise<VerificationRun> {
+  return engineFetch<VerificationRun>(`/projects/${encodeURIComponent(projectId)}/verification-runs/${encodeURIComponent(runId)}/human-result`, { method: "POST", body: JSON.stringify({ run_item_id: runItemId, result, note, confirmed: true }) });
+}
+
+export async function getGate(projectId: string, changeId: string): Promise<GateDecision> {
+  return engineFetch<GateDecision>(`/projects/${encodeURIComponent(projectId)}/changes/${encodeURIComponent(changeId)}/gate`);
+}
+
+export async function listRegressions(projectId: string): Promise<RegressionFinding[]> {
+  const response = await engineFetch<{ regressions: RegressionFinding[] }>(`/projects/${encodeURIComponent(projectId)}/regressions`);
+  return response.regressions;
+}
+
+export async function createRepairContext(projectId: string, regressionId: string): Promise<RepairContext> {
+  return engineFetch<RepairContext>(`/projects/${encodeURIComponent(projectId)}/regressions/${encodeURIComponent(regressionId)}/repair-context`, { method: "POST", body: "{}" });
+}
+
+export async function copyRepairContext(projectId: string, contextId: string): Promise<string> {
+  const response = await engineFetch<{ text: string }>(`/projects/${encodeURIComponent(projectId)}/repair-contexts/${encodeURIComponent(contextId)}/copy`, { method: "POST", body: "{}" });
+  return response.text;
+}
+
+export async function saveRepairContext(projectId: string, contextId: string): Promise<string> {
+  const response = await engineFetch<{ relative_path: string }>(`/projects/${encodeURIComponent(projectId)}/repair-contexts/${encodeURIComponent(contextId)}/save-local`, { method: "POST", body: "{}" });
+  return response.relative_path;
 }
 
 export function resetBootstrapForTests(): void {

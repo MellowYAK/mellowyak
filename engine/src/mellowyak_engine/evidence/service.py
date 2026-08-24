@@ -36,9 +36,7 @@ def _now() -> datetime:
 
 
 class EvidenceService:
-    def __init__(
-        self, sessions: sessionmaker, store: EvidenceStore, events: LocalEventBus
-    ) -> None:
+    def __init__(self, sessions: sessionmaker, store: EvidenceStore, events: LocalEventBus) -> None:
         self.sessions = sessions
         self.store = store
         self.events = events
@@ -99,7 +97,12 @@ class EvidenceService:
         return result
 
     def create_bundle(
-        self, project_id: str, capture_id: str, items: list[tuple[str, str]]
+        self,
+        project_id: str,
+        capture_id: str,
+        items: list[tuple[str, str]],
+        bundle_type: str = "BASELINE_CAPTURE",
+        verification_run_id: str | None = None,
     ) -> dict[str, Any]:
         if not items:
             raise EvidenceServiceError("EVIDENCE_BUNDLE_EMPTY")
@@ -142,6 +145,8 @@ class EvidenceService:
                 "bundle_id": bundle_id,
                 "project_id": project_id,
                 "capture_id": capture_id,
+                "bundle_type": bundle_type,
+                "verification_run_id": verification_run_id,
                 "source_revision": json.loads(capture.source_revision_json),
                 "items": manifest_items,
             }
@@ -153,6 +158,8 @@ class EvidenceService:
                 capture_id=capture_id,
                 manifest_sha256=manifest_sha256,
                 status="CAPTURED",
+                bundle_type=bundle_type[:40],
+                verification_run_id=verification_run_id,
                 created_at=now,
             )
             session.add(bundle)
@@ -210,7 +217,10 @@ class EvidenceService:
                 capture.status = "STALE_SOURCE"
                 capture.updated_at = now
                 raise EvidenceServiceError("CAPTURE_SOURCE_STALE")
-            if not capture.expected_assertions_json or json.loads(capture.expected_assertions_json) == []:
+            if (
+                not capture.expected_assertions_json
+                or json.loads(capture.expected_assertions_json) == []
+            ):
                 raise EvidenceServiceError("EXPECTED_ASSERTION_REQUIRED")
             bundle = session.scalars(
                 select(EvidenceBundle).where(EvidenceBundle.capture_id == capture_id)
@@ -288,8 +298,16 @@ class EvidenceService:
             behavior = session.get(ProtectedBehavior, behavior_id)
             if behavior is None or behavior.project_id != project_id:
                 raise EvidenceServiceError("BEHAVIOR_NOT_FOUND")
-            baseline = session.get(BehaviorBaseline, behavior.last_accepted_baseline_id) if behavior.last_accepted_baseline_id else None
-            if baseline is None or baseline.project_id != project_id or baseline.status not in {"ACCEPTED", "STALE"}:
+            baseline = (
+                session.get(BehaviorBaseline, behavior.last_accepted_baseline_id)
+                if behavior.last_accepted_baseline_id
+                else None
+            )
+            if (
+                baseline is None
+                or baseline.project_id != project_id
+                or baseline.status not in {"ACCEPTED", "STALE"}
+            ):
                 raise EvidenceServiceError("BASELINE_NOT_FOUND")
             baseline.status = "REVOKED"
             baseline.revoked_at = now
@@ -302,15 +320,23 @@ class EvidenceService:
                 if delete_evidence:
                     items = session.execute(
                         select(EvidenceBundleItem, EvidenceArtifact)
-                        .join(EvidenceArtifact, EvidenceArtifact.id == EvidenceBundleItem.artifact_id)
+                        .join(
+                            EvidenceArtifact, EvidenceArtifact.id == EvidenceBundleItem.artifact_id
+                        )
                         .where(EvidenceBundleItem.bundle_id == bundle.id)
                     ).all()
                     for item, artifact in items:
                         artifact_deletions.append((artifact.id, artifact.sha256))
                         session.delete(item)
                         session.delete(artifact)
-            self._audit(session, project_id, "baseline_revoked", "baseline", baseline.id,
-                        {"evidence_deleted": delete_evidence})
+            self._audit(
+                session,
+                project_id,
+                "baseline_revoked",
+                "baseline",
+                baseline.id,
+                {"evidence_deleted": delete_evidence},
+            )
         for _, digest in artifact_deletions:
             self.store.delete(project_id, digest)
         self.events.publish("evidence_revoked", project_id, {"behavior_id": behavior_id})
@@ -319,19 +345,32 @@ class EvidenceService:
     def list_evidence(self, project_id: str) -> dict[str, Any]:
         with self.sessions() as session:
             bundles = session.scalars(
-                select(EvidenceBundle).where(EvidenceBundle.project_id == project_id)
+                select(EvidenceBundle)
+                .where(EvidenceBundle.project_id == project_id)
                 .order_by(EvidenceBundle.created_at.desc())
             ).all()
             artifacts = session.scalars(
-                select(EvidenceArtifact).where(EvidenceArtifact.project_id == project_id)
+                select(EvidenceArtifact)
+                .where(EvidenceArtifact.project_id == project_id)
                 .order_by(EvidenceArtifact.created_at.desc())
             ).all()
             return {
-                "bundles": [{"id": row.id, "capture_id": row.capture_id,
-                             "manifest_sha256": row.manifest_sha256, "status": row.status,
-                             "created_at": row.created_at.isoformat()} for row in bundles],
-                "artifacts": [self._artifact_public(row, self.store.verify(project_id, row.sha256))
-                              for row in artifacts],
+                "bundles": [
+                    {
+                        "id": row.id,
+                        "capture_id": row.capture_id,
+                        "manifest_sha256": row.manifest_sha256,
+                        "status": row.status,
+                        "bundle_type": row.bundle_type,
+                        "verification_run_id": row.verification_run_id,
+                        "created_at": row.created_at.isoformat(),
+                    }
+                    for row in bundles
+                ],
+                "artifacts": [
+                    self._artifact_public(row, self.store.verify(project_id, row.sha256))
+                    for row in artifacts
+                ],
             }
 
     def remove_review_artifact(self, project_id: str, artifact_id: str) -> dict[str, Any]:
@@ -360,9 +399,7 @@ class EvidenceService:
                     .order_by(EvidenceBundleItem.ordinal)
                 ).all()
                 manifest_items: list[dict[str, Any]] = []
-                for ordinal, (remaining_item, remaining_artifact) in enumerate(
-                    remaining, start=1
-                ):
+                for ordinal, (remaining_item, remaining_artifact) in enumerate(remaining, start=1):
                     remaining_item.ordinal = ordinal
                     manifest_items.append(
                         {
@@ -382,12 +419,8 @@ class EvidenceService:
                     "source_revision": json.loads(capture.source_revision_json),
                     "items": manifest_items,
                 }
-                payload = json.dumps(
-                    manifest, sort_keys=True, separators=(",", ":")
-                ).encode()
-                bundle.manifest_sha256 = self.store.write_manifest(
-                    project_id, bundle.id, payload
-                )
+                payload = json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode()
+                bundle.manifest_sha256 = self.store.write_manifest(project_id, bundle.id, payload)
             remaining_references = int(
                 session.scalar(
                     select(func.count())
@@ -447,6 +480,8 @@ class EvidenceService:
                 "capture_id": bundle.capture_id,
                 "manifest_sha256": bundle.manifest_sha256,
                 "status": bundle.status,
+                "bundle_type": bundle.bundle_type,
+                "verification_run_id": bundle.verification_run_id,
                 "items": [
                     {
                         "ordinal": item.ordinal,

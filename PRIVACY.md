@@ -1,5 +1,9 @@
 # Privacy
 
+## Phase 5 verification and repair
+
+Fresh verification runs in a new ephemeral browser context against the approved loopback origin. Current screenshots, bounded action/network metadata, assertion results, regression records, immutable gate decisions, and Repair Context metadata stay under the local MellowYak data root. They do not replace Last Known Good. Repair Context uses relative paths and evidence identifiers, excludes source contents by default, redacts secret-shaped values, is limited to 256 KiB, and leaves the application only through an explicit local clipboard action. No model, connector, source upload, evidence upload, analytics, account, or cloud synchronization was added.
+
 ## Phase 4 browser evidence
 
 Browser capture is opt-in and limited to an explicitly approved local HTTP origin. It uses an ephemeral browser context and does not persist cookies, local/session storage, authorization or cookie headers, query values, request/response bodies, or raw input values. Password/secret/token fields are masked before screenshots. Start/final screenshots, action metadata, runtime metadata, hashes, and attestations remain under the platform-native local data root. Screenshots may still contain project or user data, so review and deletion are available before human acceptance. No source or evidence upload was added.
@@ -26,4 +30,4 @@ Opening the data folder is a local operating-system action. Uninstalling the app
 
 ## Future boundary
 
-Source code, Git history, project maps, protected behaviors, screenshots, traces, videos, evidence, regression history and repair context must stay local by default. Data may leave only through a future connector explicitly enabled by the user, with a visible destination and consent. No connector is implemented in Phase 4.
+Source code, Git history, project maps, protected behaviors, screenshots, traces, videos, evidence, regression history and repair context must stay local by default. Data may leave only through a future connector explicitly enabled by the user, with a visible destination and consent. No connector is implemented in Phase 5.
