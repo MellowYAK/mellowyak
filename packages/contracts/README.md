@@ -17,4 +17,12 @@ Phase 3 contract groups include:
 - non-verified behavior-candidate actions;
 - Impact Explorer search with incoming/outgoing provenance and scan revision.
 
-All routes remain loopback-authenticated and project-scoped. The contract has no source-content response, connector delivery, test execution, behavior verification or Completion Gate endpoint.
+Phase 4 contract groups include:
+
+- protected behavior drafts, immutable versions, archive and baseline revoke;
+- project runtime configurations and explicit runtime testing;
+- browser capture start/list/detail/pause/resume/stop/cancel;
+- mandatory capture review and explicit baseline acceptance;
+- evidence artifact/bundle listing, content retrieval, local opening and reference-safe deletion.
+
+All routes remain loopback-authenticated and project-scoped. The contract has no source-content response, connector delivery, assertion execution, fresh PASS/FAIL behavior verification, regression decision or Completion Gate endpoint.

@@ -666,7 +666,7 @@ The intended principle is:
 
 ## Project status
 
-MellowYak Phase 3 now has a working local Project, Git, Source Scan, bounded Reverse Impact, and Context Receipt foundation. It is not a released product. The desktop can detect exact local changes, traverse known static project relationships, explain related entities and paths, expose unknown/stale boundaries, and generate a bounded metadata-only Context Receipt. This is not regression protection or behavior verification. Windows and Linux remain CI-configured rather than runtime-verified on this macOS revision.
+MellowYak Phase 4 now adds versioned Behavior Drafts, explicitly local runtime configuration, bounded Playwright browser capture, reviewable content-addressed evidence, human-accepted baselines, and a revision-bound Last Known Good pointer to the Phase 1–3 local foundation. It is not a released product. A capture is evidence, not a current PASS/FAIL result: automatic verification, regression decisions, required-check selection, Completion Gate, and Repair Context remain unimplemented. Windows and Linux remain CI-configured rather than runtime-verified on this macOS revision.
 
 The complete workflow described in this README is the product direction. Implementation must advance through verified stages.
 
@@ -716,11 +716,15 @@ Phase 3 does **not** implement Protected Behaviors, runtime capture, automatic o
 
 ### Phase 4 — Behaviors and evidence
 
-- Protected Behavior schema;
-- last-known-good evidence;
-- browser/runtime capture adapters;
-- evidence storage and lineage;
-- optional Record Behavior workflow.
+- implemented immutable behavior versions with explicit criticality, provenance, limitations and Draft/Protected/Archived lifecycle;
+- implemented candidate-to-Draft preparation without creating a baseline or protection claim;
+- implemented project-scoped loopback-only runtime settings and an ephemeral Playwright Chromium execution arm;
+- implemented bounded, redacted actions, local network metadata, start/final screenshots, pause/resume, review and expected-assertion definitions;
+- implemented atomic content-addressed evidence, deterministic manifests, SHA-256 integrity, human attestation, revocation and Last Known Good lineage;
+- implemented Protected Behaviors, capture review, evidence timeline and behavior-aware Impact Explorer surfaces in English and Hebrew RTL;
+- added migration `0004_behavior_evidence_browser` and a deterministic local PulsePlan reschedule fixture.
+
+Phase 4 does **not** run stored assertions as verification, replay captures authoritatively, select checks, label behaviors PASS/FAIL, decide regressions, block completion, or generate repair context.
 
 ### Phase 5 — Verification, gate, and repair
 

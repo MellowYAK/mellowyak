@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -286,6 +288,7 @@ class BehaviorCandidateResponse(BaseModel):
     not_protected: bool
     created_at: str | None = None
     updated_at: str | None = None
+    behavior_draft_id: str | None = None
 
 
 class BehaviorCandidateListResponse(BaseModel):
@@ -353,3 +356,217 @@ class LocalEventResponse(BaseModel):
 
 class LocalEventListResponse(BaseModel):
     events: list[LocalEventResponse]
+
+
+class BehaviorDraftRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=240)
+    description: str = Field(default="", max_length=4000)
+    expected_outcome: str = Field(default="", max_length=4000)
+    criticality: str = "MEDIUM"
+    persona: str = Field(default="", max_length=500)
+    preconditions: str = Field(default="", max_length=4000)
+    starting_state: str = Field(default="", max_length=4000)
+    expected_assertions: list[dict[str, object]] = Field(default_factory=list, max_length=50)
+    links: list[dict[str, str]] = Field(default_factory=list, max_length=50)
+
+
+class BehaviorVersionResponse(BaseModel):
+    id: str
+    version_number: int
+    title: str
+    description: str
+    expected_outcome: str
+    criticality: str
+    persona: str
+    preconditions: str
+    starting_state: str
+    expected_assertions: list[dict[str, object]]
+    limitations: list[str]
+    verification_not_configured: bool
+    created_by_type: str
+    source_candidate_id: str | None
+    content_digest: str
+    supersedes_version_id: str | None
+    source_revision: dict[str, object]
+    created_at: datetime
+
+
+class BehaviorBaselineSummaryResponse(BaseModel):
+    id: str
+    status: str
+    behavior_version_id: str
+    evidence_bundle_id: str
+    created_at: datetime
+
+
+class ProtectedBehaviorResponse(BaseModel):
+    id: str
+    project_id: str
+    stable_key: str
+    display_name: str
+    lifecycle_state: str
+    current_version_id: str
+    last_accepted_baseline_id: str | None
+    current_version: BehaviorVersionResponse
+    versions: list[BehaviorVersionResponse]
+    links: list[dict[str, str]]
+    baselines: list[BehaviorBaselineSummaryResponse]
+    created_at: datetime
+    updated_at: datetime
+    archived_at: datetime | None
+
+
+class ProtectedBehaviorListResponse(BaseModel):
+    behaviors: list[ProtectedBehaviorResponse]
+
+
+class RuntimeConfigurationRequest(BaseModel):
+    display_name: str = Field(min_length=1, max_length=240)
+    base_url: str = Field(min_length=1, max_length=2000)
+    starting_path: str = Field(default="/", max_length=1000)
+    viewport_width: int = Field(default=1280, ge=320, le=3840)
+    viewport_height: int = Field(default=800, ge=240, le=2160)
+    locale: str = Field(default="en-US", max_length=40)
+    timezone: str = Field(default="UTC", max_length=80)
+    browser_type: str = "chromium"
+    capture_screenshots: bool = True
+    capture_trace: bool = False
+    capture_video: bool = False
+    capture_network: bool = True
+
+
+class RuntimeConfigurationResponse(BaseModel):
+    id: str
+    project_id: str
+    display_name: str
+    base_url: str
+    allowed_origin: str
+    starting_path: str
+    viewport_width: int
+    viewport_height: int
+    locale: str
+    timezone: str
+    browser_type: str
+    capture_screenshots: bool
+    capture_trace: bool
+    capture_video: bool
+    capture_network: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class RuntimeConfigurationListResponse(BaseModel):
+    runtimes: list[RuntimeConfigurationResponse]
+
+
+class BrowserCaptureStartRequest(BaseModel):
+    behavior_id: str
+    runtime_configuration_id: str
+    entry_url: str | None = Field(default=None, max_length=2000)
+
+
+class BrowserCaptureStepResponse(BaseModel):
+    id: str
+    ordinal: int
+    event_type: str
+    page_url: str
+    selector: str | None
+    metadata: dict[str, object]
+    occurred_at: datetime
+    included: bool
+    label: str
+
+
+class RuntimeObservationResponse(BaseModel):
+    id: str
+    observation_type: str
+    metadata: dict[str, object]
+    observed_at: datetime
+    included: bool
+
+
+class BrowserCaptureResponse(BaseModel):
+    id: str
+    project_id: str
+    behavior_id: str
+    behavior_version_id: str
+    runtime_configuration_id: str
+    status: str
+    entry_url: str
+    source_revision: dict[str, object]
+    source_stale: bool
+    steps: list[BrowserCaptureStepResponse]
+    observations: list[RuntimeObservationResponse]
+    started_at: datetime
+    stopped_at: datetime | None
+    error_code: str | None
+    paused: bool
+    browser_version: str | None
+    expected_assertions: list[dict[str, object]]
+
+
+class CaptureReviewRequest(BaseModel):
+    step_updates: list[dict[str, object]] = Field(default_factory=list, max_length=500)
+    excluded_observation_ids: list[str] = Field(default_factory=list, max_length=1000)
+    expected_assertions: list[dict[str, object]] = Field(default_factory=list, max_length=50)
+    notes: str = Field(default="", max_length=4000)
+
+
+class BaselineRevokeRequest(BaseModel):
+    delete_evidence: bool = False
+    confirmation: bool = False
+
+
+class BrowserCaptureListResponse(BaseModel):
+    captures: list[BrowserCaptureResponse]
+
+
+class BaselineAcceptRequest(BaseModel):
+    reviewer: str = Field(min_length=1, max_length=240)
+    notes: str = Field(default="", max_length=4000)
+
+
+class BehaviorBaselineResponse(BaseModel):
+    id: str
+    project_id: str
+    behavior_id: str
+    behavior_version_id: str
+    evidence_bundle_id: str
+    status: str
+    source_revision: dict[str, object]
+    attestation: dict[str, object]
+    created_at: datetime
+    revoked_at: datetime | None
+
+
+class EvidenceArtifactResponse(BaseModel):
+    id: str
+    project_id: str
+    sha256: str
+    size_bytes: int
+    media_type: str
+    redaction_state: str
+    capture_id: str | None
+    behavior_id: str | None
+    behavior_version_id: str | None
+    source_identity: dict[str, object]
+    runtime_identity: dict[str, object]
+    trust_source: str
+    local_reference: str
+    integrity_verified: bool
+    created_at: datetime
+
+
+class EvidenceListResponse(BaseModel):
+    bundles: list[dict[str, object]]
+    artifacts: list[EvidenceArtifactResponse]
+
+
+class EvidenceBundleResponse(BaseModel):
+    id: str
+    project_id: str
+    capture_id: str
+    manifest_sha256: str
+    status: str
+    items: list[dict[str, object]]
+    created_at: datetime

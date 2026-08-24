@@ -52,6 +52,8 @@ def main() -> None:
             f"{ENGINE / 'alembic.ini'}{os.pathsep}.",
             "--collect-all",
             "alembic",
+            "--collect-all",
+            "playwright",
             str(ENGINE / "src" / "mellowyak_engine" / "main.py"),
         ],
         cwd=ENGINE,

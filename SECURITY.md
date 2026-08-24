@@ -1,6 +1,10 @@
 # Security policy
 
-MellowYak Phase 3 is a local foundation, not a production-security certification.
+## Phase 4 browser boundary
+
+The browser arm starts only after explicit action, accepts only exact explicit-port `http://127.0.0.1` or `http://localhost` origins, aborts other origins, disables downloads and persistent profiles, and is terminated with its engine owner. Evidence objects are project-scoped, size-bounded, content-addressed, atomically written, symlink/traversal checked, and hash-verified. API access remains loopback-only with the per-launch bearer token. Trace is disabled unless separately package-verified; video is disabled by default.
+
+MellowYak Phase 4 is a local foundation, not a production-security certification.
 
 ## Reporting
 
@@ -20,7 +24,7 @@ Do not publish a suspected vulnerability or private project evidence in a public
 - Behavior candidates are explicitly unverified and not protected.
 - Desktop setup starts the packaged engine asynchronously. Slow cold starts return `ENGINE_STARTING` to the UI instead of blocking AppKit setup or aborting the desktop process.
 - The desktop updater accepts metadata only from the HTTPS MellowYak GitHub Releases endpoint and refuses update bundles that do not match the embedded public signing key. The private updater key is prohibited from source history and build logs.
-- Phase 3 has no remote account, cloud synchronization, telemetry uploader, model call, connector, browser automation, test execution or completion gate. The release update check is the only configured non-loopback application request.
+- Phase 4 has no remote account, cloud synchronization, telemetry uploader, model call, connector, automatic test execution or completion gate. Its explicit browser automation is restricted to the approved local runtime origin. The release update check remains the only configured non-loopback product request.
 
 Local development packages remain unsigned and unnotarized and are not release artifacts. The updater minisign key does not replace required macOS notarization or Windows code signing. A public production release remains blocked until the platform signing credentials and updater private key are configured as repository secrets. Future connectors, execution arms and team services require separate threat models and explicit user consent.
 

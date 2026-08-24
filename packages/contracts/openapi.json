@@ -14,6 +14,146 @@
         "title": "ActionResponse",
         "type": "object"
       },
+      "BaselineAcceptRequest": {
+        "properties": {
+          "notes": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Notes",
+            "type": "string"
+          },
+          "reviewer": {
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Reviewer",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reviewer"
+        ],
+        "title": "BaselineAcceptRequest",
+        "type": "object"
+      },
+      "BaselineRevokeRequest": {
+        "properties": {
+          "confirmation": {
+            "default": false,
+            "title": "Confirmation",
+            "type": "boolean"
+          },
+          "delete_evidence": {
+            "default": false,
+            "title": "Delete Evidence",
+            "type": "boolean"
+          }
+        },
+        "title": "BaselineRevokeRequest",
+        "type": "object"
+      },
+      "BehaviorBaselineResponse": {
+        "properties": {
+          "attestation": {
+            "additionalProperties": true,
+            "title": "Attestation",
+            "type": "object"
+          },
+          "behavior_id": {
+            "title": "Behavior Id",
+            "type": "string"
+          },
+          "behavior_version_id": {
+            "title": "Behavior Version Id",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "evidence_bundle_id": {
+            "title": "Evidence Bundle Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          },
+          "source_revision": {
+            "additionalProperties": true,
+            "title": "Source Revision",
+            "type": "object"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "behavior_id",
+          "behavior_version_id",
+          "evidence_bundle_id",
+          "status",
+          "source_revision",
+          "attestation",
+          "created_at",
+          "revoked_at"
+        ],
+        "title": "BehaviorBaselineResponse",
+        "type": "object"
+      },
+      "BehaviorBaselineSummaryResponse": {
+        "properties": {
+          "behavior_version_id": {
+            "title": "Behavior Version Id",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "evidence_bundle_id": {
+            "title": "Evidence Bundle Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "behavior_version_id",
+          "evidence_bundle_id",
+          "created_at"
+        ],
+        "title": "BehaviorBaselineSummaryResponse",
+        "type": "object"
+      },
       "BehaviorCandidateListResponse": {
         "properties": {
           "candidates": {
@@ -32,6 +172,17 @@
       },
       "BehaviorCandidateResponse": {
         "properties": {
+          "behavior_draft_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Behavior Draft Id"
+          },
           "created_at": {
             "anyOf": [
               {
@@ -122,6 +273,470 @@
           "not_protected"
         ],
         "title": "BehaviorCandidateResponse",
+        "type": "object"
+      },
+      "BehaviorDraftRequest": {
+        "properties": {
+          "criticality": {
+            "default": "MEDIUM",
+            "title": "Criticality",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Description",
+            "type": "string"
+          },
+          "expected_assertions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "maxItems": 50,
+            "title": "Expected Assertions",
+            "type": "array"
+          },
+          "expected_outcome": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Expected Outcome",
+            "type": "string"
+          },
+          "links": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "maxItems": 50,
+            "title": "Links",
+            "type": "array"
+          },
+          "persona": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Persona",
+            "type": "string"
+          },
+          "preconditions": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Preconditions",
+            "type": "string"
+          },
+          "starting_state": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Starting State",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "BehaviorDraftRequest",
+        "type": "object"
+      },
+      "BehaviorVersionResponse": {
+        "properties": {
+          "content_digest": {
+            "title": "Content Digest",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by_type": {
+            "title": "Created By Type",
+            "type": "string"
+          },
+          "criticality": {
+            "title": "Criticality",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "expected_assertions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Expected Assertions",
+            "type": "array"
+          },
+          "expected_outcome": {
+            "title": "Expected Outcome",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "persona": {
+            "title": "Persona",
+            "type": "string"
+          },
+          "preconditions": {
+            "title": "Preconditions",
+            "type": "string"
+          },
+          "source_candidate_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Candidate Id"
+          },
+          "source_revision": {
+            "additionalProperties": true,
+            "title": "Source Revision",
+            "type": "object"
+          },
+          "starting_state": {
+            "title": "Starting State",
+            "type": "string"
+          },
+          "supersedes_version_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supersedes Version Id"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "verification_not_configured": {
+            "title": "Verification Not Configured",
+            "type": "boolean"
+          },
+          "version_number": {
+            "title": "Version Number",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "version_number",
+          "title",
+          "description",
+          "expected_outcome",
+          "criticality",
+          "persona",
+          "preconditions",
+          "starting_state",
+          "expected_assertions",
+          "limitations",
+          "verification_not_configured",
+          "created_by_type",
+          "source_candidate_id",
+          "content_digest",
+          "supersedes_version_id",
+          "source_revision",
+          "created_at"
+        ],
+        "title": "BehaviorVersionResponse",
+        "type": "object"
+      },
+      "BrowserCaptureListResponse": {
+        "properties": {
+          "captures": {
+            "items": {
+              "$ref": "#/components/schemas/BrowserCaptureResponse"
+            },
+            "title": "Captures",
+            "type": "array"
+          }
+        },
+        "required": [
+          "captures"
+        ],
+        "title": "BrowserCaptureListResponse",
+        "type": "object"
+      },
+      "BrowserCaptureResponse": {
+        "properties": {
+          "behavior_id": {
+            "title": "Behavior Id",
+            "type": "string"
+          },
+          "behavior_version_id": {
+            "title": "Behavior Version Id",
+            "type": "string"
+          },
+          "browser_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Browser Version"
+          },
+          "entry_url": {
+            "title": "Entry Url",
+            "type": "string"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "expected_assertions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Expected Assertions",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "observations": {
+            "items": {
+              "$ref": "#/components/schemas/RuntimeObservationResponse"
+            },
+            "title": "Observations",
+            "type": "array"
+          },
+          "paused": {
+            "title": "Paused",
+            "type": "boolean"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "runtime_configuration_id": {
+            "title": "Runtime Configuration Id",
+            "type": "string"
+          },
+          "source_revision": {
+            "additionalProperties": true,
+            "title": "Source Revision",
+            "type": "object"
+          },
+          "source_stale": {
+            "title": "Source Stale",
+            "type": "boolean"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/BrowserCaptureStepResponse"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "stopped_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stopped At"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "behavior_id",
+          "behavior_version_id",
+          "runtime_configuration_id",
+          "status",
+          "entry_url",
+          "source_revision",
+          "source_stale",
+          "steps",
+          "observations",
+          "started_at",
+          "stopped_at",
+          "error_code",
+          "paused",
+          "browser_version",
+          "expected_assertions"
+        ],
+        "title": "BrowserCaptureResponse",
+        "type": "object"
+      },
+      "BrowserCaptureStartRequest": {
+        "properties": {
+          "behavior_id": {
+            "title": "Behavior Id",
+            "type": "string"
+          },
+          "entry_url": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Url"
+          },
+          "runtime_configuration_id": {
+            "title": "Runtime Configuration Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "behavior_id",
+          "runtime_configuration_id"
+        ],
+        "title": "BrowserCaptureStartRequest",
+        "type": "object"
+      },
+      "BrowserCaptureStepResponse": {
+        "properties": {
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "included": {
+            "title": "Included",
+            "type": "boolean"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "ordinal": {
+            "title": "Ordinal",
+            "type": "integer"
+          },
+          "page_url": {
+            "title": "Page Url",
+            "type": "string"
+          },
+          "selector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selector"
+          }
+        },
+        "required": [
+          "id",
+          "ordinal",
+          "event_type",
+          "page_url",
+          "selector",
+          "metadata",
+          "occurred_at",
+          "included",
+          "label"
+        ],
+        "title": "BrowserCaptureStepResponse",
+        "type": "object"
+      },
+      "CaptureReviewRequest": {
+        "properties": {
+          "excluded_observation_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 1000,
+            "title": "Excluded Observation Ids",
+            "type": "array"
+          },
+          "expected_assertions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "maxItems": 50,
+            "title": "Expected Assertions",
+            "type": "array"
+          },
+          "notes": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Notes",
+            "type": "string"
+          },
+          "step_updates": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "maxItems": 500,
+            "title": "Step Updates",
+            "type": "array"
+          }
+        },
+        "title": "CaptureReviewRequest",
         "type": "object"
       },
       "ChangeImpactResponse": {
@@ -442,6 +1057,186 @@
           "updated_at"
         ],
         "title": "CurrentChangeResponse",
+        "type": "object"
+      },
+      "EvidenceArtifactResponse": {
+        "properties": {
+          "behavior_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Behavior Id"
+          },
+          "behavior_version_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Behavior Version Id"
+          },
+          "capture_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capture Id"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "integrity_verified": {
+            "title": "Integrity Verified",
+            "type": "boolean"
+          },
+          "local_reference": {
+            "title": "Local Reference",
+            "type": "string"
+          },
+          "media_type": {
+            "title": "Media Type",
+            "type": "string"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "redaction_state": {
+            "title": "Redaction State",
+            "type": "string"
+          },
+          "runtime_identity": {
+            "additionalProperties": true,
+            "title": "Runtime Identity",
+            "type": "object"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "source_identity": {
+            "additionalProperties": true,
+            "title": "Source Identity",
+            "type": "object"
+          },
+          "trust_source": {
+            "title": "Trust Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "sha256",
+          "size_bytes",
+          "media_type",
+          "redaction_state",
+          "capture_id",
+          "behavior_id",
+          "behavior_version_id",
+          "source_identity",
+          "runtime_identity",
+          "trust_source",
+          "local_reference",
+          "integrity_verified",
+          "created_at"
+        ],
+        "title": "EvidenceArtifactResponse",
+        "type": "object"
+      },
+      "EvidenceBundleResponse": {
+        "properties": {
+          "capture_id": {
+            "title": "Capture Id",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "manifest_sha256": {
+            "title": "Manifest Sha256",
+            "type": "string"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "capture_id",
+          "manifest_sha256",
+          "status",
+          "items",
+          "created_at"
+        ],
+        "title": "EvidenceBundleResponse",
+        "type": "object"
+      },
+      "EvidenceListResponse": {
+        "properties": {
+          "artifacts": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceArtifactResponse"
+            },
+            "title": "Artifacts",
+            "type": "array"
+          },
+          "bundles": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Bundles",
+            "type": "array"
+          }
+        },
+        "required": [
+          "bundles",
+          "artifacts"
+        ],
+        "title": "EvidenceListResponse",
         "type": "object"
       },
       "GitStateResponse": {
@@ -1520,6 +2315,128 @@
         "title": "ProjectResponse",
         "type": "object"
       },
+      "ProtectedBehaviorListResponse": {
+        "properties": {
+          "behaviors": {
+            "items": {
+              "$ref": "#/components/schemas/ProtectedBehaviorResponse"
+            },
+            "title": "Behaviors",
+            "type": "array"
+          }
+        },
+        "required": [
+          "behaviors"
+        ],
+        "title": "ProtectedBehaviorListResponse",
+        "type": "object"
+      },
+      "ProtectedBehaviorResponse": {
+        "properties": {
+          "archived_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived At"
+          },
+          "baselines": {
+            "items": {
+              "$ref": "#/components/schemas/BehaviorBaselineSummaryResponse"
+            },
+            "title": "Baselines",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "current_version": {
+            "$ref": "#/components/schemas/BehaviorVersionResponse"
+          },
+          "current_version_id": {
+            "title": "Current Version Id",
+            "type": "string"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "last_accepted_baseline_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Accepted Baseline Id"
+          },
+          "lifecycle_state": {
+            "title": "Lifecycle State",
+            "type": "string"
+          },
+          "links": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "stable_key": {
+            "title": "Stable Key",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/BehaviorVersionResponse"
+            },
+            "title": "Versions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "stable_key",
+          "display_name",
+          "lifecycle_state",
+          "current_version_id",
+          "last_accepted_baseline_id",
+          "current_version",
+          "versions",
+          "links",
+          "baselines",
+          "created_at",
+          "updated_at",
+          "archived_at"
+        ],
+        "title": "ProtectedBehaviorResponse",
+        "type": "object"
+      },
       "ReadinessResponse": {
         "properties": {
           "checks": {
@@ -1599,6 +2516,231 @@
           "stale"
         ],
         "title": "RelationshipResponse",
+        "type": "object"
+      },
+      "RuntimeConfigurationListResponse": {
+        "properties": {
+          "runtimes": {
+            "items": {
+              "$ref": "#/components/schemas/RuntimeConfigurationResponse"
+            },
+            "title": "Runtimes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "runtimes"
+        ],
+        "title": "RuntimeConfigurationListResponse",
+        "type": "object"
+      },
+      "RuntimeConfigurationRequest": {
+        "properties": {
+          "base_url": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Base Url",
+            "type": "string"
+          },
+          "browser_type": {
+            "default": "chromium",
+            "title": "Browser Type",
+            "type": "string"
+          },
+          "capture_network": {
+            "default": true,
+            "title": "Capture Network",
+            "type": "boolean"
+          },
+          "capture_screenshots": {
+            "default": true,
+            "title": "Capture Screenshots",
+            "type": "boolean"
+          },
+          "capture_trace": {
+            "default": false,
+            "title": "Capture Trace",
+            "type": "boolean"
+          },
+          "capture_video": {
+            "default": false,
+            "title": "Capture Video",
+            "type": "boolean"
+          },
+          "display_name": {
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "locale": {
+            "default": "en-US",
+            "maxLength": 40,
+            "title": "Locale",
+            "type": "string"
+          },
+          "starting_path": {
+            "default": "/",
+            "maxLength": 1000,
+            "title": "Starting Path",
+            "type": "string"
+          },
+          "timezone": {
+            "default": "UTC",
+            "maxLength": 80,
+            "title": "Timezone",
+            "type": "string"
+          },
+          "viewport_height": {
+            "default": 800,
+            "maximum": 2160.0,
+            "minimum": 240.0,
+            "title": "Viewport Height",
+            "type": "integer"
+          },
+          "viewport_width": {
+            "default": 1280,
+            "maximum": 3840.0,
+            "minimum": 320.0,
+            "title": "Viewport Width",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "display_name",
+          "base_url"
+        ],
+        "title": "RuntimeConfigurationRequest",
+        "type": "object"
+      },
+      "RuntimeConfigurationResponse": {
+        "properties": {
+          "allowed_origin": {
+            "title": "Allowed Origin",
+            "type": "string"
+          },
+          "base_url": {
+            "title": "Base Url",
+            "type": "string"
+          },
+          "browser_type": {
+            "title": "Browser Type",
+            "type": "string"
+          },
+          "capture_network": {
+            "title": "Capture Network",
+            "type": "boolean"
+          },
+          "capture_screenshots": {
+            "title": "Capture Screenshots",
+            "type": "boolean"
+          },
+          "capture_trace": {
+            "title": "Capture Trace",
+            "type": "boolean"
+          },
+          "capture_video": {
+            "title": "Capture Video",
+            "type": "boolean"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "locale": {
+            "title": "Locale",
+            "type": "string"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "starting_path": {
+            "title": "Starting Path",
+            "type": "string"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "viewport_height": {
+            "title": "Viewport Height",
+            "type": "integer"
+          },
+          "viewport_width": {
+            "title": "Viewport Width",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "display_name",
+          "base_url",
+          "allowed_origin",
+          "starting_path",
+          "viewport_width",
+          "viewport_height",
+          "locale",
+          "timezone",
+          "browser_type",
+          "capture_screenshots",
+          "capture_trace",
+          "capture_video",
+          "capture_network",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "RuntimeConfigurationResponse",
+        "type": "object"
+      },
+      "RuntimeObservationResponse": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "included": {
+            "title": "Included",
+            "type": "boolean"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "observation_type": {
+            "title": "Observation Type",
+            "type": "string"
+          },
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "observation_type",
+          "metadata",
+          "observed_at",
+          "included"
+        ],
+        "title": "RuntimeObservationResponse",
         "type": "object"
       },
       "ScanFindingListResponse": {
@@ -2493,6 +3635,1050 @@
         "summary": "Prepare Candidate"
       }
     },
+    "/projects/{project_id}/behaviors": {
+      "get": {
+        "operationId": "list_behaviors_projects__project_id__behaviors_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtectedBehaviorListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Behaviors"
+      },
+      "post": {
+        "operationId": "create_behavior_projects__project_id__behaviors_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BehaviorDraftRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtectedBehaviorResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Behavior"
+      }
+    },
+    "/projects/{project_id}/behaviors/{behavior_id}": {
+      "get": {
+        "operationId": "get_behavior_projects__project_id__behaviors__behavior_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "behavior_id",
+            "required": true,
+            "schema": {
+              "title": "Behavior Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtectedBehaviorResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Behavior"
+      }
+    },
+    "/projects/{project_id}/behaviors/{behavior_id}/archive": {
+      "post": {
+        "operationId": "archive_behavior_projects__project_id__behaviors__behavior_id__archive_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "behavior_id",
+            "required": true,
+            "schema": {
+              "title": "Behavior Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtectedBehaviorResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Archive Behavior"
+      }
+    },
+    "/projects/{project_id}/behaviors/{behavior_id}/baseline": {
+      "get": {
+        "operationId": "current_behavior_baseline_projects__project_id__behaviors__behavior_id__baseline_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "behavior_id",
+            "required": true,
+            "schema": {
+              "title": "Behavior Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BehaviorBaselineResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Current Behavior Baseline"
+      }
+    },
+    "/projects/{project_id}/behaviors/{behavior_id}/baseline/revoke": {
+      "post": {
+        "operationId": "revoke_behavior_baseline_projects__project_id__behaviors__behavior_id__baseline_revoke_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "behavior_id",
+            "required": true,
+            "schema": {
+              "title": "Behavior Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BaselineRevokeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Revoke Behavior Baseline"
+      }
+    },
+    "/projects/{project_id}/behaviors/{behavior_id}/versions": {
+      "post": {
+        "operationId": "update_behavior_projects__project_id__behaviors__behavior_id__versions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "behavior_id",
+            "required": true,
+            "schema": {
+              "title": "Behavior Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BehaviorDraftRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtectedBehaviorResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Behavior"
+      }
+    },
+    "/projects/{project_id}/captures": {
+      "get": {
+        "operationId": "list_captures_projects__project_id__captures_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrowserCaptureListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Captures"
+      },
+      "post": {
+        "operationId": "start_capture_projects__project_id__captures_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BrowserCaptureStartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrowserCaptureResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Capture"
+      }
+    },
+    "/projects/{project_id}/captures/{capture_id}": {
+      "get": {
+        "operationId": "get_capture_projects__project_id__captures__capture_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "capture_id",
+            "required": true,
+            "schema": {
+              "title": "Capture Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrowserCaptureResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Capture"
+      }
+    },
+    "/projects/{project_id}/captures/{capture_id}/accept-baseline": {
+      "post": {
+        "operationId": "accept_baseline_projects__project_id__captures__capture_id__accept_baseline_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "capture_id",
+            "required": true,
+            "schema": {
+              "title": "Capture Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BaselineAcceptRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BehaviorBaselineResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Accept Baseline"
+      }
+    },
+    "/projects/{project_id}/captures/{capture_id}/cancel": {
+      "post": {
+        "operationId": "cancel_capture_projects__project_id__captures__capture_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "capture_id",
+            "required": true,
+            "schema": {
+              "title": "Capture Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrowserCaptureResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Capture"
+      }
+    },
+    "/projects/{project_id}/captures/{capture_id}/pause": {
+      "post": {
+        "operationId": "pause_capture_projects__project_id__captures__capture_id__pause_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "capture_id",
+            "required": true,
+            "schema": {
+              "title": "Capture Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrowserCaptureResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Pause Capture"
+      }
+    },
+    "/projects/{project_id}/captures/{capture_id}/resume": {
+      "post": {
+        "operationId": "resume_capture_projects__project_id__captures__capture_id__resume_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "capture_id",
+            "required": true,
+            "schema": {
+              "title": "Capture Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrowserCaptureResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Resume Capture"
+      }
+    },
+    "/projects/{project_id}/captures/{capture_id}/review": {
+      "post": {
+        "operationId": "review_capture_projects__project_id__captures__capture_id__review_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "capture_id",
+            "required": true,
+            "schema": {
+              "title": "Capture Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaptureReviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrowserCaptureResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Review Capture"
+      }
+    },
+    "/projects/{project_id}/captures/{capture_id}/stop": {
+      "post": {
+        "operationId": "stop_capture_projects__project_id__captures__capture_id__stop_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "capture_id",
+            "required": true,
+            "schema": {
+              "title": "Capture Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrowserCaptureResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Stop Capture"
+      }
+    },
     "/projects/{project_id}/changes": {
       "get": {
         "operationId": "project_changes_projects__project_id__changes_get",
@@ -3133,6 +5319,503 @@
         "summary": "Change Unknowns"
       }
     },
+    "/projects/{project_id}/evidence": {
+      "get": {
+        "operationId": "list_evidence_projects__project_id__evidence_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Evidence"
+      }
+    },
+    "/projects/{project_id}/evidence/artifacts/{artifact_id}": {
+      "delete": {
+        "operationId": "delete_evidence_artifact_projects__project_id__evidence_artifacts__artifact_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "artifact_id",
+            "required": true,
+            "schema": {
+              "title": "Artifact Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Evidence Artifact"
+      },
+      "get": {
+        "operationId": "evidence_artifact_projects__project_id__evidence_artifacts__artifact_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "artifact_id",
+            "required": true,
+            "schema": {
+              "title": "Artifact Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceArtifactResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evidence Artifact"
+      }
+    },
+    "/projects/{project_id}/evidence/artifacts/{artifact_id}/content": {
+      "get": {
+        "operationId": "evidence_artifact_content_projects__project_id__evidence_artifacts__artifact_id__content_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "artifact_id",
+            "required": true,
+            "schema": {
+              "title": "Artifact Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evidence Artifact Content"
+      }
+    },
+    "/projects/{project_id}/evidence/bundles/{bundle_id}": {
+      "get": {
+        "operationId": "evidence_bundle_projects__project_id__evidence_bundles__bundle_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "bundle_id",
+            "required": true,
+            "schema": {
+              "title": "Bundle Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceBundleResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evidence Bundle"
+      }
+    },
+    "/projects/{project_id}/evidence/{artifact_id}": {
+      "delete": {
+        "operationId": "delete_evidence_artifact_canonical_projects__project_id__evidence__artifact_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "artifact_id",
+            "required": true,
+            "schema": {
+              "title": "Artifact Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Evidence Artifact Canonical"
+      },
+      "get": {
+        "operationId": "evidence_artifact_canonical_projects__project_id__evidence__artifact_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "artifact_id",
+            "required": true,
+            "schema": {
+              "title": "Artifact Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceArtifactResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evidence Artifact Canonical"
+      }
+    },
+    "/projects/{project_id}/evidence/{artifact_id}/open-local": {
+      "post": {
+        "operationId": "open_evidence_artifact_projects__project_id__evidence__artifact_id__open_local_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "artifact_id",
+            "required": true,
+            "schema": {
+              "title": "Artifact Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Open Evidence Artifact"
+      }
+    },
     "/projects/{project_id}/findings": {
       "get": {
         "operationId": "scan_findings_projects__project_id__findings_get",
@@ -3527,6 +6210,306 @@
           }
         },
         "summary": "Open Project Folder"
+      }
+    },
+    "/projects/{project_id}/runtime-configurations": {
+      "get": {
+        "operationId": "list_runtimes_projects__project_id__runtime_configurations_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuntimeConfigurationListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Runtimes"
+      },
+      "post": {
+        "operationId": "configure_runtime_projects__project_id__runtime_configurations_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RuntimeConfigurationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuntimeConfigurationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Configure Runtime"
+      }
+    },
+    "/projects/{project_id}/runtime-configurations/{runtime_id}/test": {
+      "post": {
+        "operationId": "test_runtime_configuration_projects__project_id__runtime_configurations__runtime_id__test_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "runtime_id",
+            "required": true,
+            "schema": {
+              "title": "Runtime Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Test Runtime Configuration"
+      }
+    },
+    "/projects/{project_id}/runtimes": {
+      "get": {
+        "operationId": "list_runtimes_projects__project_id__runtimes_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuntimeConfigurationListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Runtimes"
+      },
+      "post": {
+        "operationId": "configure_runtime_projects__project_id__runtimes_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RuntimeConfigurationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuntimeConfigurationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Configure Runtime"
       }
     },
     "/projects/{project_id}/scan": {

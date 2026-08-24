@@ -1,5 +1,7 @@
 # Releases and in-app updates
 
+Phase 4 packages stage a platform-matching Playwright Chromium tree before the Tauri build. A release artifact is not valid unless the installed sidecar reaches migration `0004_behavior_evidence_browser`, the packaged executable completes the local PulsePlan reschedule capture, start/final evidence hashes verify after restart, and shutdown leaves no engine/browser process. Browser assets increase package size and must be recorded before/after. No Phase 4 release is published by the implementation task; the signed updater remains implemented but not end-to-end runtime verified until a higher signed GitHub Release exists.
+
 MellowYak source is public, but installers are distributed only through GitHub Releases. A version tag builds the exact tagged commit on macOS, Windows, and Linux and publishes the platform installer plus Tauri's signed update metadata.
 
 ## User path

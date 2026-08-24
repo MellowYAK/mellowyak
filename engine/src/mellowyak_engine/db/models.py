@@ -387,6 +387,254 @@ class BehaviorCandidateLink(Base):
     )
 
 
+class ProtectedBehavior(Base):
+    __tablename__ = "protected_behaviors"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    stable_key: Mapped[str] = mapped_column(String(120), nullable=False)
+    display_name: Mapped[str] = mapped_column(Text, nullable=False)
+    lifecycle_state: Mapped[str] = mapped_column(String(40), nullable=False, default="DRAFT")
+    current_version_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    last_accepted_baseline_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (UniqueConstraint("project_id", "stable_key"),)
+
+
+class BehaviorVersion(Base):
+    __tablename__ = "behavior_versions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    behavior_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("protected_behaviors.id"), nullable=False
+    )
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    version_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    title: Mapped[str] = mapped_column(Text, nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    expected_outcome: Mapped[str] = mapped_column(Text, nullable=False)
+    criticality: Mapped[str] = mapped_column(String(20), nullable=False, default="MEDIUM")
+    preconditions: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    starting_state: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    environment_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    persona: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    runtime_configuration_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    expected_assertions_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    limitations_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    verification_not_configured: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_by_type: Mapped[str] = mapped_column(String(40), nullable=False, default="HUMAN")
+    source_candidate_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    content_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    supersedes_version_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    source_revision_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (UniqueConstraint("behavior_id", "version_number"),)
+
+
+class BehaviorLink(Base):
+    __tablename__ = "behavior_links"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    behavior_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("protected_behaviors.id"), nullable=False
+    )
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    link_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    link_key: Mapped[str] = mapped_column(Text, nullable=False)
+    provenance: Mapped[str] = mapped_column(String(40), nullable=False, default="HUMAN_CONFIRMED")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (UniqueConstraint("behavior_id", "link_type", "link_key"),)
+
+
+class RuntimeConfiguration(Base):
+    __tablename__ = "runtime_configurations"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    display_name: Mapped[str] = mapped_column(Text, nullable=False)
+    base_url: Mapped[str] = mapped_column(Text, nullable=False)
+    allowed_origin: Mapped[str] = mapped_column(Text, nullable=False)
+    starting_path: Mapped[str] = mapped_column(Text, nullable=False, default="/")
+    viewport_width: Mapped[int] = mapped_column(Integer, nullable=False, default=1280)
+    viewport_height: Mapped[int] = mapped_column(Integer, nullable=False, default=800)
+    locale: Mapped[str] = mapped_column(String(40), nullable=False, default="en-US")
+    timezone: Mapped[str] = mapped_column(String(80), nullable=False, default="UTC")
+    browser_type: Mapped[str] = mapped_column(String(40), nullable=False, default="chromium")
+    capture_screenshots: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    capture_trace: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    capture_video: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    capture_network: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (UniqueConstraint("project_id", "allowed_origin"),)
+
+
+class BrowserCaptureSession(Base):
+    __tablename__ = "browser_capture_sessions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    behavior_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("protected_behaviors.id"), nullable=False
+    )
+    behavior_version_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("behavior_versions.id"), nullable=False
+    )
+    runtime_configuration_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("runtime_configurations.id"), nullable=False
+    )
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    entry_url: Mapped[str] = mapped_column(Text, nullable=False)
+    source_revision_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    stopped_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    error_code: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    review_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    paused: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    browser_version: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    runtime_identity_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    expected_assertions_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+
+
+class BrowserCaptureStep(Base):
+    __tablename__ = "browser_capture_steps"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    capture_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("browser_capture_sessions.id"), nullable=False
+    )
+    ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    event_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    page_url: Mapped[str] = mapped_column(Text, nullable=False)
+    selector: Mapped[str | None] = mapped_column(Text, nullable=True)
+    metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    included: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    label: Mapped[str] = mapped_column(Text, nullable=False, default="")
+
+    __table_args__ = (UniqueConstraint("capture_id", "ordinal"),)
+
+
+class RuntimeObservation(Base):
+    __tablename__ = "runtime_observations"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    capture_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("browser_capture_sessions.id"), nullable=False
+    )
+    observation_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    included: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+
+class EvidenceArtifact(Base):
+    __tablename__ = "evidence_artifacts"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    media_type: Mapped[str] = mapped_column(String(120), nullable=False)
+    object_key: Mapped[str] = mapped_column(Text, nullable=False)
+    redaction_state: Mapped[str] = mapped_column(String(40), nullable=False)
+    capture_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    behavior_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    behavior_version_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    source_identity_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    runtime_identity_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    trust_source: Mapped[str] = mapped_column(String(40), nullable=False, default="LOCAL_CAPTURE")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (UniqueConstraint("project_id", "sha256"),)
+
+
+class EvidenceBundle(Base):
+    __tablename__ = "evidence_bundles"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    capture_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("browser_capture_sessions.id"), nullable=False, unique=True
+    )
+    manifest_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class EvidenceBundleItem(Base):
+    __tablename__ = "evidence_bundle_items"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    bundle_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("evidence_bundles.id"), nullable=False
+    )
+    artifact_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("evidence_artifacts.id"), nullable=False
+    )
+    ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    item_type: Mapped[str] = mapped_column(String(40), nullable=False)
+
+    __table_args__ = (UniqueConstraint("bundle_id", "ordinal"),)
+
+
+class BaselineAttestation(Base):
+    __tablename__ = "baseline_attestations"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    capture_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("browser_capture_sessions.id"), nullable=False
+    )
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    reviewer: Mapped[str] = mapped_column(Text, nullable=False)
+    notes: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class BehaviorBaseline(Base):
+    __tablename__ = "behavior_baselines"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    behavior_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("protected_behaviors.id"), nullable=False
+    )
+    behavior_version_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("behavior_versions.id"), nullable=False
+    )
+    evidence_bundle_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("evidence_bundles.id"), nullable=False
+    )
+    attestation_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("baseline_attestations.id"), nullable=False
+    )
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    source_revision_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class EvidenceAuditEvent(Base):
+    __tablename__ = "evidence_audit_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    event_type: Mapped[str] = mapped_column(String(120), nullable=False)
+    subject_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    subject_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    details_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
 class EngineRun(Base):
     __tablename__ = "engine_runs"
 

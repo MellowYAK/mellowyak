@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from mellowyak_engine.core.events import LocalEventBus
 from mellowyak_engine.db.models import (
+    BehaviorLink,
     ImpactEdge,
     ImpactNode,
     Project,
@@ -20,6 +21,7 @@ from mellowyak_engine.db.models import (
     ProjectFile,
     ProjectGitSnapshot,
     ProjectScanRun,
+    ProtectedBehavior,
     ScanFinding,
 )
 from mellowyak_engine.git.observer import GitState, observe_git
@@ -524,6 +526,49 @@ class ProjectService:
                             ).all()
                             if node.relative_path in json.loads(row.changed_paths_json)
                         ],
+                    }
+                )
+            behaviors = session.scalars(
+                select(ProtectedBehavior)
+                .where(
+                    ProtectedBehavior.project_id == project_id,
+                    ProtectedBehavior.display_name.ilike(f"%{term}%"),
+                )
+                .limit(min(limit, 100))
+            ).all()
+            for behavior in behaviors:
+                links = session.scalars(
+                    select(BehaviorLink).where(BehaviorLink.behavior_id == behavior.id).limit(50)
+                ).all()
+                results.append(
+                    {
+                        "node": {
+                            "type": "BEHAVIOR",
+                            "label": behavior.display_name,
+                            "relative_path": None,
+                        },
+                        "relationships": [
+                            {
+                                "direction": "outgoing",
+                                "type": {
+                                    "RUNTIME_ROUTE": "BEHAVIOR_OBSERVED_AT",
+                                    "API_ENDPOINT": "BEHAVIOR_CALLS_API",
+                                    "UI_ELEMENT": "BEHAVIOR_USES_ELEMENT",
+                                    "TEST": "BEHAVIOR_SUPPORTED_BY_TEST",
+                                }.get(link.link_type, "BEHAVIOR_LINKED_TO_SOURCE"),
+                                "target_type": link.link_type,
+                                "target": link.link_key,
+                                "target_path": link.link_key
+                                if link.link_type in {"FILE", "TEST"}
+                                else None,
+                                "provenance": link.provenance,
+                                "parser_adapter": "phase4-behavior-links",
+                                "source_scan_revision": "behavior-lineage",
+                                "stale": False,
+                            }
+                            for link in links
+                        ],
+                        "recent_changes": [],
                     }
                 )
             return results

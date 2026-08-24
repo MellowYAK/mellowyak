@@ -88,7 +88,10 @@ jobs:
           engine/.venv/Scripts/python.exe -m pip install -e './engine[dev]'
           npm ci --prefix apps/desktop
       - name: Build platform sidecar
-        run: python scripts/build_engine.py
+        shell: bash
+        run: |
+          python scripts/stage_browser.py
+          python scripts/build_engine.py
       - uses: tauri-apps/tauri-action@action-v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

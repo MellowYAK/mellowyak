@@ -16,9 +16,9 @@ vi.mock("@tauri-apps/plugin-process", () => ({ relaunch: (...args: unknown[]) =>
 configure({ asyncUtilTimeout: 3_000 });
 
 const responses: Record<string, unknown> = {
-  "/health": { status: "ready", mode: "local", engine_version: "0.1.0", app_version: "0.1.0", database_status: "ready", database_schema_version: "0003_reverse_impact_context", data_root: "/local/MellowYak", cloud_connected: false, outbound_network_enabled: false, uptime_seconds: 1 },
+  "/health": { status: "ready", mode: "local", engine_version: "0.1.0", app_version: "0.1.0", database_status: "ready", database_schema_version: "0004_behavior_evidence_browser", data_root: "/local/MellowYak", cloud_connected: false, outbound_network_enabled: false, uptime_seconds: 1 },
   "/readiness": { ready: true, checks: { local_only: true, database_ready: true } },
-  "/installation": { installation_id: "install-1", created_at: "2026-08-23T00:00:00Z", last_started_at: "2026-08-23T00:00:00Z", app_version: "0.1.0", engine_version: "0.1.0", database_schema_version: "0003_reverse_impact_context" },
+  "/installation": { installation_id: "install-1", created_at: "2026-08-23T00:00:00Z", last_started_at: "2026-08-23T00:00:00Z", app_version: "0.1.0", engine_version: "0.1.0", database_schema_version: "0004_behavior_evidence_browser" },
   "/settings/privacy": { mode: "local", cloud_connected: false, outbound_network_enabled: false, source_upload_enabled: false, telemetry_upload_enabled: false, account_required: false },
   "/storage/paths": { data_root: "/local/MellowYak", database: "/local/MellowYak/database", evidence: "/local/MellowYak/evidence", projects: "/local/MellowYak/projects", cache: "/local/MellowYak/cache", logs: "/local/MellowYak/logs", runtime: "/local/MellowYak/runtime", backups: "/local/MellowYak/backups" },
   "/projects": { projects: [] },
@@ -74,7 +74,7 @@ test("renders real engine values and local privacy status", async () => {
   expect(screen.getByText("Not connected")).toBeInTheDocument();
   expect(screen.getByText("Your code stays local.")).toBeInTheDocument();
   expect(screen.getByText("No Docker.")).toBeInTheDocument();
-  expect(screen.getByText("0003_reverse_impact_context")).toBeInTheDocument();
+  expect(screen.getByText("0004_behavior_evidence_browser")).toBeInTheDocument();
 });
 
 test("does not report ready or render projects before real project discovery completes", async () => {
@@ -154,6 +154,7 @@ test("shows explainable change impact, context receipt, and behavior candidate c
   responses["/projects/project-1/impact/summary"] = { files_indexed: 2, languages: 1, language_counts: { TypeScript: 2 }, direct_relationships: 1, tests_found: 1, sensitive_files: 0, unknown_references: 1, unsupported_files: 0, stale_relationships: 0 };
   responses["/projects/project-1/changes/current"] = change;
   responses["/projects/project-1/behavior-candidates"] = { candidates: [{ id: "candidate-1", title: "Keeps parser stable", source_type: "test_name", source_key: "parser.test.ts", status: "CANDIDATE", evidence: "none", verification: "not_configured", not_protected: true }] };
+  responses["/projects/project-1/behaviors"] = { behaviors: [] };
   responses["/projects/project-1/changes/change-1/impact"] = impact;
   responses["/projects/project-1/changes/change-1/impact/paths"] = { paths: [{ id: "path-1", result_id: "result-1", result: "src/a.ts", impact_class: "changed", depth: 0, steps: [] }] };
   responses["/projects/project-1/changes/change-1/intent"] = { ...change, task_intent: "update parser" };
@@ -212,4 +213,50 @@ test("uses the native folder picker and reports real project detection", async (
   expect(screen.getByText("1234567890ab")).toBeInTheDocument();
   expect(screen.getByText("1 staged · 0 unstaged · 1 untracked")).toBeInTheDocument();
   expect(screen.getByText("Your source remains local.")).toBeInTheDocument();
+});
+
+test("shows the protected behavior, runtime, capture review, and evidence workflow", async () => {
+  const behavior = {
+    id: "behavior-1", project_id: "project-1", lifecycle_state: "DRAFT",
+    current_version_id: "version-1",
+    current_version: { id: "version-1", version_number: 1, title: "Task remains complete", description: "Create and complete a task.", expected_outcome: "The task stays complete.", source_revision: {}, created_at: "2026-08-24T00:00:00Z" },
+    versions: [{ id: "version-1", version_number: 1, title: "Task remains complete", description: "Create and complete a task.", expected_outcome: "The task stays complete.", source_revision: {}, created_at: "2026-08-24T00:00:00Z" }],
+    links: [], baselines: [], created_at: "2026-08-24T00:00:00Z", updated_at: "2026-08-24T00:00:00Z", archived_at: null,
+  };
+  const capture = {
+    id: "capture-1", project_id: "project-1", behavior_id: "behavior-1", behavior_version_id: "version-1", runtime_configuration_id: "runtime-1", status: "REVIEW_REQUIRED", entry_url: "http://127.0.0.1:8262/", source_revision: {}, source_stale: false,
+    steps: [{ id: "step-1", ordinal: 1, event_type: "click", page_url: "http://127.0.0.1:8262/", selector: "[data-testid=task-item]", metadata: {}, occurred_at: "2026-08-24T00:00:00Z" }],
+    observations: [], started_at: "2026-08-24T00:00:00Z", stopped_at: "2026-08-24T00:01:00Z", error_code: null,
+  };
+  responses["/projects"] = { projects: [project] };
+  responses["/projects/project-1"] = project;
+  responses["/projects/project-1/impact/summary"] = { files_indexed: 1, languages: 1, language_counts: {}, direct_relationships: 0, tests_found: 0, sensitive_files: 0, unknown_references: 0, unsupported_files: 0, stale_relationships: 0 };
+  responses["/projects/project-1/behaviors"] = { behaviors: [behavior] };
+  responses["/projects/project-1/runtimes"] = { runtimes: [{ id: "runtime-1", project_id: "project-1", display_name: "PulsePlan", base_url: "http://127.0.0.1:8262/", allowed_origin: "http://127.0.0.1:8262", created_at: "2026-08-24T00:00:00Z", updated_at: "2026-08-24T00:00:00Z" }] };
+  responses["/projects/project-1/captures"] = { captures: [capture] };
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: /demo/i }));
+  fireEvent.click(await screen.findByRole("button", { name: "Behaviors" }));
+  expect(await screen.findByText("Protected behaviors")).toBeInTheDocument();
+  expect(screen.getAllByText("Task remains complete").length).toBeGreaterThan(0);
+  expect(screen.getByText("Review required")).toBeInTheDocument();
+  expect(screen.getByText("MellowYak does not label this capture as pass, fail, or regression.")).toBeInTheDocument();
+  expect(screen.getByText("Only http://127.0.0.1 or http://localhost with an explicit port is allowed.")).toBeInTheDocument();
+});
+
+test("renders the protected behavior workflow in full Hebrew RTL", async () => {
+  responses["/projects"] = { projects: [project] };
+  responses["/projects/project-1"] = project;
+  responses["/projects/project-1/impact/summary"] = { files_indexed: 1, languages: 1, language_counts: {}, direct_relationships: 0, tests_found: 0, sensitive_files: 0, unknown_references: 0, unsupported_files: 0, stale_relationships: 0 };
+  responses["/projects/project-1/behaviors"] = { behaviors: [] };
+  responses["/projects/project-1/runtimes"] = { runtimes: [] };
+  responses["/projects/project-1/captures"] = { captures: [] };
+  render(<App />);
+  fireEvent.click(await screen.findByRole("button", { name: /demo/i }));
+  fireEvent.change(screen.getByLabelText("Language"), { target: { value: "he" } });
+  fireEvent.click(await screen.findByRole("button", { name: "התנהגויות" }));
+  expect(await screen.findByText("התנהגויות מוגנות")).toBeInTheDocument();
+  expect(screen.getByText("הגנו על ההתנהגות הראשונה שאינכם רוצים ששינוי AI ישבור.")).toBeInTheDocument();
+  expect(document.documentElement).toHaveAttribute("dir", "rtl");
+  expect(document.querySelector("main")).toHaveAttribute("dir", "rtl");
 });

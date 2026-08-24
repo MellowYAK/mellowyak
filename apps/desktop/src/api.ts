@@ -224,6 +224,133 @@ export interface BehaviorCandidate {
   not_protected: true;
   created_at?: string;
   updated_at?: string;
+  behavior_draft_id?: string;
+}
+
+export interface BehaviorVersion {
+  id: string;
+  version_number: number;
+  title: string;
+  description: string;
+  expected_outcome: string;
+  criticality: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  persona: string;
+  preconditions: string;
+  starting_state: string;
+  expected_assertions: Array<Record<string, unknown>>;
+  limitations: string[];
+  verification_not_configured: true;
+  created_by_type: string;
+  source_candidate_id: string | null;
+  content_digest: string;
+  supersedes_version_id: string | null;
+  source_revision: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface ProtectedBehavior {
+  id: string;
+  project_id: string;
+  stable_key: string;
+  display_name: string;
+  lifecycle_state: "DRAFT" | "PROTECTED" | "ARCHIVED";
+  current_version_id: string;
+  last_accepted_baseline_id: string | null;
+  current_version: BehaviorVersion;
+  versions: BehaviorVersion[];
+  links: Array<{ id: string; link_type: string; link_key: string; provenance: string }>;
+  baselines: Array<{
+    id: string;
+    status: "CAPTURED" | "REVIEWED" | "ACCEPTED" | "REVOKED" | "STALE";
+    behavior_version_id: string;
+    evidence_bundle_id: string;
+    created_at: string;
+  }>;
+  created_at: string;
+  updated_at: string;
+  archived_at: string | null;
+}
+
+export interface RuntimeConfiguration {
+  id: string;
+  project_id: string;
+  display_name: string;
+  base_url: string;
+  allowed_origin: string;
+  starting_path: string;
+  viewport_width: number;
+  viewport_height: number;
+  locale: string;
+  timezone: string;
+  browser_type: "chromium";
+  capture_screenshots: boolean;
+  capture_trace: boolean;
+  capture_video: boolean;
+  capture_network: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BrowserCapture {
+  id: string;
+  project_id: string;
+  behavior_id: string;
+  behavior_version_id: string;
+  runtime_configuration_id: string;
+  status: "STARTING" | "RECORDING" | "STOPPING" | "REVIEW_REQUIRED" | "ACCEPTED" | "CANCELLED" | "FAILED" | "STALE_SOURCE";
+  entry_url: string;
+  source_revision: Record<string, unknown>;
+  source_stale: boolean;
+  steps: Array<{
+    id: string;
+    ordinal: number;
+    event_type: string;
+    page_url: string;
+    selector: string | null;
+    metadata: Record<string, unknown>;
+    occurred_at: string;
+    included: boolean;
+    label: string;
+  }>;
+  observations: Array<{
+    id: string;
+    observation_type: string;
+    metadata: Record<string, unknown>;
+    observed_at: string;
+    included: boolean;
+  }>;
+  started_at: string;
+  stopped_at: string | null;
+  error_code: string | null;
+  paused: boolean;
+  browser_version: string | null;
+  expected_assertions: Array<Record<string, unknown>>;
+}
+
+export interface EvidenceArtifact {
+  id: string;
+  project_id: string;
+  sha256: string;
+  size_bytes: number;
+  media_type: string;
+  redaction_state: string;
+  integrity_verified: boolean;
+  created_at: string;
+}
+
+export interface EvidenceBundle {
+  id: string;
+  project_id: string;
+  capture_id: string;
+  manifest_sha256: string;
+  status: string;
+  items: Array<{ ordinal: number; item_type: string; artifact: EvidenceArtifact }>;
+  created_at: string;
+}
+
+export interface EvidenceList {
+  bundles: Array<{ id: string; capture_id: string; manifest_sha256: string; status: string; created_at: string }>;
+  artifacts: EvidenceArtifact[];
 }
 
 export interface ImpactExplorerItem {
@@ -402,6 +529,124 @@ export async function updateBehaviorCandidate(projectId: string, candidateId: st
     method: "POST",
     body: "{}",
   });
+}
+
+export async function listBehaviors(projectId: string): Promise<ProtectedBehavior[]> {
+  const response = await engineFetch<{ behaviors: ProtectedBehavior[] }>(`/projects/${encodeURIComponent(projectId)}/behaviors`);
+  return response.behaviors;
+}
+
+export async function createBehavior(
+  projectId: string,
+  value: { title: string; description: string; expected_outcome: string; criticality: string; persona: string; preconditions: string },
+): Promise<ProtectedBehavior> {
+  return engineFetch<ProtectedBehavior>(`/projects/${encodeURIComponent(projectId)}/behaviors`, {
+    method: "POST",
+    body: JSON.stringify(value),
+  });
+}
+
+export async function updateBehavior(
+  projectId: string,
+  behaviorId: string,
+  value: { title: string; description: string; expected_outcome: string; criticality: string; persona: string; preconditions: string },
+): Promise<ProtectedBehavior> {
+  return engineFetch<ProtectedBehavior>(`/projects/${encodeURIComponent(projectId)}/behaviors/${encodeURIComponent(behaviorId)}/versions`, {
+    method: "POST",
+    body: JSON.stringify(value),
+  });
+}
+
+export async function archiveBehavior(projectId: string, behaviorId: string): Promise<ProtectedBehavior> {
+  return engineFetch<ProtectedBehavior>(`/projects/${encodeURIComponent(projectId)}/behaviors/${encodeURIComponent(behaviorId)}/archive`, {
+    method: "POST",
+    body: "{}",
+  });
+}
+
+export async function listRuntimes(projectId: string): Promise<RuntimeConfiguration[]> {
+  const response = await engineFetch<{ runtimes: RuntimeConfiguration[] }>(`/projects/${encodeURIComponent(projectId)}/runtimes`);
+  return response.runtimes;
+}
+
+export async function configureRuntime(projectId: string, displayName: string, baseUrl: string): Promise<RuntimeConfiguration> {
+  return engineFetch<RuntimeConfiguration>(`/projects/${encodeURIComponent(projectId)}/runtimes`, {
+    method: "POST",
+    body: JSON.stringify({ display_name: displayName, base_url: baseUrl }),
+  });
+}
+
+export async function listCaptures(projectId: string): Promise<BrowserCapture[]> {
+  const response = await engineFetch<{ captures: BrowserCapture[] }>(`/projects/${encodeURIComponent(projectId)}/captures`);
+  return response.captures;
+}
+
+export async function startCapture(projectId: string, behaviorId: string, runtimeConfigurationId: string): Promise<BrowserCapture> {
+  return engineFetch<BrowserCapture>(`/projects/${encodeURIComponent(projectId)}/captures`, {
+    method: "POST",
+    body: JSON.stringify({ behavior_id: behaviorId, runtime_configuration_id: runtimeConfigurationId }),
+  });
+}
+
+export async function stopCapture(projectId: string, captureId: string): Promise<BrowserCapture> {
+  return engineFetch<BrowserCapture>(`/projects/${encodeURIComponent(projectId)}/captures/${encodeURIComponent(captureId)}/stop`, {
+    method: "POST",
+    body: "{}",
+  });
+}
+
+export async function pauseCapture(projectId: string, captureId: string): Promise<BrowserCapture> {
+  return engineFetch<BrowserCapture>(`/projects/${encodeURIComponent(projectId)}/captures/${encodeURIComponent(captureId)}/pause`, { method: "POST", body: "{}" });
+}
+
+export async function resumeCapture(projectId: string, captureId: string): Promise<BrowserCapture> {
+  return engineFetch<BrowserCapture>(`/projects/${encodeURIComponent(projectId)}/captures/${encodeURIComponent(captureId)}/resume`, { method: "POST", body: "{}" });
+}
+
+export async function submitCaptureReview(
+  projectId: string,
+  captureId: string,
+  expectedAssertions: Array<Record<string, unknown>>,
+  notes: string,
+  stepUpdates: Array<{ id: string; label?: string; included?: boolean }> = [],
+  excludedObservationIds: string[] = [],
+): Promise<BrowserCapture> {
+  return engineFetch<BrowserCapture>(`/projects/${encodeURIComponent(projectId)}/captures/${encodeURIComponent(captureId)}/review`, {
+    method: "POST",
+    body: JSON.stringify({ expected_assertions: expectedAssertions, notes, step_updates: stepUpdates, excluded_observation_ids: excludedObservationIds }),
+  });
+}
+
+export async function revokeBaseline(projectId: string, behaviorId: string, deleteEvidence = false): Promise<void> {
+  await engineFetch(`/projects/${encodeURIComponent(projectId)}/behaviors/${encodeURIComponent(behaviorId)}/baseline/revoke`, {
+    method: "POST", body: JSON.stringify({ confirmation: true, delete_evidence: deleteEvidence }),
+  });
+}
+
+export async function cancelCapture(projectId: string, captureId: string): Promise<BrowserCapture> {
+  return engineFetch<BrowserCapture>(`/projects/${encodeURIComponent(projectId)}/captures/${encodeURIComponent(captureId)}/cancel`, {
+    method: "POST",
+    body: "{}",
+  });
+}
+
+export async function acceptBaseline(projectId: string, captureId: string, reviewer: string, notes: string): Promise<{ evidence_bundle_id: string }> {
+  return engineFetch<{ evidence_bundle_id: string }>(`/projects/${encodeURIComponent(projectId)}/captures/${encodeURIComponent(captureId)}/accept-baseline`, {
+    method: "POST",
+    body: JSON.stringify({ reviewer, notes }),
+  });
+}
+
+export async function getEvidenceBundle(projectId: string, bundleId: string): Promise<EvidenceBundle> {
+  return engineFetch<EvidenceBundle>(`/projects/${encodeURIComponent(projectId)}/evidence/bundles/${encodeURIComponent(bundleId)}`);
+}
+
+export async function listEvidence(projectId: string): Promise<EvidenceList> {
+  return engineFetch<EvidenceList>(`/projects/${encodeURIComponent(projectId)}/evidence`);
+}
+
+export async function deleteEvidenceArtifact(projectId: string, artifactId: string): Promise<void> {
+  await engineFetch(`/projects/${encodeURIComponent(projectId)}/evidence/artifacts/${encodeURIComponent(artifactId)}`, { method: "DELETE" });
 }
 
 export async function searchImpact(projectId: string, query: string): Promise<ImpactExplorerItem[]> {

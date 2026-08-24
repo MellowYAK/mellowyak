@@ -12,6 +12,7 @@ import {
   getImpactPaths,
   getProject,
   listBehaviorCandidates,
+  listBehaviors,
   listProjects,
   loadStartup,
   openDataFolder,
@@ -29,15 +30,17 @@ import {
   type ImpactSummary,
   type Project,
   type ProjectDetection,
+  type ProtectedBehavior,
   type SetupSnapshot,
   type StartupStatus,
 } from "./api";
 import { useI18n, type Locale } from "./i18n";
 import { mascotAssets, type MascotId } from "./mascots";
+import { BehaviorsScreen } from "./BehaviorsScreen";
 import { StartupAnimation, startupStepKeys } from "./StartupAnimation";
 import { useDesktopUpdater, type UpdaterState } from "./updater";
 
-type Screen = "home" | "add" | "project" | "change" | "impact";
+type Screen = "home" | "add" | "project" | "change" | "impact" | "behaviors";
 type Tone = "good" | "warn" | "neutral";
 
 function StatusRow({ label, value, tone = "neutral" }: { label: string; value: string; tone?: Tone }) {
@@ -76,11 +79,12 @@ function Header({ home, locale, setLocale, t, updater }: { home: () => void; loc
     </header>{updater.phase !== "idle" && <section className="update-banner" role="status"><div><strong>{t("update.availableTitle")}</strong><span>{updater.phase === "available" ? t("update.availableBody", { version: updater.version ?? t("common.unknown") }) : updater.phase === "installing" ? t("update.installing") : t("update.relaunching")}</span></div><button className="primary" disabled={updater.phase !== "available"} onClick={() => void updater.install()}>{updater.phase === "available" ? t("update.install") : updater.phase === "installing" ? t("update.installing") : t("update.relaunching")}</button></section>}</>;
 }
 
-function ProjectNav({ active, select, t }: { active: "overview" | "change" | "impact"; select: (screen: "project" | "change" | "impact") => void; t: Translator }) {
+function ProjectNav({ active, select, t }: { active: "overview" | "change" | "impact" | "behaviors"; select: (screen: "project" | "change" | "impact" | "behaviors") => void; t: Translator }) {
   return <nav className="project-nav" aria-label={t("nav.overview")}>
     <button className={active === "overview" ? "active" : ""} onClick={() => select("project")}>{t("nav.overview")}</button>
     <button className={active === "change" ? "active" : ""} onClick={() => select("change")}>{t("nav.changes")}</button>
     <button className={active === "impact" ? "active" : ""} onClick={() => select("impact")}>{t("nav.impact")}</button>
+    <button className={active === "behaviors" ? "active" : ""} onClick={() => select("behaviors")}>{t("nav.behaviors")}</button>
   </nav>;
 }
 
@@ -140,6 +144,7 @@ export function App() {
   const [impactPaths, setImpactPaths] = useState<Array<Record<string, unknown>>>([]);
   const [receipt, setReceipt] = useState<ContextReceipt | null>(null);
   const [candidates, setCandidates] = useState<BehaviorCandidate[]>([]);
+  const [knownBehaviors, setKnownBehaviors] = useState<ProtectedBehavior[]>([]);
   const [taskIntent, setTaskIntent] = useState("");
   const [impactQuery, setImpactQuery] = useState("");
   const [impactResults, setImpactResults] = useState<ImpactExplorerItem[]>([]);
@@ -156,6 +161,7 @@ export function App() {
   const [startupLeaving, setStartupLeaving] = useState(false);
   const [startupSlow, setStartupSlow] = useState(false);
   const [startupAttempt, setStartupAttempt] = useState(0);
+  const [focusBehaviorId, setFocusBehaviorId] = useState<string | null>(null);
 
   const reloadProjects = useCallback(async () => setProjects(await listProjects()), []);
 
@@ -219,10 +225,10 @@ export function App() {
   useEffect(() => {
     if (screen !== "change" || !selected) return;
     let active = true;
-    Promise.all([getProject(selected.id), getCurrentChange(selected.id), listBehaviorCandidates(selected.id)])
-      .then(async ([project, change, behaviorCandidates]) => {
+    Promise.all([getProject(selected.id), getCurrentChange(selected.id), listBehaviorCandidates(selected.id), listBehaviors(selected.id)])
+      .then(async ([project, change, behaviorCandidates, protectedBehaviors]) => {
         if (!active) return;
-        setSelected(project); setCurrentChange(change); setTaskIntent(change.task_intent ?? ""); setCandidates(behaviorCandidates);
+        setSelected(project); setCurrentChange(change); setTaskIntent(change.task_intent ?? ""); setCandidates(behaviorCandidates); setKnownBehaviors(protectedBehaviors);
         try {
           const [analysis, paths] = await Promise.all([getChangeImpact(project.id, change.id), getImpactPaths(project.id, change.id)]);
           if (active) { setChangeImpact(analysis); setImpactPaths(paths); }
@@ -237,7 +243,7 @@ export function App() {
     void reloadProjects().catch(() => undefined);
   };
 
-  const selectProjectScreen = (next: "project" | "change" | "impact") => {
+  const selectProjectScreen = (next: "project" | "change" | "impact" | "behaviors") => {
     setError(""); setScreen(next);
   };
 
@@ -268,8 +274,16 @@ export function App() {
 
   const changeCandidate = async (candidate: BehaviorCandidate, action: "keep" | "dismiss" | "prepare") => {
     if (!selected) return;
-    const updated = await updateBehaviorCandidate(selected.id, candidate.id, action);
-    setCandidates((items) => items.map((item) => item.id === candidate.id ? { ...item, ...updated } : item));
+    try {
+      const updated = await updateBehaviorCandidate(selected.id, candidate.id, action);
+      setCandidates((items) => items.map((item) => item.id === candidate.id ? { ...item, ...updated } : item));
+      if (action === "prepare" && updated.behavior_draft_id) {
+        setFocusBehaviorId(updated.behavior_draft_id);
+        setScreen("behaviors");
+      }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "PHASE4_OPERATION_FAILED");
+    }
   };
 
   const runImpactSearch = async () => {
@@ -340,6 +354,7 @@ export function App() {
   if (screen === "change" && selected) {
     const impacted = changeImpact?.results.filter((item) => !item.unknown && !item.stale) ?? [];
     const boundaries = changeImpact?.results.filter((item) => item.unknown || item.stale) ?? [];
+    const linkedBehaviors = knownBehaviors.filter((behavior) => behavior.links.some((link) => link.link_type === "FILE" && currentChange?.changed_paths.includes(link.link_key)));
     return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} />
       <ProjectNav active="change" select={selectProjectScreen} t={t} />
       <section className="page-head"><div><div className="eyebrow">{currentChange?.status === "change_detected" ? t("change.detected") : t("change.local")}</div><h1>{t("change.title")}</h1><p>{currentChange?.change_kind === "uncommitted_worktree" ? t("change.workingTree", { head: currentChange.head_sha?.slice(0, 12) ?? t("change.unknownHead") }) : `${currentChange?.base_head_sha?.slice(0, 12) ?? t("common.unknown")} → ${currentChange?.head_sha?.slice(0, 12) ?? t("common.unknown")}`}</p></div><span className={selected.monitoring_status === "active" ? "live-dot" : "muted"}>{selected.monitoring_status === "active" ? t("common.live").toUpperCase() : t("common.paused").toUpperCase()}</span></section>
@@ -354,6 +369,7 @@ export function App() {
           <section className="panel"><div className="section-head"><h2>{t("change.boundaries")}</h2><span>{boundaries.length}</span></div>{boundaries.length ? <ul className="boundary-list">{boundaries.map((item) => <li key={item.id}><strong>{item.display_name}</strong><span>{item.unknown_reason ?? (item.stale ? t("change.staleRelation") : t("change.unknownBoundary"))}</span></li>)}</ul> : <p className="muted">{t("change.noBoundaries")}</p>}</section>
           <section className="panel receipt-panel"><div className="section-head"><h2>{t("receipt.title")}</h2><button className="secondary" disabled={busy || !changeImpact} onClick={() => void generateReceipt()}>{receipt ? t("receipt.regenerate") : t("receipt.generate")}</button></div><p className="muted">{t("receipt.description")}</p>{receipt && <><div className="receipt-summary"><StatusRow label={t("common.schema")} value={receipt.schema} /><StatusRow label={t("receipt.selectedFiles")} value={String(receipt.size_metrics.selected_files ?? 0)} /><StatusRow label={t("receipt.sourceBytes")} value={String(receipt.size_metrics.selected_source_bytes ?? 0)} tone="good" /><StatusRow label={t("receipt.status")} value={receipt.stale ? t("common.stale") : receipt.truncated ? t("receipt.bounded") : t("common.current")} tone={receipt.stale ? "warn" : "good"} /></div><div className="button-row"><button className="secondary" onClick={() => void copyReceipt()}>{t("receipt.copy")}</button></div><details><summary>{t("receipt.details")}</summary><pre dir="ltr">{JSON.stringify({ selected_files: receipt.selected_files, selection_reasons: receipt.selection_reasons, excluded_context: receipt.excluded_context, unknowns: receipt.unknowns, constraints: receipt.constraints }, null, 2)}</pre></details></>}</section>
           <section className="panel behavior-panel"><div className="section-head"><h2>{t("candidate.title")}</h2><span>{candidates.length}</span></div><p className="muted">{t("candidate.description")}</p>{candidates.length ? <div className="candidate-list">{candidates.map((candidate) => <article key={candidate.id}><div><strong>{candidate.title ?? candidate.source_key ?? t("candidate.observed")}</strong><small>{t("candidate.meta", { status: status(candidate.status) })}</small></div><div className="mini-actions"><button onClick={() => void changeCandidate(candidate, "keep")}>{t("candidate.keep")}</button><button onClick={() => void changeCandidate(candidate, "dismiss")}>{t("candidate.dismiss")}</button><button onClick={() => void changeCandidate(candidate, "prepare")}>{t("candidate.prepare")}</button></div></article>)}</div> : <p className="muted">{t("candidate.none")}</p>}</section>
+          <section className="panel behavior-panel"><div className="section-head"><h2>{t("change.knownBehaviorLinks")}</h2><span>{linkedBehaviors.length}</span></div><p className="muted">{t("change.behaviorLinkCaution")}</p>{linkedBehaviors.length ? <ul className="compact-list">{linkedBehaviors.map((behavior) => <li key={behavior.id}><strong>{behavior.current_version.title}</strong><span>{t(`behavior.state.${behavior.lifecycle_state}`)}</span></li>)}</ul> : <p className="muted">{t("change.noKnownBehaviorLinks")}</p>}</section>
         </div>
       </>}
     </main>;
@@ -366,6 +382,12 @@ export function App() {
     <section className="panel impact-search"><label className="field"><span>{t("impact.searchLabel")}</span><input value={impactQuery} placeholder={t("impact.searchPlaceholder")} onChange={(event) => setImpactQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void runImpactSearch(); }} /></label><button className="primary" disabled={busy} onClick={() => void runImpactSearch()}>{busy ? t("impact.searching") : t("impact.search")}</button></section>
     <section className="explorer-results">{impactResults.map((item, index) => <article className="panel explorer-card" key={`${item.node.type}-${item.node.label}-${index}`}><div className="section-head"><div><h2>{item.node.label}</h2><span className="muted">{item.node.type}{item.node.relative_path ? ` · ${item.node.relative_path}` : ""}</span></div><span>{t("impact.relations", { count: item.relationships.length })}</span></div><div className="relationship-list">{item.relationships.map((relation, relationIndex) => <div key={`${relation.direction}-${relation.target}-${relationIndex}`}><span className={`direction ${relation.direction}`}>{status(relation.direction)}</span><strong>{relation.type} → {relation.target}</strong><small>{t("impact.scanMeta", { provenance: relation.provenance, scan: relation.source_scan_revision, stale: relation.stale ? t("impact.staleSuffix") : "" })}</small></div>)}</div>{item.recent_changes.length > 0 && <div className="recent-changes"><strong>{t("impact.recentChanges")}</strong><Tags values={item.recent_changes} empty="" /></div>}</article>)}</section>
     {!impactResults.length && <section className="panel mascot-helper"><MascotArt pose="yak-teaching-map" t={t} className="mascot-helper-art" /><p className="muted">{t("impact.empty")}</p></section>}
+  </main>;
+
+  if (screen === "behaviors" && selected) return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} />
+    <ProjectNav active="behaviors" select={selectProjectScreen} t={t} />
+    {error && <section className="panel error" role="alert">{errorText(error)}</section>}
+    <BehaviorsScreen projectId={selected.id} initialBehaviorId={focusBehaviorId} t={t} onError={setError} />
   </main>;
 
   if (screen === "project" && selected) {

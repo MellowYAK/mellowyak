@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PulsePlan Fixture</title>
+    <style>
+      body { background:#071521; color:#e9fbff; font-family:system-ui; margin:0; padding:48px }
+      main { margin:auto; max-width:760px } article { background:#102839; border-radius:16px; padding:24px }
+      button, select { border:0; border-radius:10px; font:inherit; margin:8px; padding:12px 16px }
+      button { background:#35d3c7; color:#06131c; font-weight:700 } .time { color:#5de6dc; font-size:2rem; font-weight:800 }
+    </style>
+  </head>
+  <body>
+    <main data-testid="pulseplan-app"></main>
+    <script>
+      const root = document.querySelector('[data-testid="pulseplan-app"]');
+      const eventId = 'planning-sync';
+      const storedTime = () => sessionStorage.getItem('pulseplan-time') || '13:00';
+      const link = (path, label, testid) => `<button data-path="${path}" data-testid="${testid}">${label}</button>`;
+      function render() {
+        const path = location.pathname;
+        if (path === '/calendar' || path === '/') {
+          root.innerHTML = `<h1>PulsePlan Calendar</h1><article data-testid="event-card"><h2>Planning sync</h2><p class="time" data-testid="calendar-event-time">${storedTime()}</p>${link(`/events/${eventId}`, 'Open event', 'open-event')}</article>`;
+        } else if (path === `/events/${eventId}`) {
+          root.innerHTML = `<h1>Planning sync</h1><article><p class="time" data-testid="event-time">${storedTime()}</p>${link(`/events/${eventId}/reschedule`, 'Reschedule', 'reschedule-event')}${link('/calendar', 'Back to calendar', 'back-calendar')}</article>`;
+        } else if (path === `/events/${eventId}/reschedule`) {
+          root.innerHTML = `<h1>Reschedule Planning sync</h1><form data-testid="reschedule-form"><label for="event-time-select">New time</label><select id="event-time-select" data-testid="time-select"><option>13:00</option><option>14:00</option><option>15:00</option></select><button type="submit" data-testid="save-reschedule">Save</button></form>`;
+          document.querySelector('[data-testid="reschedule-form"]').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const time = document.querySelector('[data-testid="time-select"]').value;
+            const response = await fetch(`/api/events/${eventId}/reschedule`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({time})});
+            if (!response.ok) throw new Error('fixture request failed');
+            sessionStorage.setItem('pulseplan-time', time);
+            history.pushState({}, '', `/events/${eventId}`); render();
+          });
+        } else if (path === '/events/new') {
+          root.innerHTML = '<h1>New event</h1><p data-testid="new-event-page">Synthetic fixture page</p>';
+        } else { root.innerHTML = '<h1>Not found</h1>'; }
+      }
+      document.addEventListener('click', (event) => { const path = event.target.dataset.path; if (path) { history.pushState({}, '', path); render(); } });
+      addEventListener('popstate', render); render();
+    </script>
+  </body>
+</html>

@@ -7,18 +7,29 @@ from dataclasses import dataclass
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from mellowyak_engine import APP_VERSION, ENGINE_VERSION
 from mellowyak_engine.api.schemas import (
     ActionResponse,
+    BaselineAcceptRequest,
+    BaselineRevokeRequest,
+    BehaviorBaselineResponse,
     BehaviorCandidateListResponse,
     BehaviorCandidateResponse,
+    BehaviorDraftRequest,
+    BrowserCaptureListResponse,
+    BrowserCaptureResponse,
+    BrowserCaptureStartRequest,
+    CaptureReviewRequest,
     ChangeImpactResponse,
     ChangeIntentRequest,
     ChangeListResponse,
     ContextReceiptResponse,
     CurrentChangeResponse,
+    EvidenceArtifactResponse,
+    EvidenceBundleResponse,
+    EvidenceListResponse,
     GitStateResponse,
     HandshakeResponse,
     HealthResponse,
@@ -37,14 +48,23 @@ from mellowyak_engine.api.schemas import (
     ProjectDetectRequest,
     ProjectListResponse,
     ProjectResponse,
+    ProtectedBehaviorListResponse,
+    ProtectedBehaviorResponse,
     ReadinessResponse,
+    RuntimeConfigurationListResponse,
+    RuntimeConfigurationRequest,
+    RuntimeConfigurationResponse,
     ScanFindingListResponse,
     ScanRunResponse,
     StoragePathsResponse,
 )
+from mellowyak_engine.behaviors.service import BehaviorService, BehaviorServiceError
+from mellowyak_engine.browser.service import BrowserCaptureError, BrowserCaptureService
 from mellowyak_engine.core.events import LocalEventBus
 from mellowyak_engine.core.logging import configure_logging
 from mellowyak_engine.db.database import LocalDatabase
+from mellowyak_engine.evidence.service import EvidenceService, EvidenceServiceError
+from mellowyak_engine.evidence.store import EvidenceStore
 from mellowyak_engine.impact.models import TraversalPolicy
 from mellowyak_engine.impact.service import ImpactService, ImpactServiceError
 from mellowyak_engine.monitoring.service import MonitoringService
@@ -69,6 +89,9 @@ class EngineRuntime:
     scans: ScanCoordinator
     monitoring: MonitoringService
     impact: ImpactService
+    behaviors: BehaviorService
+    evidence: EvidenceService
+    browser: BrowserCaptureService
 
 
 def _open_folder(path: str) -> str:
@@ -104,6 +127,9 @@ def create_app(settings: EngineSettings) -> FastAPI:
     scans = ScanCoordinator(SourceScanner(database.sessions, events))
     monitoring = MonitoringService(projects, scans)
     impact = ImpactService(database.sessions, events)
+    behaviors = BehaviorService(database.sessions, events)
+    evidence = EvidenceService(database.sessions, EvidenceStore(paths.evidence), events)
+    browser = BrowserCaptureService(database.sessions, evidence, events)
     runtime = EngineRuntime(
         settings=settings,
         paths=paths,
@@ -117,6 +143,9 @@ def create_app(settings: EngineSettings) -> FastAPI:
         scans=scans,
         monitoring=monitoring,
         impact=impact,
+        behaviors=behaviors,
+        evidence=evidence,
+        browser=browser,
     )
 
     app = FastAPI(
@@ -129,7 +158,7 @@ def create_app(settings: EngineSettings) -> FastAPI:
         CORSMiddleware,
         allow_origins=list(settings.allowed_origins),
         allow_credentials=False,
-        allow_methods=["GET", "POST"],
+        allow_methods=["GET", "POST", "DELETE"],
         allow_headers=["Authorization", "Content-Type"],
     )
 
@@ -155,6 +184,22 @@ def create_app(settings: EngineSettings) -> FastAPI:
         if error.code in {"TASK_INTENT_TOO_LONG", "BEHAVIOR_ACTION_INVALID"}:
             status = 400
         return HTTPException(status_code=status, detail=error.code)
+
+    def phase4_error(error: Exception) -> HTTPException:
+        code = str(getattr(error, "code", "PHASE4_OPERATION_FAILED"))
+        status = 409
+        if code.endswith("_NOT_FOUND"):
+            status = 404
+        elif code.endswith("_INVALID") or code in {
+            "RUNTIME_LOOPBACK_HTTP_REQUIRED",
+            "RUNTIME_EXPLICIT_PORT_REQUIRED",
+            "CAPTURE_ORIGIN_NOT_ALLOWED",
+            "ATTESTATION_INVALID",
+        }:
+            status = 400
+        elif code in {"BROWSER_RUNTIME_UNAVAILABLE"}:
+            status = 503
+        return HTTPException(status_code=status, detail=code)
 
     @app.get("/handshake", response_model=HandshakeResponse, include_in_schema=True)
     def handshake() -> HandshakeResponse:
@@ -466,7 +511,12 @@ def create_app(settings: EngineSettings) -> FastAPI:
         dependencies=[Depends(guard)],
     )
     def prepare_candidate(project_id: str, candidate_id: str) -> BehaviorCandidateResponse:
-        return candidate_action(project_id, candidate_id, "prepare")
+        candidate = candidate_action(project_id, candidate_id, "prepare")
+        try:
+            draft = behaviors.create_from_candidate(project_id, candidate_id)
+        except BehaviorServiceError as error:
+            raise phase4_error(error) from error
+        return candidate.model_copy(update={"behavior_draft_id": draft["id"]})
 
     @app.get(
         "/projects/{project_id}/impact/summary",
@@ -536,6 +586,410 @@ def create_app(settings: EngineSettings) -> FastAPI:
         except ProjectError as error:
             raise project_error(error) from error
 
+    @app.get(
+        "/projects/{project_id}/behaviors",
+        response_model=ProtectedBehaviorListResponse,
+        dependencies=[Depends(guard)],
+    )
+    def list_behaviors(project_id: str) -> ProtectedBehaviorListResponse:
+        try:
+            return ProtectedBehaviorListResponse(behaviors=behaviors.list(project_id))
+        except BehaviorServiceError as error:
+            raise phase4_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/behaviors",
+        response_model=ProtectedBehaviorResponse,
+        dependencies=[Depends(guard)],
+    )
+    def create_behavior(
+        project_id: str, request: BehaviorDraftRequest
+    ) -> ProtectedBehaviorResponse:
+        try:
+            return ProtectedBehaviorResponse(
+                **behaviors.create_draft(
+                    project_id,
+                    request.title,
+                    request.description,
+                    request.expected_outcome,
+                    request.links,
+                    request.criticality,
+                    request.persona,
+                    request.preconditions,
+                    request.starting_state,
+                    request.expected_assertions,
+                )
+            )
+        except BehaviorServiceError as error:
+            raise phase4_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/behaviors/{behavior_id}",
+        response_model=ProtectedBehaviorResponse,
+        dependencies=[Depends(guard)],
+    )
+    def get_behavior(project_id: str, behavior_id: str) -> ProtectedBehaviorResponse:
+        try:
+            return ProtectedBehaviorResponse(**behaviors.get(project_id, behavior_id))
+        except BehaviorServiceError as error:
+            raise phase4_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/behaviors/{behavior_id}/versions",
+        response_model=ProtectedBehaviorResponse,
+        dependencies=[Depends(guard)],
+    )
+    def update_behavior(
+        project_id: str, behavior_id: str, request: BehaviorDraftRequest
+    ) -> ProtectedBehaviorResponse:
+        try:
+            return ProtectedBehaviorResponse(
+                **behaviors.update(
+                    project_id,
+                    behavior_id,
+                    request.title,
+                    request.description,
+                    request.expected_outcome,
+                    request.criticality,
+                    request.persona,
+                    request.preconditions,
+                    request.starting_state,
+                    request.expected_assertions,
+                )
+            )
+        except BehaviorServiceError as error:
+            raise phase4_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/behaviors/{behavior_id}/archive",
+        response_model=ProtectedBehaviorResponse,
+        dependencies=[Depends(guard)],
+    )
+    def archive_behavior(project_id: str, behavior_id: str) -> ProtectedBehaviorResponse:
+        try:
+            return ProtectedBehaviorResponse(**behaviors.archive(project_id, behavior_id))
+        except BehaviorServiceError as error:
+            raise phase4_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/behaviors/{behavior_id}/baseline",
+        response_model=BehaviorBaselineResponse,
+        dependencies=[Depends(guard)],
+    )
+    def current_behavior_baseline(project_id: str, behavior_id: str) -> BehaviorBaselineResponse:
+        try:
+            behavior = behaviors.get(project_id, behavior_id)
+            baseline_id = behavior["last_accepted_baseline_id"]
+            if not baseline_id:
+                raise EvidenceServiceError("BASELINE_NOT_FOUND")
+            return BehaviorBaselineResponse(**evidence.baseline(project_id, baseline_id))
+        except (BehaviorServiceError, EvidenceServiceError) as error:
+            raise phase4_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/behaviors/{behavior_id}/baseline/revoke",
+        response_model=ActionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def revoke_behavior_baseline(
+        project_id: str, behavior_id: str, request: BaselineRevokeRequest
+    ) -> ActionResponse:
+        try:
+            result = evidence.revoke_baseline(
+                project_id, behavior_id, request.delete_evidence, request.confirmation
+            )
+            return ActionResponse(status=result["status"])
+        except EvidenceServiceError as error:
+            raise phase4_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/runtime-configurations",
+        response_model=RuntimeConfigurationListResponse,
+        dependencies=[Depends(guard)],
+    )
+    @app.get(
+        "/projects/{project_id}/runtimes",
+        response_model=RuntimeConfigurationListResponse,
+        dependencies=[Depends(guard)],
+    )
+    def list_runtimes(project_id: str) -> RuntimeConfigurationListResponse:
+        try:
+            return RuntimeConfigurationListResponse(runtimes=behaviors.runtimes(project_id))
+        except BehaviorServiceError as error:
+            raise phase4_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/runtime-configurations",
+        response_model=RuntimeConfigurationResponse,
+        dependencies=[Depends(guard)],
+    )
+    @app.post(
+        "/projects/{project_id}/runtimes",
+        response_model=RuntimeConfigurationResponse,
+        dependencies=[Depends(guard)],
+    )
+    def configure_runtime(
+        project_id: str, request: RuntimeConfigurationRequest
+    ) -> RuntimeConfigurationResponse:
+        try:
+            return RuntimeConfigurationResponse(
+                **behaviors.add_runtime(
+                    project_id,
+                    request.display_name,
+                    request.base_url,
+                    request.starting_path,
+                    request.viewport_width,
+                    request.viewport_height,
+                    request.locale,
+                    request.timezone,
+                    request.browser_type,
+                    request.capture_screenshots,
+                    request.capture_trace,
+                    request.capture_video,
+                    request.capture_network,
+                )
+            )
+        except BehaviorServiceError as error:
+            raise phase4_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/runtime-configurations/{runtime_id}/test",
+        response_model=ActionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def test_runtime_configuration(project_id: str, runtime_id: str) -> ActionResponse:
+        try:
+            return ActionResponse(status=behaviors.test_runtime(project_id, runtime_id)["status"])
+        except BehaviorServiceError as error:
+            raise phase4_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/captures",
+        response_model=BrowserCaptureListResponse,
+        dependencies=[Depends(guard)],
+    )
+    def list_captures(project_id: str) -> BrowserCaptureListResponse:
+        try:
+            return BrowserCaptureListResponse(captures=browser.list(project_id))
+        except BrowserCaptureError as error:
+            raise phase4_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/captures",
+        response_model=BrowserCaptureResponse,
+        dependencies=[Depends(guard)],
+    )
+    def start_capture(
+        project_id: str, request: BrowserCaptureStartRequest
+    ) -> BrowserCaptureResponse:
+        try:
+            return BrowserCaptureResponse(
+                **browser.start(
+                    project_id,
+                    request.behavior_id,
+                    request.runtime_configuration_id,
+                    request.entry_url,
+                )
+            )
+        except BrowserCaptureError as error:
+            raise phase4_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/captures/{capture_id}",
+        response_model=BrowserCaptureResponse,
+        dependencies=[Depends(guard)],
+    )
+    def get_capture(project_id: str, capture_id: str) -> BrowserCaptureResponse:
+        try:
+            return BrowserCaptureResponse(**browser.get(project_id, capture_id))
+        except BrowserCaptureError as error:
+            raise phase4_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/captures/{capture_id}/stop",
+        response_model=BrowserCaptureResponse,
+        dependencies=[Depends(guard)],
+    )
+    def stop_capture(project_id: str, capture_id: str) -> BrowserCaptureResponse:
+        try:
+            return BrowserCaptureResponse(**browser.stop(project_id, capture_id))
+        except BrowserCaptureError as error:
+            raise phase4_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/captures/{capture_id}/pause",
+        response_model=BrowserCaptureResponse,
+        dependencies=[Depends(guard)],
+    )
+    def pause_capture(project_id: str, capture_id: str) -> BrowserCaptureResponse:
+        try:
+            return BrowserCaptureResponse(**browser.pause(project_id, capture_id))
+        except BrowserCaptureError as error:
+            raise phase4_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/captures/{capture_id}/resume",
+        response_model=BrowserCaptureResponse,
+        dependencies=[Depends(guard)],
+    )
+    def resume_capture(project_id: str, capture_id: str) -> BrowserCaptureResponse:
+        try:
+            return BrowserCaptureResponse(**browser.resume(project_id, capture_id))
+        except BrowserCaptureError as error:
+            raise phase4_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/captures/{capture_id}/review",
+        response_model=BrowserCaptureResponse,
+        dependencies=[Depends(guard)],
+    )
+    def review_capture(
+        project_id: str, capture_id: str, request: CaptureReviewRequest
+    ) -> BrowserCaptureResponse:
+        try:
+            return BrowserCaptureResponse(
+                **browser.review(
+                    project_id,
+                    capture_id,
+                    request.step_updates,
+                    request.excluded_observation_ids,
+                    request.expected_assertions,
+                    request.notes,
+                )
+            )
+        except BrowserCaptureError as error:
+            raise phase4_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/captures/{capture_id}/cancel",
+        response_model=BrowserCaptureResponse,
+        dependencies=[Depends(guard)],
+    )
+    def cancel_capture(project_id: str, capture_id: str) -> BrowserCaptureResponse:
+        try:
+            return BrowserCaptureResponse(**browser.cancel(project_id, capture_id))
+        except BrowserCaptureError as error:
+            raise phase4_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/captures/{capture_id}/validation-fixture-flow",
+        response_model=ActionResponse,
+        include_in_schema=False,
+        dependencies=[Depends(guard)],
+    )
+    def validation_fixture_flow(project_id: str, capture_id: str) -> ActionResponse:
+        try:
+            return ActionResponse(status=browser.run_fixture_flow(project_id, capture_id)["status"])
+        except BrowserCaptureError as error:
+            raise phase4_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/captures/{capture_id}/accept-baseline",
+        response_model=BehaviorBaselineResponse,
+        dependencies=[Depends(guard)],
+    )
+    def accept_baseline(
+        project_id: str, capture_id: str, request: BaselineAcceptRequest
+    ) -> BehaviorBaselineResponse:
+        try:
+            return BehaviorBaselineResponse(
+                **evidence.accept_baseline(project_id, capture_id, request.reviewer, request.notes)
+            )
+        except EvidenceServiceError as error:
+            raise phase4_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/evidence/bundles/{bundle_id}",
+        response_model=EvidenceBundleResponse,
+        dependencies=[Depends(guard)],
+    )
+    def evidence_bundle(project_id: str, bundle_id: str) -> EvidenceBundleResponse:
+        try:
+            return EvidenceBundleResponse(**evidence.get_bundle(project_id, bundle_id))
+        except EvidenceServiceError as error:
+            raise phase4_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/evidence",
+        response_model=EvidenceListResponse,
+        dependencies=[Depends(guard)],
+    )
+    def list_evidence(project_id: str) -> EvidenceListResponse:
+        try:
+            return EvidenceListResponse(**evidence.list_evidence(project_id))
+        except EvidenceServiceError as error:
+            raise phase4_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/evidence/{artifact_id}",
+        response_model=EvidenceArtifactResponse,
+        dependencies=[Depends(guard)],
+    )
+    def evidence_artifact_canonical(project_id: str, artifact_id: str) -> EvidenceArtifactResponse:
+        try:
+            return EvidenceArtifactResponse(**evidence.artifact(project_id, artifact_id))
+        except EvidenceServiceError as error:
+            raise phase4_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/evidence/artifacts/{artifact_id}",
+        response_model=EvidenceArtifactResponse,
+        dependencies=[Depends(guard)],
+    )
+    def evidence_artifact(project_id: str, artifact_id: str) -> EvidenceArtifactResponse:
+        try:
+            return EvidenceArtifactResponse(**evidence.artifact(project_id, artifact_id))
+        except EvidenceServiceError as error:
+            raise phase4_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/evidence/artifacts/{artifact_id}/content",
+        dependencies=[Depends(guard)],
+    )
+    def evidence_artifact_content(project_id: str, artifact_id: str) -> Response:
+        try:
+            content, media_type = evidence.artifact_content(project_id, artifact_id)
+            return Response(
+                content=content,
+                media_type=media_type,
+                headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"},
+            )
+        except EvidenceServiceError as error:
+            raise phase4_error(error) from error
+
+    @app.delete(
+        "/projects/{project_id}/evidence/artifacts/{artifact_id}",
+        response_model=ActionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def delete_evidence_artifact(project_id: str, artifact_id: str) -> ActionResponse:
+        try:
+            return ActionResponse(
+                status=evidence.remove_review_artifact(project_id, artifact_id)["status"]
+            )
+        except EvidenceServiceError as error:
+            raise phase4_error(error) from error
+
+    @app.delete(
+        "/projects/{project_id}/evidence/{artifact_id}",
+        response_model=ActionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def delete_evidence_artifact_canonical(project_id: str, artifact_id: str) -> ActionResponse:
+        return delete_evidence_artifact(project_id, artifact_id)
+
+    @app.post(
+        "/projects/{project_id}/evidence/{artifact_id}/open-local",
+        response_model=ActionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def open_evidence_artifact(project_id: str, artifact_id: str) -> ActionResponse:
+        try:
+            _open_folder(str(evidence.artifact_local_path(project_id, artifact_id).parent))
+            return ActionResponse(status="opened")
+        except EvidenceServiceError as error:
+            raise phase4_error(error) from error
+
     @app.get("/events", response_model=LocalEventListResponse, dependencies=[Depends(guard)])
     def local_events(after: int = Query(default=0, ge=0)) -> LocalEventListResponse:
         return LocalEventListResponse(events=events.after(after))
@@ -543,6 +997,7 @@ def create_app(settings: EngineSettings) -> FastAPI:
     def stop_background_services() -> None:
         monitoring.stop_all()
         scans.stop_all()
+        browser.close()
 
     app.router.on_shutdown.append(stop_background_services)
     monitoring.start_persisted()

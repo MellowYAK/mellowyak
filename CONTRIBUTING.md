@@ -1,5 +1,7 @@
 # Contributing
 
+Phase 4 changes must run the PulsePlan browser fixture, migration tests, evidence integrity/privacy tests, UI translation-key check, English/Hebrew RTL tests, packaged sidecar smoke, and packaged browser flow. Never commit local evidence, captured screenshots/traces/video, browser profiles, Playwright cache, generated installers, private updater keys, source fixtures copied from user projects, or APC data. Browser changes must preserve exact loopback-origin enforcement and must not persist headers, bodies, cookies, storage state, or input values.
+
 Phase 1 protects a strict local-first boundary. Do not add cloud endpoints, telemetry upload, accounts, Docker, APC server code, or a Phase 2 feature under a placeholder claim.
 
 ## Development prerequisites

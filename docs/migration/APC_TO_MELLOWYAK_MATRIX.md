@@ -37,6 +37,13 @@ Updated: 2026-08-24. The local APC checkout was inspected read-only; paths below
 
 ## Interpretation
 
+## Phase 4 update
+
+- Browser Runtime and Playwright actions are now a clean `REWRITE` in the local Python engine with exact loopback-origin enforcement; APC server/browser topology was not copied.
+- Browser artifacts, Hybrid capture, Screenshot Memory, Verified Solution Memory, and task-proof concepts informed the independent evidence/lineage contract documented in `PHASE_4_APC_BEHAVIOR_BROWSER_EVIDENCE_EXTRACTION.md`.
+- Phase 4 destinations are `engine/.../browser/`, `engine/.../evidence/`, `engine/.../behaviors/`, migration `0004_behavior_evidence_browser`, and `BehaviorsScreen.tsx`.
+- APC runtime credentials, accounts, tenants, cookies, Bridge transport, PHP/MariaDB persistence, backup/restore, broad readers, and model/ingest routes remain `DO_NOT_USE` or `SECURITY_BLOCKER`.
+
 - `PORT` means only the independently reviewable concept, contract, algorithm or fixture may later cross the boundary with provenance and tests.
 - `REWRITE` means no code copy: implement against MellowYak's local contracts.
 - `SECURITY_BLOCKER` overrides all historical evidence and permanently blocks direct reuse.

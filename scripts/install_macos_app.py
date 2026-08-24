@@ -27,11 +27,15 @@ def run(*command: str, cwd: Path = ROOT, check: bool = True) -> None:
 def main() -> None:
     if sys.platform != "darwin":
         raise SystemExit("install-macos is available only on macOS")
-    run(
-        str(ROOT / "engine" / ".venv" / "bin" / "python"),
-        str(ROOT / "scripts" / "build_engine.py"),
-    )
-    run("npm", "run", "tauri", "build", "--", "--bundles", "app", cwd=DESKTOP)
+    use_existing = sys.argv[1:] == ["--from-existing"]
+    if sys.argv[1:] and not use_existing:
+        raise SystemExit("usage: install_macos_app.py [--from-existing]")
+    if not use_existing:
+        run(
+            str(ROOT / "engine" / ".venv" / "bin" / "python"),
+            str(ROOT / "scripts" / "build_engine.py"),
+        )
+        run("npm", "run", "tauri", "build", "--", "--bundles", "app", cwd=DESKTOP)
     if not SOURCE.is_dir():
         raise SystemExit(f"Built application is missing: {SOURCE}")
 

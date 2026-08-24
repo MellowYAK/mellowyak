@@ -1,0 +1,1 @@
+"""Protected behavior domain."""

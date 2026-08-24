@@ -13,6 +13,7 @@ dependencies = [
   "fastapi>=0.115,<1",
   "pathspec>=0.12,<1",
   "platformdirs>=4.3,<5",
+  "playwright>=1.55,<2",
   "pydantic>=2.10,<3",
   "sqlalchemy>=2.0,<3",
   "uvicorn>=0.34,<1",

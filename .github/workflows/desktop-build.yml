@@ -65,12 +65,13 @@ jobs:
       - name: Build bundled engine and desktop package
         shell: bash
         run: |
+          python scripts/stage_browser.py
           python scripts/build_engine.py
           npm --prefix apps/desktop run tauri build -- --bundles ${{ matrix.bundles }}
-      - name: Validate packaged Phase 3 flow (macOS)
+      - name: Validate packaged Phase 4 flow (macOS)
         if: runner.os == 'macOS'
         run: >-
-          python scripts/validate_packaged_phase3.py
+          python scripts/validate_packaged_phase4.py
           apps/desktop/src-tauri/target/release/bundle/macos/MellowYak.app/Contents/MacOS/mellowyak-engine
       - name: Record immutable source identity
         shell: bash

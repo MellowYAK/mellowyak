@@ -29,6 +29,9 @@
     "active": true,
     "targets": "all",
     "externalBin": ["binaries/mellowyak-engine"],
+    "resources": {
+      ".browser-resources/browser/": "browser/"
+    },
     "createUpdaterArtifacts": false,
     "icon": [
       "icons/32x32.png",

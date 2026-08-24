@@ -1,8 +1,12 @@
 # Privacy
 
-## Current implemented behavior (Phase 3)
+## Phase 4 browser evidence
 
-MellowYak runs a desktop shell and local engine on the same machine. It stores installation settings, selected project paths, Git/scan metadata, relationship facts, Change identities, impact results, Context Receipts, non-verified behavior candidates and local audit events in SQLite. It does not store source contents in the Phase 3 graph, impact or receipt tables. Evidence folders exist, but screenshots, traces, videos, runtime evidence and regression evidence are not collected.
+Browser capture is opt-in and limited to an explicitly approved local HTTP origin. It uses an ephemeral browser context and does not persist cookies, local/session storage, authorization or cookie headers, query values, request/response bodies, or raw input values. Password/secret/token fields are masked before screenshots. Start/final screenshots, action metadata, runtime metadata, hashes, and attestations remain under the platform-native local data root. Screenshots may still contain project or user data, so review and deletion are available before human acceptance. No source or evidence upload was added.
+
+## Earlier local-core behavior
+
+MellowYak runs a desktop shell and local engine on the same machine. It stores installation settings, selected project paths, Git/scan metadata, relationship facts, Change identities, impact results, Context Receipts, non-verified behavior candidates, versioned behaviors, evidence metadata, attestations, and local audit events in SQLite. It does not store source contents or evidence blobs in SQLite. Opt-in Phase 4 captures may store redacted screenshots and bounded runtime evidence as content-addressed local files; trace and video are disabled in the verified default.
 
 There is no account, cloud synchronization, analytics endpoint, telemetry upload, model call, connector, embedding service or configured MellowYak remote API. Scan, reverse-impact analysis and Context Receipt generation require no outbound network operation. The local API binds to loopback and requires a per-launch token that is not persisted.
 
@@ -22,4 +26,4 @@ Opening the data folder is a local operating-system action. Uninstalling the app
 
 ## Future boundary
 
-Source code, Git history, project maps, future protected behaviors, screenshots, traces, videos, evidence, regression history and repair context must stay local by default. Data may leave only through a future connector explicitly enabled by the user, with a visible destination and consent. No connector is implemented in Phase 3.
+Source code, Git history, project maps, protected behaviors, screenshots, traces, videos, evidence, regression history and repair context must stay local by default. Data may leave only through a future connector explicitly enabled by the user, with a visible destination and consent. No connector is implemented in Phase 4.

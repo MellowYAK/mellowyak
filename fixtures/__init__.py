@@ -1,0 +1,1 @@
+"""Deterministic local product fixtures."""
