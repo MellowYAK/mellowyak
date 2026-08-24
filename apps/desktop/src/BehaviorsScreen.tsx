@@ -24,6 +24,7 @@ import {
 } from "./api";
 import type { TranslationKey } from "./i18n";
 import { mascotAssets } from "./mascots";
+import { ProbePanel } from "./ProbePanel";
 
 type Translator = (key: TranslationKey, values?: Record<string, string | number>) => string;
 
@@ -248,6 +249,7 @@ export function BehaviorsScreen({ projectId, initialBehaviorId, t, onError }: Pr
             <div className="button-row"><button className="secondary danger" disabled={busy || selected.lifecycle_state === "ARCHIVED"} onClick={() => void run(async () => { await archiveBehavior(projectId, selected.id); await refresh(); })}>{t("behavior.archive")}</button></div>
             <details><summary>{t("behavior.versionHistory")}</summary><ol className="compact-list">{selected.versions.map((version) => <li key={version.id}>{t("behavior.version", { number: version.version_number })} · {version.title}</li>)}</ol></details>
           </section>
+          <ProbePanel projectId={projectId} behaviorId={selected.id} t={t} onError={onError} />
           <section className="panel runtime-panel">
             <div className="section-head"><h2>{t("runtime.title")}</h2><span>{runtimes.length}</span></div>
             <p className="muted">{t("runtime.security")}</p>

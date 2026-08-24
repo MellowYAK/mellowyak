@@ -316,7 +316,6 @@ class ProductizationService:
             runtime = session.scalar(
                 select(RuntimeConfiguration).where(
                     RuntimeConfiguration.project_id == project_id,
-                    RuntimeConfiguration.archived_at.is_(None),
                 )
             )
             local = Path(project.canonical_root_path or project.root_path).is_dir()

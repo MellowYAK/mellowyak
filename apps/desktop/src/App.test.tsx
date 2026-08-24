@@ -208,15 +208,15 @@ test("impact explorer reports incoming and outgoing provenance", async () => {
   expect(screen.getAllByText(/EXACT_PARSER/)).toHaveLength(2);
 });
 
-test("uses the native folder picker and reports real project detection", async () => {
+test("starts the Runtime Wizard with the native folder picker and local project identity", async () => {
   render(<App />);
   fireEvent.click(await screen.findByRole("button", { name: "Add your first project" }));
-  fireEvent.click(screen.getByRole("button", { name: "Choose project folder" }));
+  expect(screen.getByText("Project Runtime Wizard")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Choose local source folder" }));
   await waitFor(() => expect(dialogOpen).toHaveBeenCalledWith(expect.objectContaining({ directory: true, multiple: false })));
-  expect(await screen.findByText("Detected project")).toBeInTheDocument();
+  expect(await screen.findByText("Canonical root")).toBeInTheDocument();
   expect(screen.getByDisplayValue("demo")).toBeInTheDocument();
-  expect(screen.getByText("1234567890ab")).toBeInTheDocument();
-  expect(screen.getByText("1 staged · 0 unstaged · 1 untracked")).toBeInTheDocument();
+  expect(screen.getByText("Git detected")).toBeInTheDocument();
   expect(screen.getByText("Your source remains local.")).toBeInTheDocument();
 });
 

@@ -1,5 +1,8 @@
 # Phase 5 UI screens
 
+> Historical Phase 5 map. The current Phase 7 Runtime/Memory/Probe screen contract is documented in
+> [`PHASE_7_UI_SCREENS.md`](PHASE_7_UI_SCREENS.md).
+
 The Change Detail surface now contains a translation-key-only Change Cockpit in English and Hebrew RTL.
 
 ## Screen map

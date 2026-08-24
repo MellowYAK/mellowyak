@@ -1,5 +1,31 @@
 # Releases and in-app updates
 
+## Phase 7 package gate
+
+A Phase 7 package must be built fresh from the exact final commit. Do not reuse a Phase 6 `.app`,
+DMG, sidecar, browser tree, size, or hash. The embedded engine must migrate through
+`0007_runtime_snapshot_probe_foundation` and pass packaged-engine smoke plus
+`scripts/validate_packaged_phase7.py`.
+
+The packaged Phase 7 validator must prove, using disposable public fixtures:
+
+- a non-Git project can scan, snapshot, create a milestone, run a Probe, restart, and reload;
+- unchanged snapshot objects are reused and logical/new/reused byte counts are recorded;
+- an accepted comparable Probe PASS followed by current FAIL and retry FAIL can produce
+  `CONFIRMED`, while file-change-only and flaky scenarios do not;
+- a Repair Workspace materializes outside live source, contains no secret fixture values, and leaves
+  the live project unchanged;
+- runtime/probe children are cancelled/cleaned and local API auth/loopback checks remain intact.
+
+Record fresh `.app`/DMG sizes, desktop/engine/Chromium/DMG SHA-256 values, startup time, snapshot
+throughput and storage metrics, and Probe runtime in the Phase 7 validation report. Inspect the DMG by
+checksum, read-only mount, application/Applications-link presence, and clean unmount. Generated
+packages remain outside Git history.
+
+Windows and Linux workflows must install/build the same locked dependencies and migration, but a
+configured workflow is not runtime verification. Do not claim Windows, Linux, Apple Silicon, PHP
+execution, signing, notarization, updater delivery, or a public release without exact evidence.
+
 Phase 5 packages stage a platform-matching Playwright Chromium tree before the Tauri build. A release artifact is not valid unless the installed sidecar reaches migration `0005_verification_regression_gate` and `scripts/validate_packaged_phase5.py` completes the packaged PulsePlan baseline, seeded assertion failure, supported regression, blocked gate, Repair Context, repaired source identity, re-verification, VERIFIED_COMPLETE, restart/history reload, loopback authentication, and orphan-process checks. Browser assets and all artifact hashes/sizes must be recorded. No Phase 5 release is published by the implementation task; the signed updater remains implemented but not end-to-end runtime verified until a higher signed GitHub Release exists.
 
 MellowYak source is public, but installers are distributed only through GitHub Releases. A version tag builds the exact tagged commit on macOS, Windows, and Linux and publishes the platform installer plus Tauri's signed update metadata.

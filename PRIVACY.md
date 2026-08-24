@@ -1,5 +1,35 @@
 # Privacy
 
+## Phase 7 Runtime Profiles, Save Points, and Probes
+
+Phase 7 adds local source snapshots, but source contents still do not enter SQLite. Eligible file
+bytes are stored as project-scoped SHA-256 objects beneath the MellowYak application-data root,
+outside the live project; deterministic manifests and SQLite records contain relative paths, hashes,
+sizes, modes, references, exclusions, and identities. Unchanged content is reused. Retention defaults
+to 30 days and a 5 GiB per-project soft cap, both configurable; referenced/pinned content is protected.
+
+Capture respects ignore rules and excludes sensitive files, provider-private directories, oversized
+content, MellowYak-owned data, and unsafe symlinks. MellowYak does not read provider prompt histories,
+conversations, browser login state, Keychain credentials, SSH keys, or provider tokens. A Save Point
+represents only included content and is not a cloud backup.
+
+Runtime Profiles store executable references, argv arrays, relative working directories, safe
+environment-variable **names**, dependency fingerprints, bounded health/test definitions, approval,
+and limitations. They do not persist the full environment, secret values, registry credentials,
+authorization headers, cookies, or raw runtime configuration dumps. Sanitized runtime output/events
+are bounded.
+
+API/browser Probes default to explicit loopback targets. HTTP authorization/cookie/secret fields are
+rejected, and request/response bodies are not retained by default. CLI/Process/Test Probes require
+explicit approval and keep only bounded sanitized evidence. Manual Probes are explicitly marked as
+human confirmation.
+
+Snapshot materialization and Repair Workspaces remain below the MellowYak data root and never write
+to the live source folder. A Repair Workspace contains only included snapshot files plus bounded,
+redacted, relative incident/validation metadata. Opening or copying local information is an explicit
+user action. Phase 7 adds no account, analytics, source/evidence upload, cloud synchronization,
+coding-agent connector, prompt reader, or provider-token monitor.
+
 ## Phase 5 verification and repair
 
 Fresh verification runs in a new ephemeral browser context against the approved loopback origin. Current screenshots, bounded action/network metadata, assertion results, regression records, immutable gate decisions, and Repair Context metadata stay under the local MellowYak data root. They do not replace Last Known Good. Repair Context uses relative paths and evidence identifiers, excludes source contents by default, redacts secret-shaped values, is limited to 256 KiB, and leaves the application only through an explicit local clipboard action. No model, connector, source upload, evidence upload, analytics, account, or cloud synchronization was added.
@@ -30,4 +60,7 @@ Opening the data folder is a local operating-system action. Uninstalling the app
 
 ## Future boundary
 
-Source code, Git history, project maps, protected behaviors, screenshots, traces, videos, evidence, regression history and repair context must stay local by default. Data may leave only through a future connector explicitly enabled by the user, with a visible destination and consent. No connector is implemented in Phase 5.
+Source code, Git history, project maps, source snapshots, protected behaviors, screenshots, traces,
+videos, evidence, regression history and repair context must stay local by default. Data may leave
+only through a future connector explicitly enabled by the user, with a visible destination and
+consent. No connector is implemented in Phase 7.

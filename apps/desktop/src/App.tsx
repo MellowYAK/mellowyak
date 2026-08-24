@@ -1,12 +1,9 @@
-import { open } from "@tauri-apps/plugin-dialog";
 import { listen } from "@tauri-apps/api/event";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   analyzeChange,
   cancelProjectScan,
   createContextReceipt,
-  createProject,
-  detectProject,
   getChangeImpact,
   getCurrentChange,
   getImpactSummary,
@@ -37,7 +34,6 @@ import {
   type ImpactExplorerItem,
   type ImpactSummary,
   type Project,
-  type ProjectDetection,
   type ProtectedBehavior,
   type SetupSnapshot,
   type StartupStatus,
@@ -50,8 +46,13 @@ import { ChangeCockpit } from "./ChangeCockpit";
 import { StartupAnimation, startupStepKeys } from "./StartupAnimation";
 import { useDesktopUpdater, type UpdaterState } from "./updater";
 import { AlertsScreen, CapabilitiesCard, CommandCenter, ProjectsScreen, SettingsScreen } from "./ProductScreens";
+import { MemoryScreen } from "./MemoryScreen";
+import { ReadyWithLimitsDetails } from "./Phase7Details";
+import { RuntimeScreen } from "./RuntimeScreen";
+import { RuntimeWizard } from "./RuntimeWizard";
 
-type Screen = "home" | "projects" | "alerts" | "settings" | "add" | "project" | "change" | "impact" | "behaviors";
+type ProjectScreen = "project" | "change" | "impact" | "behaviors" | "runtime" | "memory";
+type Screen = "home" | "projects" | "alerts" | "settings" | "add" | "runtimeSetup" | ProjectScreen;
 type Tone = "good" | "warn" | "neutral";
 
 function StatusRow({ label, value, tone = "neutral" }: { label: string; value: string; tone?: Tone }) {
@@ -72,10 +73,9 @@ function MascotArt({ pose, t, className = "" }: { pose: MascotId; t: Translator;
 }
 
 function readiness(project: Project, t: Translator): { label: string; tone: Tone } {
-  if (!project.git.available) return { label: t("readiness.gitUnavailable"), tone: "warn" };
   if (!project.scan || project.scan.status === "running") return { label: t("readiness.scanIncomplete"), tone: "neutral" };
   if (project.scan.status !== "completed") return { label: t("readiness.scanIncomplete"), tone: "warn" };
-  if (project.scan.failed_files || project.scan.unknown_items || project.scan.unsupported_files) {
+  if (project.runtime_setup_status === "INCOMPLETE" || project.runtime_setup_status === "READY_WITH_LIMITS" || project.scan.failed_files || project.scan.unknown_items || project.scan.unsupported_files) {
     return { label: t("readiness.readyWithLimits"), tone: "warn" };
   }
   return { label: t("readiness.ready"), tone: "good" };
@@ -92,12 +92,14 @@ function Header({ home, locale, setLocale, t, updater }: { home: () => void; loc
     </header>{updater.phase !== "idle" && <section className="update-banner" role="status"><div><strong>{t("update.availableTitle")}</strong><span>{updater.phase === "available" ? t("update.availableBody", { version: updater.version ?? t("common.unknown") }) : updater.phase === "installing" ? t("update.installing") : t("update.relaunching")}</span></div><button className="primary" disabled={updater.phase !== "available"} onClick={() => void updater.install()}>{updater.phase === "available" ? t("update.install") : updater.phase === "installing" ? t("update.installing") : t("update.relaunching")}</button></section>}</>;
 }
 
-function ProjectNav({ active, select, t }: { active: "overview" | "change" | "impact" | "behaviors"; select: (screen: "project" | "change" | "impact" | "behaviors") => void; t: Translator }) {
+function ProjectNav({ active, select, t }: { active: "overview" | "change" | "impact" | "behaviors" | "runtime" | "memory"; select: (screen: ProjectScreen) => void; t: Translator }) {
   return <nav className="project-nav" aria-label={t("nav.overview")}>
     <button className={active === "overview" ? "active" : ""} onClick={() => select("project")}>{t("nav.overview")}</button>
     <button className={active === "change" ? "active" : ""} onClick={() => select("change")}>{t("nav.changes")}</button>
     <button className={active === "impact" ? "active" : ""} onClick={() => select("impact")}>{t("nav.impact")}</button>
     <button className={active === "behaviors" ? "active" : ""} onClick={() => select("behaviors")}>{t("nav.behaviors")}</button>
+    <button className={active === "runtime" ? "active" : ""} onClick={() => select("runtime")}>{t("nav.runtime")}</button>
+    <button className={active === "memory" ? "active" : ""} onClick={() => select("memory")}>{t("nav.memory")}</button>
   </nav>;
 }
 
@@ -161,9 +163,6 @@ export function App() {
   const [taskIntent, setTaskIntent] = useState("");
   const [impactQuery, setImpactQuery] = useState("");
   const [impactResults, setImpactResults] = useState<ImpactExplorerItem[]>([]);
-  const [detection, setDetection] = useState<ProjectDetection | null>(null);
-  const [displayName, setDisplayName] = useState("");
-  const [monitoring, setMonitoring] = useState<"passive" | "paused">("passive");
   const [screen, setScreen] = useState<Screen>("home");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -329,15 +328,15 @@ export function App() {
   }, [screen, selected?.id]);
 
   const home = () => {
-    setScreen("home"); setDetection(null); setError(""); setCurrentChange(null); setChangeImpact(null); setReceipt(null);
+    setScreen("home"); setError(""); setCurrentChange(null); setChangeImpact(null); setReceipt(null);
     void reloadProjects().catch(() => undefined);
   };
 
-  const openProject = (project: Project, destination: "project" | "change" | "impact" | "behaviors" = "project") => {
+  const openProject = (project: Project, destination: ProjectScreen = "project") => {
     setSelected(project); setImpact(null); setError(""); setScreen(destination);
   };
 
-  const selectProjectScreen = (next: "project" | "change" | "impact" | "behaviors") => {
+  const selectProjectScreen = (next: ProjectScreen) => {
     setError(""); setScreen(next);
   };
 
@@ -388,30 +387,6 @@ export function App() {
     finally { setBusy(false); }
   };
 
-  const chooseFolder = async () => {
-    setBusy(true); setError("");
-    try {
-      const chosen = await open({ directory: true, multiple: false, title: t("add.dialogTitle") });
-      const path = Array.isArray(chosen) ? chosen[0] : chosen;
-      if (!path) return;
-      const detected = await detectProject(path);
-      setDetection(detected); setDisplayName(detected.suggested_name);
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "PROJECT_DETECTION_FAILED");
-    } finally { setBusy(false); }
-  };
-
-  const connect = async () => {
-    if (!detection) return;
-    setBusy(true); setError("");
-    try {
-      const project = await createProject(detection.selected_path, displayName, monitoring);
-      setProjects((items) => [project, ...items]); setSelected(project); setImpact(null); setScreen("project");
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "PROJECT_CREATE_FAILED");
-    } finally { setBusy(false); }
-  };
-
   const scanPercent = useMemo(() => {
     if (!selected?.scan?.total_candidates) return selected?.scan?.status === "completed" ? 100 : 0;
     return Math.min(100, Math.round(selected.scan.processed_files * 100 / selected.scan.total_candidates));
@@ -426,29 +401,13 @@ export function App() {
   if (screen === "settings") return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} /><SettingsScreen t={productT} /></main>;
 
   if (screen === "add") return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} />
-    <section className="page-head"><div><div className="eyebrow">{t("add.eyebrow")}</div><h1>{t("add.title")}</h1><p>{t("add.subtitle")}</p></div><button className="secondary" onClick={home}>{t("common.back")}</button></section>
     {error && <section className="panel error" role="alert">{errorText(error)}</section>}
-    {!detection ? <section className="panel folder-picker"><MascotArt pose="yak-search-inspect" t={t} className="mascot-empty" /><h2>{t("add.chooseTitle")}</h2><p>{t("add.chooseBody")}</p><button className="primary" disabled={busy} onClick={() => void chooseFolder()}>{busy ? t("add.inspecting") : t("add.chooseButton")}</button></section>
-      : <div className="content-grid add-grid">
-        <section className="panel"><div className="section-head"><h2>{t("add.detected")}</h2><span className="local-badge">{t("common.localOnly")}</span></div>
-          <label className="field"><span>{t("add.projectName")}</span><input value={displayName} onChange={(event) => setDisplayName(event.target.value)} /></label>
-          <StatusRow label={t("add.selectedFolder")} value={detection.selected_path} /><StatusRow label={t("add.repositoryRoot")} value={detection.repository_path} />
-          <StatusRow label={t("add.candidateFiles")} value={String(detection.candidate_files)} /><StatusRow label={t("add.ignoredPaths")} value={String(detection.ignored_paths)} />
-          <h3>{t("add.languages")}</h3><Tags values={detection.languages} empty={t("add.noLanguage")} />
-          <h3>{t("add.frameworkRuntime")}</h3><Tags values={[...detection.frameworks, ...detection.runtime_hints]} empty={t("add.noFramework")} />
-          <h3>{t("add.tests")}</h3><Tags values={detection.tests} empty={t("add.noTests")} />
-        </section>
-        <section className="panel"><h2>{t("add.gitObservation")}</h2>
-          <StatusRow label={t("add.status")} value={detection.git.available ? t("add.available") : t("readiness.gitUnavailable")} tone={detection.git.available ? "good" : "warn"} />
-          <StatusRow label={t("add.branch")} value={detection.git.branch || (detection.git.is_detached ? t("add.detachedHead") : t("common.unknown"))} />
-          <StatusRow label={t("add.head")} value={detection.git.head_sha?.slice(0, 12) || t("common.unknown")} />
-          <StatusRow label={t("add.worktree")} value={detection.git.is_dirty ? t("add.changesPresent") : t("add.clean")} tone={detection.git.is_dirty ? "warn" : "good"} />
-          <StatusRow label={t("add.changes")} value={t("add.changeCounts", { staged: detection.git.staged.length, unstaged: detection.git.unstaged.length, untracked: detection.git.untracked.length })} />
-          <label className="field"><span>{t("add.passiveMonitoring")}</span><select value={monitoring} onChange={(event) => setMonitoring(event.target.value as "passive" | "paused")}><option value="passive">{t("add.monitorOn")}</option><option value="paused">{t("common.paused")}</option></select></label>
-          <div className="privacy-note"><strong>{t("add.sourceLocalTitle")}</strong><span>{t("add.sourceLocalBody")}</span></div>
-          <div className="button-row"><button className="secondary" onClick={() => setDetection(null)}>{t("add.chooseAnother")}</button><button className="primary" disabled={busy || !displayName.trim()} onClick={() => void connect()}>{busy ? t("add.connecting") : t("add.connect")}</button></div>
-        </section>
-      </div>}
+    <RuntimeWizard t={t} onCancel={home} onError={setError} onComplete={(project) => { setProjects((items) => [project, ...items.filter((item) => item.id !== project.id)]); setSelected(project); setImpact(null); setScreen("project"); }} />
+  </main>;
+
+  if (screen === "runtimeSetup" && selected) return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} />
+    {error && <section className="panel error" role="alert">{errorText(error)}</section>}
+    <RuntimeWizard existingProject={selected} t={t} onCancel={() => setScreen("runtime")} onError={setError} onComplete={(project) => { setSelected(project); setProjects((items) => items.map((item) => item.id === project.id ? project : item)); setScreen("runtime"); }} />
   </main>;
 
   if (screen === "change" && selected) {
@@ -491,10 +450,27 @@ export function App() {
     <BehaviorsScreen projectId={selected.id} initialBehaviorId={focusBehaviorId} t={t} onError={setError} />
   </main>;
 
+  if (screen === "runtime" && selected) return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} />
+    <ProjectNav active="runtime" select={selectProjectScreen} t={t} />
+    {error && <section className="panel error" role="alert">{errorText(error)}</section>}
+    <RuntimeScreen project={selected} t={t} onError={setError} completeSetup={() => setScreen("runtimeSetup")} />
+  </main>;
+
+  if (screen === "memory" && selected) return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} />
+    <ProjectNav active="memory" select={selectProjectScreen} t={t} />
+    {error && <section className="panel error" role="alert">{errorText(error)}</section>}
+    <MemoryScreen project={selected} t={t} onError={setError} />
+  </main>;
+
   if (screen === "project" && selected) {
     const ready = readiness(selected, t);
+    const overviewLimitations = [
+      ...(selected.runtime_setup_status === "INCOMPLETE" ? ["RUNTIME_SETUP_INCOMPLETE"] : []),
+      ...(selected.scan?.unsupported_files ? ["UNSUPPORTED_FILES"] : []),
+      ...(selected.scan?.unknown_items ? ["UNKNOWN_RELATIONSHIPS"] : []),
+    ];
     return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} /><ProjectNav active="overview" select={selectProjectScreen} t={t} />
-      <section className="page-head"><div><div className="eyebrow">{t("project.eyebrow")}</div><h1>{selected.display_name}</h1><p>{selected.repository_path}</p></div><span className={`readiness ${ready.tone}`}>{ready.label}</span></section>
+      <section className="page-head"><div><div className="eyebrow">{t("project.eyebrow")}</div><h1>{selected.display_name}</h1><p>{selected.repository_path}</p></div>{ready.tone === "warn" ? <ReadyWithLimitsDetails limitations={overviewLimitations.length ? overviewLimitations : ["RUNTIME_UNAVAILABLE"]} t={t} /> : <span className={`readiness ${ready.tone}`}>{ready.label}</span>}</section>
       {error && <section className="panel error" role="alert">{errorText(error)}</section>}
       <div className="project-grid">
         <section className="panel scan-panel"><div className="section-head"><h2>{t("project.sourceScan")}</h2><span>{scanPercent}%</span></div>{(!selected.scan || selected.scan.status === "running") && <MascotArt pose="yak-working-laptop" t={t} className="mascot-scan" />}<div className="progress"><span style={{ width: `${scanPercent}%` }} /></div>

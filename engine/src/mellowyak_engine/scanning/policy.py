@@ -16,9 +16,19 @@ MAX_STORED_PARSER_ITEMS = 2_000
 
 DEFAULT_EXCLUDED_DIRS = frozenset(
     {
+        ".aws",
+        ".azure",
+        ".claude",
+        ".codex",
+        ".cursor",
         ".git",
+        ".gnupg",
         ".hg",
+        ".idea",
+        ".mcp",
+        ".ssh",
         ".svn",
+        ".vscode",
         ".venv",
         "venv",
         "node_modules",
@@ -117,7 +127,8 @@ def is_sensitive_path(relative_path: str) -> bool:
     path = Path(relative_path)
     lowered = path.name.lower()
     return (
-        lowered in SENSITIVE_NAMES
+        any(part.lower() in DEFAULT_EXCLUDED_DIRS for part in path.parts[:-1])
+        or lowered in SENSITIVE_NAMES
         or lowered.startswith(".env.")
         or lowered.endswith(SENSITIVE_SUFFIXES)
         or "access_token" in lowered

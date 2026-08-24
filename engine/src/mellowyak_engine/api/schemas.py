@@ -102,6 +102,14 @@ class ProjectCreateRequest(BaseModel):
     path: str
     display_name: str
     monitoring_mode: str = "passive"
+    project_type: str = "OTHER"
+    observation_level: str = "LIGHT"
+    snapshot_retention_days: int = Field(default=30, ge=1, le=3650)
+    snapshot_soft_cap_bytes: int = Field(
+        default=5 * 1024 * 1024 * 1024,
+        ge=16 * 1024 * 1024,
+        le=1024 * 1024 * 1024 * 1024,
+    )
 
 
 class ScanRunResponse(BaseModel):
@@ -146,6 +154,12 @@ class ProjectResponse(BaseModel):
     disconnected: bool = False
     source_available: bool = True
     notifications_muted: bool = False
+    project_type: str = "OTHER"
+    runtime_setup_status: str = "INCOMPLETE"
+    observation_level: str = "LIGHT"
+    snapshot_retention_days: int = 30
+    snapshot_soft_cap_bytes: int = 5 * 1024 * 1024 * 1024
+    phase7: dict[str, object] = Field(default_factory=dict)
 
 
 class ProjectListResponse(BaseModel):
@@ -423,6 +437,307 @@ class ProjectDeleteRequest(BaseModel):
 class BackgroundSettingsRequest(BaseModel):
     keep_running_on_close: bool | None = None
     start_at_login: bool | None = None
+
+
+class RuntimeProfileCreateRequest(BaseModel):
+    display_name: str = Field(min_length=1, max_length=240)
+    runtime_type: str = Field(min_length=1, max_length=40)
+    primary: bool = False
+    execution_mode: str = "MANAGED"
+    executable_reference: str | None = Field(default=None, max_length=2000)
+    argv: list[str] = Field(default_factory=list, max_length=100)
+    relative_working_directory: str = Field(default=".", max_length=2000)
+    runtime_version: str | None = Field(default=None, max_length=120)
+    dependency_fingerprint: str | None = Field(default=None, max_length=64)
+    health_definition: dict[str, object] = Field(default_factory=dict)
+    expected_ports: list[int] = Field(default_factory=list, max_length=20)
+    test_definitions: list[dict[str, object]] = Field(default_factory=list, max_length=50)
+    environment_schema: list[str] = Field(default_factory=list, max_length=100)
+    network_policy: str = "LOOPBACK_ONLY"
+    limitations: list[str] = Field(default_factory=list, max_length=100)
+    approved: bool = False
+
+
+class RuntimeDetectionResponse(BaseModel):
+    id: str
+    project_id: str
+    status: str
+    candidates: list[dict[str, object]]
+    started_at: str
+    completed_at: str | None
+    error_code: str | None
+
+
+class RuntimeProfileVersionResponse(BaseModel):
+    id: str
+    version_number: int
+    runtime_type: str
+    adapter_version: str
+    execution_mode: str
+    executable_reference: str | None
+    argv: list[str]
+    relative_working_directory: str
+    runtime_version: str | None
+    dependency_fingerprint: str | None
+    health_definition: dict[str, object]
+    expected_ports: list[int]
+    test_definitions: list[dict[str, object]]
+    environment_schema: list[str]
+    network_policy: str
+    limitations: list[str]
+    approved_at: str | None
+    detected_at: str | None
+    created_at: str
+
+
+class RuntimeProfileResponse(BaseModel):
+    id: str
+    project_id: str
+    display_name: str
+    current_version_id: str
+    primary: bool
+    status: str
+    current_version: RuntimeProfileVersionResponse
+    versions: list[RuntimeProfileVersionResponse]
+    created_at: str
+    updated_at: str
+    validation: dict[str, object] | None = None
+
+
+class RuntimeProfileListResponse(BaseModel):
+    profiles: list[RuntimeProfileResponse]
+
+
+class RuntimeInstanceResponse(BaseModel):
+    id: str
+    project_id: str
+    profile_id: str
+    profile_version_id: str
+    correlation_id: str
+    status: str
+    process_id: int | None
+    started_at: str
+    stopped_at: str | None
+    exit_code: int | None
+    observation: dict[str, object]
+
+
+class RuntimeInstanceListResponse(BaseModel):
+    instances: list[RuntimeInstanceResponse]
+
+
+class SnapshotCreateRequest(BaseModel):
+    creation_reason: str = Field(default="MANUAL_SAVE_POINT", max_length=40)
+    episode_id: str | None = Field(default=None, max_length=36)
+
+
+class SnapshotSummaryResponse(BaseModel):
+    id: str
+    project_id: str
+    parent_snapshot_id: str | None
+    episode_id: str | None
+    manifest_digest: str
+    creation_reason: str
+    source_identity: dict[str, object]
+    git_anchor: dict[str, object]
+    included_count: int
+    excluded_count: int
+    sensitive_count: int
+    unsupported_count: int
+    logical_bytes: int
+    physical_bytes_added: int
+    reused_bytes: int
+    pinned: bool
+    integrity_status: str
+    created_at: str
+
+
+class SnapshotDetailResponse(SnapshotSummaryResponse):
+    entries: list[dict[str, object]]
+    runtime_profile_fingerprints: list[dict[str, object] | str]
+
+
+class SnapshotListResponse(BaseModel):
+    snapshots: list[SnapshotSummaryResponse]
+
+
+class SnapshotMaterializationResponse(BaseModel):
+    snapshot_id: str
+    relative_path: str
+    file_count: int
+    logical_bytes: int
+    verified: bool
+    live_project_modified: bool = False
+
+
+class SourceEpisodeResponse(BaseModel):
+    id: str
+    project_id: str
+    started_at: str
+    ended_at: str | None
+    event_count: int
+    added_paths: list[str]
+    modified_paths: list[str]
+    deleted_paths: list[str]
+    renamed_paths: list[dict[str, str]]
+    dependency_changes: list[str]
+    runtime_events: list[dict[str, object]]
+    base_snapshot_id: str | None
+    resulting_snapshot_id: str | None
+    git_anchor: dict[str, object]
+    status: str
+    error_code: str | None
+
+
+class SourceEpisodeListResponse(BaseModel):
+    episodes: list[SourceEpisodeResponse]
+
+
+class MilestoneCreateRequest(BaseModel):
+    snapshot_id: str = Field(min_length=1, max_length=64)
+    display_name: str = Field(min_length=1, max_length=240)
+    behavior_id: str | None = Field(default=None, max_length=36)
+    behavior_version_id: str | None = Field(default=None, max_length=36)
+    probe_version_id: str | None = Field(default=None, max_length=36)
+    human_attested: bool = False
+
+
+class SnapshotMilestoneResponse(BaseModel):
+    id: str
+    project_id: str
+    snapshot_id: str
+    display_name: str
+    behavior_id: str | None
+    behavior_version_id: str | None
+    probe_version_id: str | None
+    runtime_profile_versions: list[str]
+    environment_summary: dict[str, object]
+    limitations: list[str]
+    status: str
+    human_attested: bool
+    pinned: bool
+    created_at: str
+
+
+class SnapshotMilestoneListResponse(BaseModel):
+    milestones: list[SnapshotMilestoneResponse]
+
+
+class ProbeCreateRequest(BaseModel):
+    display_name: str = Field(min_length=1, max_length=240)
+    probe_type: str = Field(min_length=1, max_length=40)
+    behavior_id: str | None = Field(default=None, max_length=36)
+    runtime_profile_version_id: str | None = Field(default=None, max_length=36)
+    definition: dict[str, object] = Field(default_factory=dict)
+    timeout_seconds: int = Field(default=30, ge=1, le=300)
+    retry_policy: dict[str, object] = Field(default_factory=dict)
+    expected_result: dict[str, object] = Field(default_factory=dict)
+    evidence_policy: dict[str, object] = Field(default_factory=dict)
+    source_links: list[dict[str, object]] = Field(default_factory=list, max_length=100)
+    runtime_links: list[dict[str, object]] = Field(default_factory=list, max_length=100)
+    approved: bool = False
+
+
+class ProbeVersionResponse(BaseModel):
+    id: str
+    version_number: int
+    runtime_profile_version_id: str | None
+    definition: dict[str, object]
+    timeout_seconds: int
+    retry_policy: dict[str, object]
+    expected_result: dict[str, object]
+    evidence_policy: dict[str, object]
+    source_links: list[dict[str, object]]
+    runtime_links: list[dict[str, object]]
+    approved_at: str | None
+    created_at: str
+
+
+class ProbeDefinitionResponse(BaseModel):
+    id: str
+    project_id: str
+    behavior_id: str | None
+    display_name: str
+    probe_type: str
+    current_version_id: str
+    status: str
+    current_version: ProbeVersionResponse
+    versions: list[ProbeVersionResponse]
+    last_run: dict[str, object] | None = None
+    created_at: str
+    updated_at: str
+
+
+class ProbeListResponse(BaseModel):
+    probes: list[ProbeDefinitionResponse]
+
+
+class ProbeSelectionItemResponse(BaseModel):
+    probe_id: str
+    probe_version_id: str
+    behavior_id: str | None
+    probe_type: str
+    reason: str
+    automatic_eligible: bool
+
+
+class ProbeSelectionResponse(BaseModel):
+    project_id: str
+    episode_id: str
+    change_id: str | None
+    protection_plan_id: str | None
+    changed_paths: list[str]
+    selected: list[ProbeSelectionItemResponse]
+    selected_count: int
+    candidate_count: int
+    truncated: bool
+    unknown_count: int
+
+
+class ProbeRunRequest(BaseModel):
+    snapshot_id: str | None = Field(default=None, max_length=64)
+
+
+class ProbeRunResponse(BaseModel):
+    id: str
+    project_id: str
+    probe_id: str
+    probe_version_id: str
+    snapshot_id: str
+    episode_id: str | None
+    runtime_profile_version_id: str | None
+    source_identity: dict[str, object]
+    status: str
+    result: str
+    attempt_count: int
+    expected: dict[str, object]
+    observed: dict[str, object]
+    evidence: dict[str, object]
+    limitations: list[str]
+    reproducible: bool
+    signal: dict[str, object] | None = None
+    started_at: str | None
+    completed_at: str | None
+    cancelled_at: str | None
+
+
+class RepairWorkspaceOpenRequest(BaseModel):
+    target: str = "FOLDER"
+
+
+class RepairWorkspaceResponse(BaseModel):
+    id: str
+    project_id: str
+    regression_id: str | None
+    signal_id: str | None
+    snapshot_id: str
+    relative_path: str
+    manifest_digest: str
+    status: str
+    instructions: str | None = None
+    items: list[dict[str, object]]
+    created_at: str
+    deleted_at: str | None
 
 
 class BehaviorDraftRequest(BaseModel):

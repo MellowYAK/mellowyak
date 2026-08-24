@@ -1,5 +1,31 @@
 # Security policy
 
+## Phase 7 runtime, snapshot, probe, and workspace boundary
+
+Runtime and Probe execution is explicit, project-scoped, and represented as an executable plus argv.
+The engine never invokes a shell, rejects shell executables/command strings, confines working
+directories to the selected project, uses a minimal allow-listed environment, bounds time/output,
+supports cancellation, and cleans up owned child processes. It does not inspect arbitrary processes,
+read process memory, attach system-wide, or persist a complete environment. Runtime adapter failure
+is fail-open and cannot stop source monitoring or editor writes.
+
+The source snapshot store resolves beneath the MellowYak application-data root. Capture remains
+confined to the project root; escaping symlinks, MellowYak-owned data, sensitive files,
+provider-private directories, ignored artifacts, and oversized objects are excluded/reported.
+Objects and canonical manifests use atomic local publication and SHA-256 verification. SQLite stores
+metadata/references rather than source blobs. Reference-safe retention cannot collect an object still
+reachable from retained snapshots, milestones, baselines, incidents, or Repair Workspaces.
+
+Browser/API probes default to exact loopback targets. External network access, authorization/cookie
+headers, and secret fields are denied by the Phase 7 policy. CLI/Test/Process probes require approval
+and no-shell argv. One source change or one failed run cannot become `CONFIRMED`; comparable accepted
+prior PASS plus reproducible current FAIL (or the existing supported regression engine) is required.
+
+Snapshot materialization and Repair Workspace creation use new confined paths outside live source and
+never apply changes back. Cross-project access is rejected. Workspace metadata is bounded/redacted
+and uses relative references. No coding-agent SDK, prompt reader, provider credential access, cloud
+snapshot/evidence upload, analytics SDK, account, deployment, or rollback path is added.
+
 ## Phase 5 verification boundary
 
 Protection Plans and results are project-scoped and bound to Change ID, HEAD, worktree fingerprint, scan revision, impact analysis, behavior version, and baseline. Browser Replay uses a new context, enforces one configured loopback HTTP origin, blocks downloads and external navigation, stores no headers/bodies/cookies/storage/input values, and closes browser resources. Automatic PASS requires deterministic assertions and intact CURRENT_VERIFICATION evidence. Stale, unavailable, unresolved, unsupported, timed-out, or crashed execution is never PASS and cannot become a regression claim. Repair Context remains below the local data root, uses relative paths, excludes source content, and is never transmitted by the engine.
@@ -28,7 +54,11 @@ Do not publish a suspected vulnerability or private project evidence in a public
 - Behavior candidates are explicitly unverified and not protected.
 - Desktop setup starts the packaged engine asynchronously. Slow cold starts return `ENGINE_STARTING` to the UI instead of blocking AppKit setup or aborting the desktop process.
 - The desktop updater accepts metadata only from the HTTPS MellowYak GitHub Releases endpoint and refuses update bundles that do not match the embedded public signing key. The private updater key is prohibited from source history and build logs.
-- Phase 5 has no remote account, cloud synchronization, telemetry uploader, model call, connector, arbitrary local-command execution, or external gate enforcement. Its selective browser verification is restricted to the approved local runtime origin. The release update check remains the only configured non-loopback product request.
+- Phase 7 has no remote account, cloud synchronization, telemetry uploader, model call, connector, or
+  external gate enforcement. Approved runtime/CLI/Test execution is bounded, argv-only, no-shell, and
+  project-confined; it is not arbitrary shell execution. Browser/API probes remain restricted to
+  approved loopback runtimes. The release update check remains the only configured non-loopback
+  product request.
 
 Local development packages remain unsigned and unnotarized and are not release artifacts. The updater minisign key does not replace required macOS notarization or Windows code signing. A public production release remains blocked until the platform signing credentials and updater private key are configured as repository secrets. Future connectors, execution arms and team services require separate threat models and explicit user consent.
 

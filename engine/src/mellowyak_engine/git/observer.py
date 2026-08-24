@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -9,6 +10,11 @@ from dulwich import porcelain
 from dulwich.diff_tree import tree_changes
 from dulwich.errors import NotGitRepository
 from dulwich.repo import Repo
+
+from mellowyak_engine.scanning.policy import DEFAULT_EXCLUDED_DIRS, is_sensitive_path
+
+_NON_GIT_EXCLUDED_DIRECTORIES = DEFAULT_EXCLUDED_DIRS | frozenset({".mellowyak-data"})
+_NON_GIT_MAX_ENTRIES = 50_000
 
 
 @dataclass(frozen=True)
@@ -45,7 +51,46 @@ def discover_repository(path: Path) -> Repo | None:
         return None
 
 
+def _non_git_worktree_fingerprint(root: Path) -> str:
+    """Return a bounded watcher hint for projects that have no Git repository.
+
+    This is intentionally metadata based: authoritative Phase 7 source identity is
+    the content-addressed snapshot manifest.  The hint only makes polling notice
+    additions, writes, renames, and deletions without reading source contents.
+    """
+    rows: list[tuple[str, int, int, int]] = []
+    try:
+        for current, directories, files in os.walk(root, topdown=True, followlinks=False):
+            directories[:] = sorted(
+                directory
+                for directory in directories
+                if directory not in _NON_GIT_EXCLUDED_DIRECTORIES
+                and not (Path(current) / directory).is_symlink()
+            )
+            current_path = Path(current)
+            for filename in sorted(files):
+                candidate = current_path / filename
+                if candidate.is_symlink():
+                    continue
+                try:
+                    stat = candidate.stat()
+                    relative = candidate.relative_to(root).as_posix()
+                except (OSError, ValueError):
+                    continue
+                rows.append((relative, stat.st_size, stat.st_mtime_ns, stat.st_mode))
+                if len(rows) >= _NON_GIT_MAX_ENTRIES:
+                    break
+            if len(rows) >= _NON_GIT_MAX_ENTRIES:
+                break
+    except OSError:
+        rows.append(("UNREADABLE", 0, 0, 0))
+    canonical = json.dumps(rows, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(canonical.encode("utf-8", errors="surrogatepass")).hexdigest()
+
+
 def _working_hash(root: Path, relative_path: str) -> str:
+    if ".mellowyak-data" in Path(relative_path).parts or is_sensitive_path(relative_path):
+        return "SENSITIVE_EXCLUDED"
     candidate = (root / relative_path).resolve(strict=False)
     try:
         candidate.relative_to(root)
@@ -67,7 +112,7 @@ def observe_git(path: Path) -> GitState:
     selected = path.expanduser().resolve(strict=True)
     repo = discover_repository(selected)
     if repo is None:
-        fingerprint = hashlib.sha256(b"GIT_UNAVAILABLE").hexdigest()
+        fingerprint = _non_git_worktree_fingerprint(selected)
         return GitState(
             available=False,
             repository_root=None,

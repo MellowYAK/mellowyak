@@ -28,6 +28,8 @@ from mellowyak_engine.db.models import (
     ProjectFile,
     ProjectGitSnapshot,
     ProjectScanRun,
+    SourceEpisode,
+    SourceSnapshot,
 )
 from mellowyak_engine.git.observer import committed_changed_paths, observe_git
 from mellowyak_engine.impact.models import (
@@ -112,8 +114,6 @@ class ImpactService:
             if not root.is_dir():
                 raise ImpactServiceError("PROJECT_ROOT_UNAVAILABLE")
             state = observe_git(root)
-            if not state.available:
-                raise ImpactServiceError("GIT_UNAVAILABLE")
             prior_snapshots = session.scalars(
                 select(ProjectGitSnapshot)
                 .where(ProjectGitSnapshot.project_id == project_id)
@@ -128,10 +128,46 @@ class ImpactService:
                 ),
                 None,
             )
-            if state.is_dirty:
+            if not state.available:
+                source_snapshot = session.scalars(
+                    select(SourceSnapshot)
+                    .where(SourceSnapshot.project_id == project_id)
+                    .order_by(SourceSnapshot.created_at.desc())
+                    .limit(1)
+                ).first()
+                episode = session.scalars(
+                    select(SourceEpisode)
+                    .where(SourceEpisode.project_id == project_id)
+                    .order_by(SourceEpisode.started_at.desc())
+                    .limit(1)
+                ).first()
+                kind = "snapshot_episode"
+                base_head = None
+                changed_paths = (
+                    sorted(
+                        set(
+                            _load_json(episode.added_paths_json, [])
+                            + _load_json(episode.modified_paths_json, [])
+                            + _load_json(episode.deleted_paths_json, [])
+                        )
+                    )
+                    if episode
+                    else []
+                )
+                exact_fingerprint = (
+                    source_snapshot.manifest_digest
+                    if source_snapshot is not None
+                    else state.worktree_fingerprint
+                )
+                identity_material = (
+                    f"snapshot:{source_snapshot.id if source_snapshot else 'PENDING'}:"
+                    f"{exact_fingerprint}:{episode.id if episode else 'NO_EPISODE'}"
+                )
+            elif state.is_dirty:
                 kind = "uncommitted_worktree"
                 base_head = state.head_sha
                 changed_paths = _changed_paths_from_state(state)
+                exact_fingerprint = state.worktree_fingerprint
                 identity_material = (
                     f"working:{state.head_sha or 'UNBORN'}:{state.worktree_fingerprint}"
                 )
@@ -139,6 +175,7 @@ class ImpactService:
                 kind = "committed"
                 base_head = prior_head or state.head_sha
                 changed_paths = list(committed_changed_paths(root, base_head, state.head_sha))
+                exact_fingerprint = state.worktree_fingerprint
                 identity_material = f"commit:{base_head or 'UNBORN'}:{state.head_sha or 'UNBORN'}"
             project.current_branch = state.branch
             project.current_head_sha = state.head_sha
@@ -172,7 +209,7 @@ class ImpactService:
                     revision=revision,
                     base_head_sha=base_head,
                     head_sha=state.head_sha,
-                    worktree_fingerprint=state.worktree_fingerprint,
+                    worktree_fingerprint=exact_fingerprint,
                     changed_paths_json=_json(changed_paths),
                     status="change_detected" if changed_paths else "no_changes",
                     created_at=now,
@@ -191,6 +228,9 @@ class ImpactService:
             else:
                 change.changed_paths_json = _json(changed_paths)
                 change.updated_at = now
+            stale_identity_reason = (
+                "git_change_identity_changed" if state.available else "source_identity_changed"
+            )
             session.execute(
                 update(ImpactAnalysis)
                 .where(
@@ -198,7 +238,7 @@ class ImpactService:
                     ImpactAnalysis.change_id != change.id,
                     ImpactAnalysis.stale.is_(False),
                 )
-                .values(stale=True, stale_reasons_json=_json(["git_change_identity_changed"]))
+                .values(stale=True, stale_reasons_json=_json([stale_identity_reason]))
             )
             session.execute(
                 update(ContextReceipt)

@@ -321,9 +321,9 @@ def test_new_scan_revision_marks_prior_analysis_stale(tmp_path: Path) -> None:
         analysis = client.post(
             f"/projects/{project_id}/changes/{change['id']}/analyze", headers=headers(), json={}
         ).json()
-        previous_scan_id = client.get(
-            f"/projects/{project_id}", headers=headers()
-        ).json()["scan"]["id"]
+        previous_scan_id = client.get(f"/projects/{project_id}", headers=headers()).json()["scan"][
+            "id"
+        ]
         scan_response = client.post(f"/projects/{project_id}/scan", headers=headers(), json={})
         assert scan_response.status_code == 200
         wait_for_scan(client, project_id, previous_scan_id)
@@ -588,9 +588,11 @@ def test_medium_graph_analysis_is_bounded_and_fast() -> None:
         "0002_project_git_impact",
         "0003_reverse_impact_context",
         "0004_behavior_evidence_browser",
+        "0005_verification_regression_gate",
+        "0006_desktop_productization",
     ],
 )
-def test_phase5_migration_preserves_existing_project_rows(
+def test_phase7_migration_preserves_existing_project_rows(
     tmp_path: Path, starting_revision: str
 ) -> None:
     paths = StoragePaths.create(tmp_path / starting_revision)
@@ -610,7 +612,7 @@ def test_phase5_migration_preserves_existing_project_rows(
             (project_id, "Preserved Phase Project", str(tmp_path / "source"), now),
         )
     upgraded = LocalDatabase(paths)
-    assert upgraded.migrate() == "0006_desktop_productization"
+    assert upgraded.migrate() == "0007_runtime_snapshot_probe_foundation"
     with upgraded.engine.connect() as connection:
         row = connection.execute(
             text("SELECT display_name, root_path FROM projects WHERE id = :id"), {"id": project_id}
@@ -622,4 +624,12 @@ def test_phase5_migration_preserves_existing_project_rows(
                 text("SELECT name FROM sqlite_master WHERE type='table'")
             )
         }
-    assert {"project_changes", "context_receipts", "behavior_candidates"}.issubset(tables)
+    assert {
+        "project_changes",
+        "context_receipts",
+        "behavior_candidates",
+        "runtime_profiles",
+        "source_snapshots",
+        "probe_definitions",
+        "repair_workspaces",
+    }.issubset(tables)

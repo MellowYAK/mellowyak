@@ -70,17 +70,17 @@ MellowYak is designed to reduce that waste without replacing the developer’s c
 
 ```mermaid
 flowchart TD
-    A[Developer or AI agent changes code] --> B[MellowYak observes the exact Git change]
-    B --> C[Impact Map explains what may be affected]
+    A[Developer or local tool changes code] --> B[MellowYak groups a local Change Episode]
+    B --> S[Incremental Save Point with optional Git anchor]
+    S --> C[Impact Map explains what may be affected]
     C --> D[Required behaviors and checks are selected]
     D --> E{Fresh evidence passes?}
     E -->|Yes| F[Verified Complete]
     E -->|No| G[Regression Detected]
     G --> H[Completion Blocked]
-    H --> I[Repair Context: KEEP + RESTORE + evidence]
-    I --> J[Send to Codex, Claude Code, Cursor, IDE, or clipboard]
-    J --> K[Repair the current revision]
-    K --> L[Recheck the repaired HEAD]
+    H --> I[Repair Context and isolated Repair Workspace]
+    I --> K[Repair manually in the isolated copy]
+    K --> L[Recheck the repaired source identity]
     L --> E
 ```
 
@@ -92,8 +92,8 @@ MellowYak found what else might be affected.
 It checked only what now needed fresh proof.
 One existing behavior failed.
 MellowYak blocked completion.
-It gave the coding agent focused repair context.
-The repaired revision passed.
+It prepared focused local repair context.
+The repaired source identity passed.
 ```
 
 ---
@@ -307,12 +307,14 @@ Each Change Session is bound to a source identity such as:
 
 ```text
 project
-base commit
-head commit
-analysis revision
+snapshot manifest digest
+Episode and parent/current Save Point
+optional Git branch, HEAD, and worktree fingerprint
+Runtime Profile versions used by evidence
 ```
 
-A new commit, force-push, or relevant index change creates a new evaluation. Old evidence is preserved rather than silently rewritten.
+A settled Episode or relevant Git state creates a new evaluation. Git is optional. Old evidence and
+profile/probe versions are preserved rather than silently rewritten.
 
 ### Selective verification
 
@@ -393,7 +395,8 @@ RECHECK AFTER FIX
 4 required behaviors
 ```
 
-The repair context can be sent through an enabled connector or copied manually.
+Repair Context may be copied explicitly. Phase 7 can also create a local isolated Repair Workspace;
+it has no coding-agent connector and never applies changes to the live project.
 
 ### Evidence
 
@@ -441,7 +444,11 @@ Every value is labeled as one of:
 
 MellowYak does not publish a token-saving percentage or regression-prevention percentage without reproducible comparable evidence.
 
-### Connectors
+### Future connectors (not implemented)
+
+Phase 7 contains no Codex, Claude Code, Cursor, VS Code, MCP, CLI-agent, CI, or provider connector.
+MellowYak observes local outcomes and remains prompt-blind. The items below are product-direction ideas,
+not current capabilities.
 
 Connectors connect MellowYak to where work happens.
 
@@ -492,19 +499,17 @@ This separation keeps MellowYak model-neutral and allows non-browser projects to
 
 ```text
 1. Install MellowYak.
-2. Add a local Git repository.
-3. MellowYak scans the supported source structure and available checks.
-4. Connect Codex, Claude Code, Cursor, VS Code, or another tool.
-5. Work in the coding tool you already use.
-6. MellowYak observes the exact Git change.
-7. Impact Map identifies relevant areas and protected behaviors.
-8. MellowYak selects required checks and skips irrelevant ones.
-9. If everything required passes, the revision becomes Verified Complete.
-10. If something fails, completion is blocked.
-11. MellowYak prepares focused repair context.
-12. The coding agent repairs the current change without removing the requested feature.
-13. MellowYak verifies the repaired revision again.
-14. Evidence and measured value are stored locally.
+2. Add a local project folder; Git is optional.
+3. Confirm its Runtime Profiles and create the initial incremental Save Point.
+4. Work normally in any editor or local coding tool; no integration is required.
+5. MellowYak groups settled local writes into an Episode and reuses unchanged snapshot content.
+6. Impact Map selects bounded relevant behaviors and Probes.
+7. A file change alone remains a WATCH signal, never a regression claim.
+8. If required comparable evidence passes, the current source identity can support completion.
+9. If a previously accepted PASS fails reproducibly, MellowYak can record a confirmed regression.
+10. MellowYak prepares focused Repair Context and an optional isolated Repair Workspace.
+11. Repair remains manual and outside the live project in Phase 7.
+12. Evidence and history remain local.
 ```
 
 ---
@@ -541,7 +546,7 @@ flowchart TB
         TRACE[API / runtime tracing]
     end
 
-    ExistingTools -->|Connectors: MCP, CLI, IDE adapters| ENG
+    ExistingTools -.->|write local project files; no connector required| SRC
     UI <--> ENG
     ENG <--> DB
     ENG <--> FS
@@ -560,9 +565,10 @@ flowchart TB
 - **Data models:** Pydantic
 - **Database:** SQLite with SQLAlchemy and Alembic
 - **Evidence:** local filesystem with content hashes and SQLite metadata
+- **Source memory:** local SHA-256 object/manifests store with SQLite references
 - **Realtime UI:** local events/WebSocket or Tauri event bridge
 - **Browser execution:** Playwright-based local worker
-- **Agent interface:** MCP and CLI, with optional IDE/model adapters
+- **Runtime/verification:** versioned Runtime Profiles and Browser/API/CLI/Process/Test/Manual Probes
 
 The packaged application should include its runtime dependencies. End users should install one application—not a development stack.
 
@@ -587,7 +593,9 @@ Mandatory account    NO
 
 MellowYak itself must not upload project data to MellowYak-operated servers.
 
-Data may leave the machine only through a connector the user explicitly enables. For example, sending selected context to Codex or Claude Code means that selected context is handled under that provider’s configuration and policy—not by a hidden MellowYak upload path.
+Phase 7 contains no coding-agent connector, prompt/history reader, provider-token access, source upload,
+evidence upload, or cloud synchronization path. Explicit local clipboard/file/open actions remain under
+the user's control.
 
 Privacy claims are considered verified only after automated tests and package-level inspection prove the implemented behavior.
 
@@ -601,7 +609,7 @@ The complete product is organized around a passive monitoring workflow rather th
 |---|---|
 | Welcome | Choose local use and understand the privacy model |
 | First Setup | Verify the Local Engine, SQLite database, storage paths, and local-only mode |
-| Add Project | Select a repository and detect Git, framework, tests, runtime, and tools |
+| Add Project / Runtime Wizard | Select a local folder, confirm project type and multiple runtimes, choose privacy/retention, and create the first Save Point; Git is optional |
 | Project Readiness | Show indexed capabilities, unknowns, limits, and missing execution support |
 | Home / Command Center | Monitor current activity, regressions requiring attention, and measured value |
 | Projects | View and manage monitored repositories |
@@ -609,11 +617,12 @@ The complete product is organized around a passive monitoring workflow rather th
 | Change Cockpit | Follow one exact change from work through impact, verification, regression, repair, and completion |
 | Impact Map | Explore explainable source/runtime/behavior relationships |
 | Protected Behaviors | Define and review what must continue to work |
+| Runtime | Detect, configure, version, validate, and observe primary/secondary Runtime Profiles |
+| Memory / Save Points | Review Episodes, deduplicated snapshots, milestones, retention, and isolated materialization |
 | Verification | Review selected checks, skipped checks, progress, policy, and results |
 | Regression & Repair | Compare last-known-good with current failure and create repair context |
 | Evidence | Browse revision-bound screenshots, traces, API responses, tests, and history |
 | Value | Review measured work avoided and clearly labeled estimates |
-| Connectors | Connect coding agents, IDEs, CI, Git providers, and manual workflows |
 | Settings | Configure passive/observe/strict modes, local storage, privacy, policies, and execution adapters |
 
 The primary screen during active work is the **Change Cockpit**. The developer should not need to move through many unrelated dashboards to understand one change.
@@ -666,7 +675,13 @@ The intended principle is:
 
 ## Project status
 
-MellowYak Phase 5 now adds deterministic Protection Plans, selective local Browser Replay, deterministic assertion execution, explicit human verification, separate current evidence, supported regression decisions, an immutable local Completion Gate, model-neutral Repair Context, and re-verification for a repaired exact source identity to the Phase 1–4 foundation. It is not a released product. `VERIFIED COMPLETE` covers only checks required by the current known Protection Plan; it is not complete blast-radius knowledge or a deployment guarantee. Windows, Linux, and Apple Silicon remain CI-configured or unverified rather than runtime-verified on this Intel macOS revision.
+MellowYak Phase 7 adds multiple versioned Runtime Profiles, Git-optional Source Identity v2, settled
+Episodes, incremental content-addressed Save Points, explicit known-good milestones, Browser/API/CLI/
+Process/Test/Manual Probes, deterministic evidence states, and isolated Repair Workspaces to the
+Phase 1–6 foundation. It is not a released product. A changed file or dependency is only a reason to
+recheck; only comparable reproducible prior-PASS/current-FAIL evidence can support a confirmed
+regression. Exact completion, package, and platform status is authoritative only in
+[`docs/validation/PHASE_7_RUNTIME_MEMORY_PROBE_VALIDATION_REPORT.md`](docs/validation/PHASE_7_RUNTIME_MEMORY_PROBE_VALIDATION_REPORT.md).
 
 The complete workflow described in this README is the product direction. Implementation must advance through verified stages.
 
@@ -753,15 +768,32 @@ Phase 5 does **not** provide complete blast-radius knowledge, zero-regression gu
 
 Phase 6 does **not** add accounts, cloud sync, source or evidence upload, automatic repair, MCP/CLI connectors, external CI merge enforcement, signing, notarization, or a public release. Native-notification click routing remains platform-limited until a verified plugin callback is available; the persistent in-app alert always carries the exact destination.
 
-### Phase 7 — Connectors, value, and release
+### Phase 7 — Runtime Profiles, Snapshot Memory, and Universal Probes
 
-- MCP and CLI;
-- IDE/model adapters;
-- CI/Git integration;
-- measurement ledger;
-- Value screen;
-- signed and tested desktop packages;
-- public technical preview.
+- implemented an eight-step first-time/local-project Runtime Wizard and later setup for existing projects;
+- implemented several versioned primary/secondary Runtime Profiles with Python, Node, PHP, generic,
+  and bounded metadata detection through one fail-open adapter contract;
+- made Git optional through snapshot-backed Source Identity v2 while retaining existing Git evidence;
+- implemented coalesced Episodes and deterministic incremental local SHA-256 Save Points that reuse
+  unchanged objects and materialize only outside the live project;
+- implemented explicit pinned known-good milestones that require Probe PASS or human attestation;
+- implemented versioned Browser, API, CLI, Process, Test, and Manual Probes that feed the existing
+  Protection Plan and regression engine;
+- implemented deterministic `WATCH`, `SUSPECTED`, `HIGH`, and `CONFIRMED` evidence states;
+- implemented isolated local Repair Workspace creation/open/delete with no automatic apply;
+- added Runtime and Memory project screens, actionable Ready-with-limits details, and complete
+  translation-key-only English/Hebrew RTL copy;
+- added migration `0007_runtime_snapshot_probe_foundation` while preserving `0001`–`0006`.
+
+Phase 7 does **not** add Codex/Claude/Cursor/VS Code/MCP integration, prompt/provider-token access,
+cloud upload, automatic repair/apply, live-project overwrite, production deployment, autonomous
+rollback, process-memory checkpointing, accounts, billing, signing, notarization, or public release.
+
+Phase 7 user and technical documentation is indexed in
+[`docs/phase-7-delivery/README.md`](docs/phase-7-delivery/README.md),
+[`docs/product/RUNTIME_PROFILE_GUIDE.md`](docs/product/RUNTIME_PROFILE_GUIDE.md),
+[`docs/product/SAVE_POINTS_AND_KNOWN_GOOD.md`](docs/product/SAVE_POINTS_AND_KNOWN_GOOD.md), and
+[`docs/product/PROBE_TYPES.md`](docs/product/PROBE_TYPES.md).
 
 ---
 
@@ -950,7 +982,9 @@ No. It blocks known required failures, exposes unknown coverage, and keeps decis
 
 ### Does source leave my machine?
 
-The local-core architecture is designed so that MellowYak itself does not upload source or evidence. Data leaves only through connectors you explicitly enable. This claim must be continuously verified by tests and package inspection.
+The local-core architecture is designed so that MellowYak itself does not upload source or evidence.
+Phase 7 has no connector or cloud synchronization path. Explicit local copy/open/export actions remain
+visible and user-controlled. This claim must be continuously verified by tests and package inspection.
 
 ### Does MellowYak require a cloud account?
 
@@ -967,7 +1001,9 @@ Source change
 → required evidence
 ```
 
-Future adapters can support APIs, services, CLI tools, desktop applications, and other runtimes.
+Phase 7 includes bounded Browser, loopback API, CLI, Process, Test, and Manual Probes plus versioned
+Python, Node, PHP, generic-process, and metadata-only runtime adapters. Availability remains explicit
+and platform-specific.
 
 ### Is token saving the main product?
 

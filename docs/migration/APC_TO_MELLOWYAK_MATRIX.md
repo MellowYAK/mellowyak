@@ -53,6 +53,24 @@ Updated: 2026-08-24. The local APC checkout was inspected read-only; paths below
 - Phase 5 destinations are `engine/.../protection/`, `verification/`, `regression/`, `gate/`, `repair/`, migration `0005_verification_regression_gate`, and `ChangeCockpit.tsx`.
 - APC Bridge, PLAY, queue, tenant, credentials, PHP/MariaDB, broad reader, model, ingest and server deployment code remain excluded or security-blocked.
 
+## Phase 7 update
+
+Phase 7 did not reopen or modify APC. It extends only MellowYak's local architecture.
+
+| Phase 7 capability | APC relationship | MellowYak destination | Disposition | Boundary |
+|---|---|---|---|---|
+| Multiple Runtime Profiles | General lesson that one project can expose several local execution surfaces | `engine/src/mellowyak_engine/runtime_profiles/`, `runtime_adapters/` | `REWRITE` | No Bridge, account, credential, server process control, or APC runtime code |
+| Git-optional Source Identity | Source-history/product lesson only | `engine/src/mellowyak_engine/source_identity.py`, `episodes/` | `REWRITE` | Existing MellowYak Change/Impact records are extended, never replaced by APC history |
+| Incremental Save Points | Historical source-memory concept only | `engine/src/mellowyak_engine/snapshots/` | `REWRITE` | New local SHA-256 store; no APC backup/database/storage format or source copying |
+| Universal Probes | Browser/evidence lessons already cleanly extracted in Phases 4–5 | `engine/src/mellowyak_engine/probes/` | `REWRITE` | Extends MellowYak Browser Replay/Protection Plan; no PLAY queue, remote agent, or broad executor |
+| Repair Workspace v1 | Selective-restore/repair-context lesson only | `engine/src/mellowyak_engine/repair_workspace/` | `REWRITE` | Isolated materialization only; no live-tree restore, automatic apply, or coding-agent integration |
+| Runtime/Memory desktop UI | No reusable APC UI | Phase 7 React screens and translation catalogs | `REWRITE` | No APC PHP pages/assets; every visible string remains a translation key |
+
+Migration `0007_runtime_snapshot_probe_foundation` and all Phase 7 tables are MellowYak-native.
+APC PHP/MariaDB, tenant/user roles, Docker deployment, Bridge transport, queues, installation-wide
+tokens, broad context/model/ingest readers, provider credentials, and server control remain
+`ARCHIVE`, `DO_NOT_USE`, or `SECURITY_BLOCKER`.
+
 - `PORT` means only the independently reviewable concept, contract, algorithm or fixture may later cross the boundary with provenance and tests.
 - `REWRITE` means no code copy: implement against MellowYak's local contracts.
 - `SECURITY_BLOCKER` overrides all historical evidence and permanently blocks direct reuse.

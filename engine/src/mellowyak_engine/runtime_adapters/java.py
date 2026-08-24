@@ -1,0 +1,73 @@
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
+
+from mellowyak_engine.runtime_adapters.base import (
+    BaseRuntimeAdapter,
+    DetectionConfidence,
+    RuntimeDetection,
+)
+from mellowyak_engine.runtime_adapters.helpers import (
+    executable_on_path,
+    first_line,
+    manifest_hashes,
+    relative_markers,
+    safe_metadata_command,
+)
+
+
+class JavaMetadataRuntimeAdapter(BaseRuntimeAdapter):
+    name = "java-metadata"
+    version = "1"
+    runtime_type = "JAVA"
+    execution_supported = False
+    capabilities = (
+        "runtime.capability.detect",
+        "runtime.capability.describe",
+        "runtime.capability.fingerprint",
+    )
+
+    def detect(self, project: Path) -> tuple[RuntimeDetection, ...]:
+        root = project.expanduser().resolve()
+        candidates = (
+            "pom.xml",
+            "build.gradle",
+            "build.gradle.kts",
+            "settings.gradle",
+            "settings.gradle.kts",
+            "gradlew",
+            "mvnw",
+        )
+        markers = relative_markers(root, candidates)
+        if not markers:
+            return ()
+        executable = executable_on_path("java")
+        result = safe_metadata_command(
+            runner=self.runner,
+            project=root,
+            executable=executable,
+            argv=("-version",),
+        )
+        version = first_line((result[2] or result[1]) if result else "")
+        limitations = ["runtime.limitations.metadata_only_adapter"]
+        if executable is None:
+            limitations.append("runtime.limitations.java_executable_unavailable")
+        metadata: dict[str, Any] = {
+            "manifest_hashes": manifest_hashes(root, candidates),
+            "recommended_executable": executable,
+        }
+        return (
+            RuntimeDetection(
+                runtime_type=self.runtime_type,
+                adapter_name=self.name,
+                adapter_version=self.version,
+                confidence=DetectionConfidence.HIGH,
+                markers=markers,
+                executable=executable,
+                version=version,
+                reasons=("runtime.detection.java_markers",),
+                limitations=tuple(limitations),
+                metadata=metadata,
+            ),
+        )

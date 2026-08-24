@@ -107,6 +107,269 @@ export interface Project {
   disconnected: boolean;
   source_available: boolean;
   notifications_muted: boolean;
+  project_type?: ProjectType;
+  runtime_setup_status?: "INCOMPLETE" | "READY" | "READY_WITH_LIMITS";
+  observation_level?: "LIGHT" | "DEEP";
+  snapshot_retention_days?: number;
+  snapshot_soft_cap_bytes?: number;
+  phase7?: Record<string, unknown>;
+}
+
+export type ProjectType =
+  | "WEB_APP"
+  | "API_SERVICE"
+  | "DESKTOP_APP"
+  | "CLI_TOOL"
+  | "MOBILE_APP"
+  | "BACKGROUND_WORKER"
+  | "LIBRARY"
+  | "MIXED_POLYGLOT"
+  | "OTHER";
+
+export type RuntimeType = "NODE" | "PYTHON" | "PHP" | "TAURI_RUST" | "RUBY" | "JAVA" | "GENERIC";
+export type ExecutionMode = "MANAGED" | "EXTERNAL" | "MANUAL";
+export type ProbeType = "BROWSER" | "HTTP" | "CLI" | "PROCESS" | "TEST" | "MANUAL";
+
+export interface RuntimeCandidate {
+  runtime_type: RuntimeType | string;
+  display_name?: string;
+  runtime_version?: string | null;
+  executable_reference?: string | null;
+  relative_working_directory?: string;
+  dependency_manifests?: string[];
+  test_definitions?: Array<Record<string, unknown>>;
+  limitations?: string[];
+  detected?: boolean;
+  [key: string]: unknown;
+}
+
+export interface RuntimeDetection {
+  id: string;
+  project_id: string;
+  status: string;
+  candidates: RuntimeCandidate[];
+  started_at: string;
+  completed_at: string | null;
+  error_code: string | null;
+}
+
+export interface RuntimeProfileVersion {
+  id: string;
+  version_number: number;
+  runtime_type: RuntimeType | string;
+  adapter_version: string;
+  execution_mode: ExecutionMode | string;
+  executable_reference: string | null;
+  argv: string[];
+  relative_working_directory: string;
+  runtime_version: string | null;
+  dependency_fingerprint: string | null;
+  health_definition: Record<string, unknown>;
+  expected_ports: number[];
+  test_definitions: Array<Record<string, unknown>>;
+  environment_schema: string[];
+  network_policy: string;
+  limitations: string[];
+  approved_at: string | null;
+  detected_at: string | null;
+  created_at: string;
+}
+
+export interface RuntimeProfile {
+  id: string;
+  project_id: string;
+  display_name: string;
+  current_version_id: string;
+  primary: boolean;
+  status: string;
+  current_version: RuntimeProfileVersion;
+  versions: RuntimeProfileVersion[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RuntimeProfileInput {
+  display_name: string;
+  runtime_type: RuntimeType | string;
+  primary?: boolean;
+  execution_mode?: ExecutionMode | string;
+  executable_reference?: string | null;
+  argv?: string[];
+  relative_working_directory?: string;
+  runtime_version?: string | null;
+  dependency_fingerprint?: string | null;
+  health_definition?: Record<string, unknown>;
+  expected_ports?: number[];
+  test_definitions?: Array<Record<string, unknown>>;
+  environment_schema?: string[];
+  network_policy?: string;
+  limitations?: string[];
+  approved?: boolean;
+}
+
+export interface RuntimeInstance {
+  id: string;
+  project_id: string;
+  profile_id: string;
+  profile_version_id: string;
+  correlation_id: string;
+  status: string;
+  process_id: number | null;
+  started_at: string;
+  stopped_at: string | null;
+  exit_code: number | null;
+  observation: Record<string, unknown>;
+}
+
+export interface SourceSnapshot {
+  id: string;
+  project_id: string;
+  parent_snapshot_id: string | null;
+  episode_id: string | null;
+  manifest_digest: string;
+  creation_reason: string;
+  source_identity: Record<string, unknown>;
+  git_anchor: Record<string, unknown>;
+  included_count: number;
+  excluded_count: number;
+  sensitive_count: number;
+  unsupported_count: number;
+  logical_bytes: number;
+  physical_bytes_added: number;
+  reused_bytes: number;
+  pinned: boolean;
+  integrity_status: string;
+  created_at: string;
+  entries?: Array<Record<string, unknown>>;
+  runtime_profile_fingerprints?: Array<Record<string, unknown> | string>;
+}
+
+export interface SnapshotMaterialization {
+  snapshot_id: string;
+  relative_path: string;
+  file_count: number;
+  logical_bytes: number;
+  verified: boolean;
+  live_project_modified: false;
+}
+
+export interface SourceEpisode {
+  id: string;
+  project_id: string;
+  started_at: string;
+  ended_at: string | null;
+  event_count: number;
+  added_paths: string[];
+  modified_paths: string[];
+  deleted_paths: string[];
+  renamed_paths: Array<Record<string, string>>;
+  dependency_changes: string[];
+  runtime_events: Array<Record<string, unknown>>;
+  base_snapshot_id: string | null;
+  resulting_snapshot_id: string | null;
+  git_anchor: Record<string, unknown>;
+  status: string;
+  error_code: string | null;
+}
+
+export interface SnapshotMilestone {
+  id: string;
+  project_id: string;
+  snapshot_id: string;
+  display_name: string;
+  behavior_id: string | null;
+  behavior_version_id: string | null;
+  probe_version_id: string | null;
+  runtime_profile_versions: string[];
+  environment_summary: Record<string, unknown>;
+  limitations: string[];
+  status: string;
+  human_attested: boolean;
+  pinned: boolean;
+  created_at: string;
+}
+
+export interface ProbeVersion {
+  id: string;
+  version_number: number;
+  runtime_profile_version_id: string | null;
+  definition: Record<string, unknown>;
+  timeout_seconds: number;
+  retry_policy: Record<string, unknown>;
+  expected_result: Record<string, unknown>;
+  evidence_policy: Record<string, unknown>;
+  source_links: Array<Record<string, unknown>>;
+  runtime_links: Array<Record<string, unknown>>;
+  approved_at: string | null;
+  created_at: string;
+}
+
+export interface ProbeDefinition {
+  id: string;
+  project_id: string;
+  behavior_id: string | null;
+  display_name: string;
+  probe_type: ProbeType | string;
+  current_version_id: string;
+  status: string;
+  current_version: ProbeVersion;
+  versions: ProbeVersion[];
+  last_run: ProbeRun | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProbeInput {
+  display_name: string;
+  probe_type: ProbeType | string;
+  behavior_id?: string | null;
+  runtime_profile_version_id?: string | null;
+  definition?: Record<string, unknown>;
+  timeout_seconds?: number;
+  retry_policy?: Record<string, unknown>;
+  expected_result?: Record<string, unknown>;
+  evidence_policy?: Record<string, unknown>;
+  source_links?: Array<Record<string, unknown>>;
+  runtime_links?: Array<Record<string, unknown>>;
+  approved?: boolean;
+}
+
+export interface ProbeRun {
+  id: string;
+  project_id: string;
+  probe_id: string;
+  probe_version_id: string;
+  snapshot_id: string;
+  episode_id: string | null;
+  runtime_profile_version_id: string | null;
+  source_identity: Record<string, unknown>;
+  status: string;
+  result: string;
+  attempt_count: number;
+  expected: Record<string, unknown>;
+  observed: Record<string, unknown>;
+  evidence: Record<string, unknown>;
+  limitations: string[];
+  reproducible: boolean;
+  signal: Record<string, unknown> | null;
+  started_at: string | null;
+  completed_at: string | null;
+  cancelled_at: string | null;
+}
+
+export interface RepairWorkspace {
+  id: string;
+  project_id: string;
+  regression_id: string | null;
+  signal_id: string | null;
+  snapshot_id: string;
+  relative_path: string;
+  manifest_digest: string;
+  status: string;
+  instructions: string | null;
+  items: Array<Record<string, unknown>>;
+  created_at: string;
+  deleted_at: string | null;
 }
 
 export interface LocalAlert {
@@ -558,10 +821,16 @@ export async function createProject(
   path: string,
   displayName: string,
   monitoringMode: "passive" | "paused" = "passive",
+  options: {
+    project_type?: ProjectType;
+    observation_level?: "LIGHT" | "DEEP";
+    snapshot_retention_days?: number;
+    snapshot_soft_cap_bytes?: number;
+  } = {},
 ): Promise<Project> {
   return engineFetch<Project>("/projects", {
     method: "POST",
-    body: JSON.stringify({ path, display_name: displayName, monitoring_mode: monitoringMode }),
+    body: JSON.stringify({ path, display_name: displayName, monitoring_mode: monitoringMode, ...options }),
   });
 }
 
@@ -774,7 +1043,10 @@ export async function openProjectFolder(projectId: string): Promise<void> {
   });
 }
 
-export async function listAlerts(state = "all"): Promise<LocalAlert[]> { return (await engineFetch<{alerts: LocalAlert[]}>(`/alerts?state=${encodeURIComponent(state)}`)).alerts; }
+export async function listAlerts(state = "all"): Promise<LocalAlert[]> {
+  const response = await engineFetch<{ alerts?: LocalAlert[] }>(`/alerts?state=${encodeURIComponent(state)}`);
+  return Array.isArray(response.alerts) ? response.alerts : [];
+}
 export async function unreadAlertCount(): Promise<number> { return (await engineFetch<{count:number}>("/alerts/unread-count")).count; }
 export async function setAlertState(id: string, action: "read"|"unread"|"resolve"): Promise<LocalAlert> { return engineFetch<LocalAlert>(`/alerts/${encodeURIComponent(id)}/${action}`, {method:"POST",body:"{}"}); }
 export async function clearResolvedAlerts(): Promise<number> { return (await engineFetch<{cleared:number}>("/alerts/clear-resolved",{method:"POST",body:"{}"})).cleared; }
@@ -783,7 +1055,20 @@ export async function putNotificationSettings(value: Partial<NotificationSetting
 export async function getQuietMode(): Promise<QuietMode> { return engineFetch<QuietMode>("/settings/quiet-mode"); }
 export async function startQuietMode(duration: "one_hour"|"until_tomorrow"|"until_off", allowCritical=false): Promise<QuietMode> { return engineFetch<QuietMode>("/settings/quiet-mode/start",{method:"POST",body:JSON.stringify({duration,allow_critical:allowCritical})}); }
 export async function stopQuietMode(): Promise<QuietMode> { return engineFetch<QuietMode>("/settings/quiet-mode/stop",{method:"POST",body:"{}"}); }
-export async function getProjectCapabilities(projectId:string): Promise<ProjectCapabilities> { return engineFetch<ProjectCapabilities>(`/projects/${encodeURIComponent(projectId)}/capabilities`); }
+export async function getProjectCapabilities(projectId: string): Promise<ProjectCapabilities> {
+  const response = await engineFetch<Partial<ProjectCapabilities>>(
+    `/projects/${encodeURIComponent(projectId)}/capabilities`,
+  );
+  return {
+    mode: response.mode ?? "local_source",
+    source_available: response.source_available ?? true,
+    runtime_available: response.runtime_available ?? false,
+    available: Array.isArray(response.available) ? response.available : [],
+    unavailable: Array.isArray(response.unavailable) ? response.unavailable : [],
+    future_only: Array.isArray(response.future_only) ? response.future_only : [],
+    source_remains_local: true,
+  };
+}
 export async function setProjectMuted(projectId:string, muted:boolean): Promise<void> { await engineFetch(`/projects/${encodeURIComponent(projectId)}/notification-preferences`,{method:"PUT",body:JSON.stringify({muted})}); }
 export async function disconnectProject(projectId:string): Promise<void> { await engineFetch(`/projects/${encodeURIComponent(projectId)}/disconnect`,{method:"POST",body:"{}"}); }
 export async function deletionPreview(projectId:string): Promise<Record<string,unknown>> { return engineFetch(`/projects/${encodeURIComponent(projectId)}/deletion-preview`); }
@@ -801,7 +1086,13 @@ export async function createProtectionPlan(projectId: string, changeId: string):
 }
 
 export async function getProtectionPlan(projectId: string, changeId: string): Promise<ProtectionPlan> {
-  return engineFetch<ProtectionPlan>(`/projects/${encodeURIComponent(projectId)}/changes/${encodeURIComponent(changeId)}/protection-plan`);
+  const response = await engineFetch<Partial<ProtectionPlan>>(
+    `/projects/${encodeURIComponent(projectId)}/changes/${encodeURIComponent(changeId)}/protection-plan`,
+  );
+  if (!response.id || !response.counts || !Array.isArray(response.items)) {
+    throw new Error("PROTECTION_PLAN_NOT_AVAILABLE");
+  }
+  return response as ProtectionPlan;
 }
 
 export async function verifyRequired(projectId: string, changeId: string, planId: string, itemIds: string[] = []): Promise<VerificationRun> {
@@ -845,6 +1136,132 @@ export async function copyRepairContext(projectId: string, contextId: string): P
 export async function saveRepairContext(projectId: string, contextId: string): Promise<string> {
   const response = await engineFetch<{ relative_path: string }>(`/projects/${encodeURIComponent(projectId)}/repair-contexts/${encodeURIComponent(contextId)}/save-local`, { method: "POST", body: "{}" });
   return response.relative_path;
+}
+
+export async function detectProjectRuntimes(projectId: string): Promise<RuntimeDetection> {
+  return engineFetch<RuntimeDetection>(`/projects/${encodeURIComponent(projectId)}/runtime/detect`, {
+    method: "POST",
+    body: "{}",
+  });
+}
+
+export async function listRuntimeProfiles(projectId: string): Promise<RuntimeProfile[]> {
+  const response = await engineFetch<{ profiles?: RuntimeProfile[] }>(`/projects/${encodeURIComponent(projectId)}/runtime-profiles`);
+  return Array.isArray(response.profiles) ? response.profiles : [];
+}
+
+export async function createRuntimeProfile(projectId: string, value: RuntimeProfileInput): Promise<RuntimeProfile> {
+  return engineFetch<RuntimeProfile>(`/projects/${encodeURIComponent(projectId)}/runtime-profiles`, {
+    method: "POST",
+    body: JSON.stringify(value),
+  });
+}
+
+export async function getRuntimeProfile(projectId: string, profileId: string): Promise<RuntimeProfile> {
+  return engineFetch<RuntimeProfile>(`/projects/${encodeURIComponent(projectId)}/runtime-profiles/${encodeURIComponent(profileId)}`);
+}
+
+export async function validateRuntimeProfile(projectId: string, profileId: string): Promise<RuntimeProfile> {
+  return engineFetch<RuntimeProfile>(`/projects/${encodeURIComponent(projectId)}/runtime-profiles/${encodeURIComponent(profileId)}/validate`, { method: "POST", body: "{}" });
+}
+
+export async function startRuntimeProfile(projectId: string, profileId: string): Promise<RuntimeInstance> {
+  return engineFetch<RuntimeInstance>(`/projects/${encodeURIComponent(projectId)}/runtime-profiles/${encodeURIComponent(profileId)}/start`, { method: "POST", body: "{}" });
+}
+
+export async function stopRuntimeProfile(projectId: string, profileId: string): Promise<RuntimeInstance> {
+  return engineFetch<RuntimeInstance>(`/projects/${encodeURIComponent(projectId)}/runtime-profiles/${encodeURIComponent(profileId)}/stop`, { method: "POST", body: "{}" });
+}
+
+export async function listRuntimeInstances(projectId: string): Promise<RuntimeInstance[]> {
+  const response = await engineFetch<{ instances?: RuntimeInstance[] }>(`/projects/${encodeURIComponent(projectId)}/runtime-instances`);
+  return Array.isArray(response.instances) ? response.instances : [];
+}
+
+export async function listSnapshots(projectId: string): Promise<SourceSnapshot[]> {
+  const response = await engineFetch<{ snapshots?: SourceSnapshot[] }>(`/projects/${encodeURIComponent(projectId)}/snapshots`);
+  return Array.isArray(response.snapshots) ? response.snapshots : [];
+}
+
+export async function createSnapshot(projectId: string, creationReason = "MANUAL_SAVE_POINT", episodeId: string | null = null): Promise<SourceSnapshot> {
+  return engineFetch<SourceSnapshot>(`/projects/${encodeURIComponent(projectId)}/snapshots`, {
+    method: "POST",
+    body: JSON.stringify({ creation_reason: creationReason, episode_id: episodeId }),
+  });
+}
+
+export async function getSnapshot(projectId: string, snapshotId: string): Promise<SourceSnapshot> {
+  return engineFetch<SourceSnapshot>(`/projects/${encodeURIComponent(projectId)}/snapshots/${encodeURIComponent(snapshotId)}`);
+}
+
+export async function materializeSnapshot(projectId: string, snapshotId: string): Promise<SnapshotMaterialization> {
+  return engineFetch<SnapshotMaterialization>(`/projects/${encodeURIComponent(projectId)}/snapshots/${encodeURIComponent(snapshotId)}/materialize`, { method: "POST", body: "{}" });
+}
+
+export async function setSnapshotPinned(projectId: string, snapshotId: string, pinned: boolean): Promise<SourceSnapshot> {
+  return engineFetch<SourceSnapshot>(`/projects/${encodeURIComponent(projectId)}/snapshots/${encodeURIComponent(snapshotId)}/${pinned ? "pin" : "unpin"}`, { method: "POST", body: "{}" });
+}
+
+export async function listEpisodes(projectId: string): Promise<SourceEpisode[]> {
+  const response = await engineFetch<{ episodes?: SourceEpisode[] }>(`/projects/${encodeURIComponent(projectId)}/episodes`);
+  return Array.isArray(response.episodes) ? response.episodes : [];
+}
+
+export async function getEpisode(projectId: string, episodeId: string): Promise<SourceEpisode> {
+  return engineFetch<SourceEpisode>(`/projects/${encodeURIComponent(projectId)}/episodes/${encodeURIComponent(episodeId)}`);
+}
+
+export async function listMilestones(projectId: string): Promise<SnapshotMilestone[]> {
+  const response = await engineFetch<{ milestones?: SnapshotMilestone[] }>(`/projects/${encodeURIComponent(projectId)}/milestones`);
+  return Array.isArray(response.milestones) ? response.milestones : [];
+}
+
+export async function createKnownGoodMilestone(projectId: string, value: {
+  snapshot_id: string;
+  display_name: string;
+  behavior_id?: string | null;
+  behavior_version_id?: string | null;
+  probe_version_id?: string | null;
+  human_attested?: boolean;
+}): Promise<SnapshotMilestone> {
+  return engineFetch<SnapshotMilestone>(`/projects/${encodeURIComponent(projectId)}/milestones/known-good`, { method: "POST", body: JSON.stringify(value) });
+}
+
+export async function listProbes(projectId: string): Promise<ProbeDefinition[]> {
+  const response = await engineFetch<{ probes?: ProbeDefinition[] }>(`/projects/${encodeURIComponent(projectId)}/probes`);
+  return Array.isArray(response.probes) ? response.probes : [];
+}
+
+export async function createProbe(projectId: string, value: ProbeInput): Promise<ProbeDefinition> {
+  return engineFetch<ProbeDefinition>(`/projects/${encodeURIComponent(projectId)}/probes`, { method: "POST", body: JSON.stringify(value) });
+}
+
+export async function getProbe(projectId: string, probeId: string): Promise<ProbeDefinition> {
+  return engineFetch<ProbeDefinition>(`/projects/${encodeURIComponent(projectId)}/probes/${encodeURIComponent(probeId)}`);
+}
+
+export async function runProbe(projectId: string, probeId: string, snapshotId: string | null = null): Promise<ProbeRun> {
+  return engineFetch<ProbeRun>(`/projects/${encodeURIComponent(projectId)}/probes/${encodeURIComponent(probeId)}/run`, { method: "POST", body: JSON.stringify({ snapshot_id: snapshotId }) });
+}
+
+export async function cancelProbe(projectId: string, probeId: string): Promise<{ status: string }> {
+  return engineFetch<{ status: string }>(`/projects/${encodeURIComponent(projectId)}/probes/${encodeURIComponent(probeId)}/cancel`, { method: "POST", body: "{}" });
+}
+
+export async function createRepairWorkspace(projectId: string, regressionId: string): Promise<RepairWorkspace> {
+  return engineFetch<RepairWorkspace>(`/projects/${encodeURIComponent(projectId)}/regressions/${encodeURIComponent(regressionId)}/repair-workspace`, { method: "POST", body: "{}" });
+}
+
+export async function getRepairWorkspace(projectId: string, workspaceId: string): Promise<RepairWorkspace> {
+  return engineFetch<RepairWorkspace>(`/projects/${encodeURIComponent(projectId)}/repair-workspaces/${encodeURIComponent(workspaceId)}`);
+}
+
+export async function openRepairWorkspace(projectId: string, workspaceId: string, target = "FOLDER"): Promise<{ status: string }> {
+  return engineFetch<{ status: string }>(`/projects/${encodeURIComponent(projectId)}/repair-workspaces/${encodeURIComponent(workspaceId)}/open`, { method: "POST", body: JSON.stringify({ target }) });
+}
+
+export async function deleteRepairWorkspace(projectId: string, workspaceId: string): Promise<void> {
+  await engineFetch(`/projects/${encodeURIComponent(projectId)}/repair-workspaces/${encodeURIComponent(workspaceId)}`, { method: "DELETE" });
 }
 
 export function resetBootstrapForTests(): void {

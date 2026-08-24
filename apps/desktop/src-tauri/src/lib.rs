@@ -87,10 +87,7 @@ fn engine_bootstrap(state: State<'_, EngineState>) -> Result<EngineBootstrap, St
 }
 
 #[tauri::command]
-fn set_keep_running_on_close(
-    enabled: bool,
-    state: State<'_, EngineState>,
-) -> Result<(), String> {
+fn set_keep_running_on_close(enabled: bool, state: State<'_, EngineState>) -> Result<(), String> {
     *state
         .keep_running_on_close
         .lock()
@@ -123,9 +120,7 @@ fn set_start_at_login(app: tauri::AppHandle, enabled: bool) -> Result<bool, Stri
         manager.disable()
     }
     .map_err(|error| error.to_string())?;
-    manager
-        .is_enabled()
-        .map_err(|error| error.to_string())
+    manager.is_enabled().map_err(|error| error.to_string())
 }
 
 #[tauri::command]

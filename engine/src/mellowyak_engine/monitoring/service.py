@@ -14,11 +14,20 @@ from mellowyak_engine.scanning.policy import (
 )
 from mellowyak_engine.scanning.service import ScanCoordinator
 
+if False:  # pragma: no cover - import cycle guard for type checkers
+    from mellowyak_engine.episodes.service import EpisodeService
+
 
 class MonitoringService:
-    def __init__(self, projects: ProjectService, scans: ScanCoordinator) -> None:
+    def __init__(
+        self,
+        projects: ProjectService,
+        scans: ScanCoordinator,
+        episodes: EpisodeService | None = None,
+    ) -> None:
         self.projects = projects
         self.scans = scans
+        self.episodes = episodes
         self._workers: dict[str, tuple[threading.Thread, threading.Event]] = {}
         self._lock = threading.Lock()
 
@@ -48,6 +57,8 @@ class MonitoringService:
             return
         try:
             self.projects.refresh_git(project_id, sorted(relative_paths))
+            if self.episodes is not None:
+                self.episodes.record(project_id, sorted(relative_paths))
             self.scans.start(project_id)
         except (ProjectError, RuntimeError, OSError):
             return
@@ -78,6 +89,8 @@ class MonitoringService:
                 continue
             current = str(state["worktree_fingerprint"])
             if previous and current != previous:
+                if self.episodes is not None:
+                    self.episodes.record(project_id, ["."])
                 try:
                     self.scans.start(project_id)
                 except RuntimeError:

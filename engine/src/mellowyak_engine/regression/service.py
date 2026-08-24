@@ -117,6 +117,8 @@ class RegressionService:
             "behavior_version_id": row.behavior_version_id,
             "baseline_id": row.baseline_id,
             "verification_run_item_id": row.verification_run_item_id,
+            "probe_run_id": row.probe_run_id,
+            "signal_classification_id": row.signal_classification_id,
             "status": row.status,
             "decision_reason": row.decision_reason,
             "source_identity": json.loads(row.source_identity_json),

@@ -16,13 +16,18 @@ from mellowyak_engine.db.models import (
     BehaviorLink,
     ImpactEdge,
     ImpactNode,
+    ProbeRun,
     Project,
     ProjectChangeObservation,
     ProjectFile,
     ProjectGitSnapshot,
     ProjectScanRun,
     ProtectedBehavior,
+    RuntimeProfile,
     ScanFinding,
+    SignalClassification,
+    SnapshotMilestone,
+    SourceSnapshot,
 )
 from mellowyak_engine.git.observer import GitState, observe_git
 from mellowyak_engine.scanning.policy import iter_candidates, language_for
@@ -183,7 +188,16 @@ class ProjectService:
         session.flush()
         return snapshot
 
-    def create(self, raw_path: str, display_name: str, monitoring_mode: str) -> Project:
+    def create(
+        self,
+        raw_path: str,
+        display_name: str,
+        monitoring_mode: str,
+        project_type: str = "OTHER",
+        observation_level: str = "LIGHT",
+        snapshot_retention_days: int = 30,
+        snapshot_soft_cap_bytes: int = 5 * 1024 * 1024 * 1024,
+    ) -> Project:
         if monitoring_mode not in {"passive", "paused"}:
             raise ProjectError("MONITORING_MODE_INVALID")
         detection = self.detect(raw_path)
@@ -216,6 +230,13 @@ class ProjectService:
                 current_worktree_fingerprint=state.worktree_fingerprint,
                 detection_payload_json=json.dumps(
                     detection["public"], sort_keys=True, separators=(",", ":")
+                ),
+                project_type=project_type[:40].upper(),
+                observation_level=observation_level[:40].upper(),
+                snapshot_retention_days=max(1, min(snapshot_retention_days, 3650)),
+                snapshot_soft_cap_bytes=max(
+                    16 * 1024 * 1024,
+                    min(snapshot_soft_cap_bytes, 1024 * 1024 * 1024 * 1024),
                 ),
             )
             session.add(project)
@@ -341,6 +362,56 @@ class ProjectService:
         detection = json.loads(project.detection_payload_json or "{}")
         latest_git = self._latest_git(session, project.id)
         latest_scan = self._latest_scan(session, project.id)
+        latest_snapshot = session.scalars(
+            select(SourceSnapshot)
+            .where(SourceSnapshot.project_id == project.id)
+            .order_by(SourceSnapshot.created_at.desc())
+            .limit(1)
+        ).first()
+        latest_milestone = session.scalars(
+            select(SnapshotMilestone)
+            .where(SnapshotMilestone.project_id == project.id)
+            .order_by(SnapshotMilestone.created_at.desc())
+            .limit(1)
+        ).first()
+        runtime_profile_count = int(
+            session.scalar(
+                select(func.count(RuntimeProfile.id)).where(RuntimeProfile.project_id == project.id)
+            )
+            or 0
+        )
+        primary_profile_id = session.scalar(
+            select(RuntimeProfile.id).where(
+                RuntimeProfile.project_id == project.id,
+                RuntimeProfile.primary.is_(True),
+            )
+        )
+        confirmed_regressions = int(
+            session.scalar(
+                select(func.count(SignalClassification.id)).where(
+                    SignalClassification.project_id == project.id,
+                    SignalClassification.state == "CONFIRMED",
+                )
+            )
+            or 0
+        )
+        latest_probe = session.scalars(
+            select(ProbeRun)
+            .where(ProbeRun.project_id == project.id)
+            .order_by(ProbeRun.started_at.desc())
+            .limit(1)
+        ).first()
+        limitations: list[dict[str, object]] = []
+        if runtime_profile_count == 0:
+            limitations.append(
+                {
+                    "code": "RUNTIME_NOT_CONFIGURED",
+                    "parameters": {},
+                    "severity": "WARNING",
+                }
+            )
+        if latest_snapshot is None:
+            limitations.append({"code": "NO_SAVE_POINT", "parameters": {}, "severity": "WARNING"})
         return {
             "id": project.id,
             "display_name": project.display_name,
@@ -366,6 +437,34 @@ class ProjectService:
             "disconnected": project.disconnected_at is not None,
             "source_available": Path(project.canonical_root_path or project.root_path).is_dir(),
             "notifications_muted": project.notifications_muted,
+            "project_type": project.project_type,
+            "runtime_setup_status": project.runtime_setup_status,
+            "observation_level": project.observation_level,
+            "snapshot_retention_days": project.snapshot_retention_days,
+            "snapshot_soft_cap_bytes": project.snapshot_soft_cap_bytes,
+            "phase7": {
+                "runtime_setup_status": project.runtime_setup_status,
+                "runtime_profile_count": runtime_profile_count,
+                "primary_runtime_profile_id": primary_profile_id,
+                "latest_snapshot_id": latest_snapshot.id if latest_snapshot else None,
+                "latest_snapshot_at": latest_snapshot.created_at.isoformat()
+                if latest_snapshot
+                else None,
+                "latest_milestone_at": latest_milestone.created_at.isoformat()
+                if latest_milestone
+                else None,
+                "snapshot_logical_bytes": latest_snapshot.logical_bytes if latest_snapshot else 0,
+                "snapshot_physical_bytes": latest_snapshot.physical_bytes_added
+                if latest_snapshot
+                else 0,
+                "storage_warning": bool(
+                    latest_snapshot
+                    and latest_snapshot.logical_bytes >= project.snapshot_soft_cap_bytes
+                ),
+                "confirmed_regression_count": confirmed_regressions,
+                "latest_probe_result": latest_probe.result if latest_probe else None,
+                "limitations": limitations,
+            },
         }
 
     def list(self) -> list[dict[str, Any]]:

@@ -45,10 +45,17 @@ from mellowyak_engine.api.schemas import (
     ImpactUnknownListResponse,
     InstallationResponse,
     LocalEventListResponse,
+    MilestoneCreateRequest,
     MonitoringResponse,
     NotificationSettingsRequest,
     OpenDataFolderResponse,
     PrivacySettingsResponse,
+    ProbeCreateRequest,
+    ProbeDefinitionResponse,
+    ProbeListResponse,
+    ProbeRunRequest,
+    ProbeRunResponse,
+    ProbeSelectionResponse,
     ProjectCreateRequest,
     ProjectDeleteRequest,
     ProjectDetectionResponse,
@@ -66,11 +73,28 @@ from mellowyak_engine.api.schemas import (
     RepairContextCopyResponse,
     RepairContextResponse,
     RepairContextSaveResponse,
+    RepairWorkspaceOpenRequest,
+    RepairWorkspaceResponse,
     RuntimeConfigurationListResponse,
     RuntimeConfigurationRequest,
     RuntimeConfigurationResponse,
+    RuntimeDetectionResponse,
+    RuntimeInstanceListResponse,
+    RuntimeInstanceResponse,
+    RuntimeProfileCreateRequest,
+    RuntimeProfileListResponse,
+    RuntimeProfileResponse,
     ScanFindingListResponse,
     ScanRunResponse,
+    SnapshotCreateRequest,
+    SnapshotDetailResponse,
+    SnapshotListResponse,
+    SnapshotMaterializationResponse,
+    SnapshotMilestoneListResponse,
+    SnapshotMilestoneResponse,
+    SnapshotSummaryResponse,
+    SourceEpisodeListResponse,
+    SourceEpisodeResponse,
     StoragePathsResponse,
     UnreadCountResponse,
     VerificationRunResponse,
@@ -81,20 +105,31 @@ from mellowyak_engine.browser.service import BrowserCaptureError, BrowserCapture
 from mellowyak_engine.core.events import LocalEventBus
 from mellowyak_engine.core.logging import configure_logging
 from mellowyak_engine.db.database import LocalDatabase
+from mellowyak_engine.episodes.service import EpisodeService
 from mellowyak_engine.evidence.service import EvidenceService, EvidenceServiceError
 from mellowyak_engine.evidence.store import EvidenceStore
 from mellowyak_engine.gate.service import GateError, GateService
 from mellowyak_engine.impact.models import TraversalPolicy
 from mellowyak_engine.impact.service import ImpactService, ImpactServiceError
 from mellowyak_engine.monitoring.service import MonitoringService
+from mellowyak_engine.probes.service import ProbeService, ProbeServiceError
 from mellowyak_engine.productization.service import ProductizationError, ProductizationService
 from mellowyak_engine.projects.service import ProjectError, ProjectService
 from mellowyak_engine.protection.service import ProtectionPlanError, ProtectionPlanService
 from mellowyak_engine.regression.service import RegressionService
 from mellowyak_engine.repair.service import RepairContextError, RepairContextService
+from mellowyak_engine.repair_workspace.service import (
+    RepairWorkspaceService,
+    RepairWorkspaceServiceError,
+)
+from mellowyak_engine.runtime_profiles.service import (
+    RuntimeProfileService,
+    RuntimeProfileServiceError,
+)
 from mellowyak_engine.scanning.service import ScanCoordinator, SourceScanner
 from mellowyak_engine.security.auth import SessionTokenGuard
 from mellowyak_engine.settings.config import EngineSettings
+from mellowyak_engine.snapshots.service import SnapshotService, SnapshotServiceError
 from mellowyak_engine.storage.paths import StoragePaths
 from mellowyak_engine.verification.service import VerificationError, VerificationService
 
@@ -122,6 +157,11 @@ class EngineRuntime:
     repair: RepairContextService
     verification: VerificationService
     productization: ProductizationService
+    runtime_profiles: RuntimeProfileService
+    snapshots: SnapshotService
+    episodes: EpisodeService
+    probes: ProbeService
+    repair_workspaces: RepairWorkspaceService
 
 
 def _open_folder(path: str) -> str:
@@ -155,7 +195,11 @@ def create_app(settings: EngineSettings) -> FastAPI:
     events = LocalEventBus()
     projects = ProjectService(database.sessions, installation.id, events)
     scans = ScanCoordinator(SourceScanner(database.sessions, events))
-    monitoring = MonitoringService(projects, scans)
+    snapshots = SnapshotService(database.sessions, paths.root, events)
+    episodes = EpisodeService(database.sessions, events)
+    episodes.bind_snapshot_callback(snapshots.create)
+    monitoring = MonitoringService(projects, scans, episodes)
+    runtime_profiles = RuntimeProfileService(database.sessions, events)
     impact = ImpactService(database.sessions, events)
     behaviors = BehaviorService(database.sessions, events)
     evidence = EvidenceService(database.sessions, EvidenceStore(paths.evidence), events)
@@ -165,6 +209,9 @@ def create_app(settings: EngineSettings) -> FastAPI:
     regressions = RegressionService(database.sessions, events)
     repair = RepairContextService(database.sessions, paths.root, events)
     productization = ProductizationService(database.sessions, paths.root, events)
+    probes = ProbeService(database.sessions, events, snapshots, productization)
+    episodes.bind_selection_callback(probes.select_impacted)
+    repair_workspaces = RepairWorkspaceService(database.sessions, paths.root, events, _open_folder)
     verification = VerificationService(
         database.sessions,
         evidence,
@@ -195,6 +242,11 @@ def create_app(settings: EngineSettings) -> FastAPI:
         repair=repair,
         verification=verification,
         productization=productization,
+        runtime_profiles=runtime_profiles,
+        snapshots=snapshots,
+        episodes=episodes,
+        probes=probes,
+        repair_workspaces=repair_workspaces,
     )
 
     app = FastAPI(
@@ -352,7 +404,15 @@ def create_app(settings: EngineSettings) -> FastAPI:
     @app.post("/projects", response_model=ProjectResponse, dependencies=[Depends(guard)])
     def create_project(request: ProjectCreateRequest) -> ProjectResponse:
         try:
-            project = projects.create(request.path, request.display_name, request.monitoring_mode)
+            project = projects.create(
+                request.path,
+                request.display_name,
+                request.monitoring_mode,
+                request.project_type,
+                request.observation_level,
+                request.snapshot_retention_days,
+                request.snapshot_soft_cap_bytes,
+            )
             scans.start(project.id)
             if request.monitoring_mode == "passive":
                 monitoring.start(project.id)
@@ -1442,16 +1502,353 @@ def create_app(settings: EngineSettings) -> FastAPI:
     def update_start_at_login(request: BackgroundSettingsRequest) -> dict[str, object]:
         return productization.background(start_at_login=request.start_at_login)
 
+    def phase7_error(error: Exception) -> HTTPException:
+        code = str(getattr(error, "code", str(error) or "PHASE7_OPERATION_FAILED"))
+        if code.endswith("_NOT_FOUND"):
+            status = 404
+        elif code.endswith("_UNAVAILABLE") or code.endswith("_FAILED_OPEN"):
+            status = 503
+        elif code.endswith("_REQUIRED") or code.endswith("_INVALID") or code.endswith("_DENIED"):
+            status = 400
+        else:
+            status = 409
+        return HTTPException(status_code=status, detail=code)
+
+    @app.post(
+        "/projects/{project_id}/runtime/detect",
+        response_model=RuntimeDetectionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def detect_runtime_profiles(project_id: str) -> RuntimeDetectionResponse:
+        try:
+            return RuntimeDetectionResponse(**runtime_profiles.detect(project_id))
+        except RuntimeProfileServiceError as error:
+            raise phase7_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/runtime-profiles",
+        response_model=RuntimeProfileListResponse,
+        dependencies=[Depends(guard)],
+    )
+    def list_runtime_profiles(project_id: str) -> RuntimeProfileListResponse:
+        try:
+            return RuntimeProfileListResponse(profiles=runtime_profiles.list(project_id))
+        except RuntimeProfileServiceError as error:
+            raise phase7_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/runtime-profiles",
+        response_model=RuntimeProfileResponse,
+        dependencies=[Depends(guard)],
+    )
+    def create_runtime_profile(
+        project_id: str, request: RuntimeProfileCreateRequest
+    ) -> RuntimeProfileResponse:
+        try:
+            return RuntimeProfileResponse(
+                **runtime_profiles.create_or_version(project_id, **request.model_dump())
+            )
+        except RuntimeProfileServiceError as error:
+            raise phase7_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/runtime-profiles/{profile_id}",
+        response_model=RuntimeProfileResponse,
+        dependencies=[Depends(guard)],
+    )
+    def get_runtime_profile(project_id: str, profile_id: str) -> RuntimeProfileResponse:
+        try:
+            return RuntimeProfileResponse(**runtime_profiles.get(project_id, profile_id))
+        except RuntimeProfileServiceError as error:
+            raise phase7_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/runtime-profiles/{profile_id}/validate",
+        response_model=RuntimeProfileResponse,
+        dependencies=[Depends(guard)],
+    )
+    def validate_runtime_profile(project_id: str, profile_id: str) -> RuntimeProfileResponse:
+        try:
+            return RuntimeProfileResponse(**runtime_profiles.validate(project_id, profile_id))
+        except RuntimeProfileServiceError as error:
+            raise phase7_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/runtime-profiles/{profile_id}/start",
+        response_model=RuntimeInstanceResponse,
+        dependencies=[Depends(guard)],
+    )
+    def start_runtime_profile(project_id: str, profile_id: str) -> RuntimeInstanceResponse:
+        try:
+            return RuntimeInstanceResponse(**runtime_profiles.start(project_id, profile_id))
+        except RuntimeProfileServiceError as error:
+            raise phase7_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/runtime-profiles/{profile_id}/stop",
+        response_model=RuntimeInstanceResponse,
+        dependencies=[Depends(guard)],
+    )
+    def stop_runtime_profile(project_id: str, profile_id: str) -> RuntimeInstanceResponse:
+        try:
+            return RuntimeInstanceResponse(**runtime_profiles.stop(project_id, profile_id))
+        except RuntimeProfileServiceError as error:
+            raise phase7_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/runtime-instances",
+        response_model=RuntimeInstanceListResponse,
+        dependencies=[Depends(guard)],
+    )
+    def list_runtime_instances(project_id: str) -> RuntimeInstanceListResponse:
+        try:
+            return RuntimeInstanceListResponse(instances=runtime_profiles.instances(project_id))
+        except RuntimeProfileServiceError as error:
+            raise phase7_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/snapshots",
+        response_model=SnapshotListResponse,
+        dependencies=[Depends(guard)],
+    )
+    def list_snapshots(project_id: str) -> SnapshotListResponse:
+        try:
+            return SnapshotListResponse(snapshots=snapshots.list(project_id))
+        except SnapshotServiceError as error:
+            raise phase7_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/snapshots",
+        response_model=SnapshotSummaryResponse,
+        dependencies=[Depends(guard)],
+    )
+    def create_snapshot(project_id: str, request: SnapshotCreateRequest) -> SnapshotSummaryResponse:
+        try:
+            return SnapshotSummaryResponse(
+                **snapshots.create(project_id, request.episode_id, request.creation_reason)
+            )
+        except (SnapshotServiceError, OSError, ValueError) as error:
+            raise phase7_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/snapshots/{snapshot_id}",
+        response_model=SnapshotDetailResponse,
+        dependencies=[Depends(guard)],
+    )
+    def get_snapshot(project_id: str, snapshot_id: str) -> SnapshotDetailResponse:
+        try:
+            return SnapshotDetailResponse(**snapshots.get(project_id, snapshot_id))
+        except SnapshotServiceError as error:
+            raise phase7_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/snapshots/{snapshot_id}/materialize",
+        response_model=SnapshotMaterializationResponse,
+        dependencies=[Depends(guard)],
+    )
+    def materialize_snapshot(project_id: str, snapshot_id: str) -> SnapshotMaterializationResponse:
+        try:
+            return SnapshotMaterializationResponse(**snapshots.materialize(project_id, snapshot_id))
+        except (SnapshotServiceError, OSError, ValueError) as error:
+            raise phase7_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/snapshots/{snapshot_id}/pin",
+        response_model=SnapshotSummaryResponse,
+        dependencies=[Depends(guard)],
+    )
+    def pin_snapshot(project_id: str, snapshot_id: str) -> SnapshotSummaryResponse:
+        try:
+            return SnapshotSummaryResponse(**snapshots.pin(project_id, snapshot_id, True))
+        except SnapshotServiceError as error:
+            raise phase7_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/snapshots/{snapshot_id}/unpin",
+        response_model=SnapshotSummaryResponse,
+        dependencies=[Depends(guard)],
+    )
+    def unpin_snapshot(project_id: str, snapshot_id: str) -> SnapshotSummaryResponse:
+        try:
+            return SnapshotSummaryResponse(**snapshots.pin(project_id, snapshot_id, False))
+        except SnapshotServiceError as error:
+            raise phase7_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/episodes",
+        response_model=SourceEpisodeListResponse,
+        dependencies=[Depends(guard)],
+    )
+    def list_source_episodes(project_id: str) -> SourceEpisodeListResponse:
+        try:
+            projects.get_model(project_id)
+            return SourceEpisodeListResponse(episodes=episodes.list(project_id))
+        except (ProjectError, ValueError) as error:
+            raise phase7_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/episodes/{episode_id}",
+        response_model=SourceEpisodeResponse,
+        dependencies=[Depends(guard)],
+    )
+    def get_source_episode(project_id: str, episode_id: str) -> SourceEpisodeResponse:
+        try:
+            return SourceEpisodeResponse(**episodes.get(project_id, episode_id))
+        except ValueError as error:
+            raise phase7_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/episodes/{episode_id}/probe-selection",
+        response_model=ProbeSelectionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def get_episode_probe_selection(project_id: str, episode_id: str) -> ProbeSelectionResponse:
+        try:
+            return ProbeSelectionResponse(**probes.select_impacted(project_id, episode_id))
+        except ProbeServiceError as error:
+            raise phase7_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/milestones/known-good",
+        response_model=SnapshotMilestoneResponse,
+        dependencies=[Depends(guard)],
+    )
+    def create_known_good_milestone(
+        project_id: str, request: MilestoneCreateRequest
+    ) -> SnapshotMilestoneResponse:
+        try:
+            return SnapshotMilestoneResponse(
+                **probes.create_milestone(project_id, **request.model_dump())
+            )
+        except ProbeServiceError as error:
+            raise phase7_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/milestones",
+        response_model=SnapshotMilestoneListResponse,
+        dependencies=[Depends(guard)],
+    )
+    def list_known_good_milestones(project_id: str) -> SnapshotMilestoneListResponse:
+        try:
+            return SnapshotMilestoneListResponse(milestones=probes.milestones(project_id))
+        except ProbeServiceError as error:
+            raise phase7_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/probes",
+        response_model=ProbeListResponse,
+        dependencies=[Depends(guard)],
+    )
+    def list_probes(project_id: str) -> ProbeListResponse:
+        try:
+            return ProbeListResponse(probes=probes.list(project_id))
+        except ProbeServiceError as error:
+            raise phase7_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/probes",
+        response_model=ProbeDefinitionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def create_probe(project_id: str, request: ProbeCreateRequest) -> ProbeDefinitionResponse:
+        try:
+            return ProbeDefinitionResponse(**probes.create(project_id, **request.model_dump()))
+        except ProbeServiceError as error:
+            raise phase7_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/probes/{probe_id}",
+        response_model=ProbeDefinitionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def get_probe(project_id: str, probe_id: str) -> ProbeDefinitionResponse:
+        try:
+            return ProbeDefinitionResponse(**probes.get(project_id, probe_id))
+        except ProbeServiceError as error:
+            raise phase7_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/probes/{probe_id}/run",
+        response_model=ProbeRunResponse,
+        dependencies=[Depends(guard)],
+    )
+    def run_probe(project_id: str, probe_id: str, request: ProbeRunRequest) -> ProbeRunResponse:
+        try:
+            return ProbeRunResponse(**probes.run(project_id, probe_id, request.snapshot_id))
+        except ProbeServiceError as error:
+            raise phase7_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/probes/{probe_id}/cancel",
+        response_model=ActionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def cancel_probe(project_id: str, probe_id: str) -> ActionResponse:
+        return ActionResponse(status=probes.cancel(project_id, probe_id)["status"])
+
+    @app.post(
+        "/projects/{project_id}/regressions/{regression_id}/repair-workspace",
+        response_model=RepairWorkspaceResponse,
+        dependencies=[Depends(guard)],
+    )
+    def create_repair_workspace(project_id: str, regression_id: str) -> RepairWorkspaceResponse:
+        try:
+            return RepairWorkspaceResponse(**repair_workspaces.create(project_id, regression_id))
+        except RepairWorkspaceServiceError as error:
+            raise phase7_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/repair-workspaces/{workspace_id}",
+        response_model=RepairWorkspaceResponse,
+        dependencies=[Depends(guard)],
+    )
+    def get_repair_workspace(project_id: str, workspace_id: str) -> RepairWorkspaceResponse:
+        try:
+            return RepairWorkspaceResponse(**repair_workspaces.get(project_id, workspace_id))
+        except RepairWorkspaceServiceError as error:
+            raise phase7_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/repair-workspaces/{workspace_id}/open",
+        response_model=ActionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def open_repair_workspace(
+        project_id: str, workspace_id: str, request: RepairWorkspaceOpenRequest
+    ) -> ActionResponse:
+        try:
+            result = repair_workspaces.open(project_id, workspace_id, request.target)
+            return ActionResponse(status=result["status"])
+        except RepairWorkspaceServiceError as error:
+            raise phase7_error(error) from error
+
+    @app.delete(
+        "/projects/{project_id}/repair-workspaces/{workspace_id}",
+        response_model=ActionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def delete_repair_workspace(project_id: str, workspace_id: str) -> ActionResponse:
+        try:
+            return ActionResponse(
+                status=repair_workspaces.delete(project_id, workspace_id)["status"]
+            )
+        except RepairWorkspaceServiceError as error:
+            raise phase7_error(error) from error
+
     @app.get("/events", response_model=LocalEventListResponse, dependencies=[Depends(guard)])
     def local_events(after: int = Query(default=0, ge=0)) -> LocalEventListResponse:
         return LocalEventListResponse(events=events.after(after))
 
     def stop_background_services() -> None:
         monitoring.stop_all()
+        episodes.stop_all()
+        runtime_profiles.stop_all()
         scans.stop_all()
         browser.close()
 
     app.router.on_shutdown.append(stop_background_services)
+    episodes.recover()
+    runtime_profiles.recover()
     monitoring.start_persisted()
 
     logger.info("engine_runtime_ready schema=%s", schema_version)
