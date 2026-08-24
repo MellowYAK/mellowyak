@@ -1,0 +1,11 @@
+{
+  "tray.open": "פתיחת MellowYak",
+  "tray.status": "מעקב מקומי פעיל",
+  "tray.alerts": "פתיחת התראות",
+  "tray.quietHour": "שקט לשעה",
+  "tray.quietTomorrow": "שקט עד מחר",
+  "tray.endQuiet": "סיום מצב שקט",
+  "tray.settings": "הגדרות",
+  "tray.quit": "יציאה מ־MellowYak"
+  ,"tray.tooltip": "המעקב המקומי של MellowYak"
+}

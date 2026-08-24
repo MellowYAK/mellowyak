@@ -739,7 +739,21 @@ Phase 4 does **not** run stored assertions as verification, replay captures auth
 
 Phase 5 does **not** provide complete blast-radius knowledge, zero-regression guarantees, automatic code repair, automatic baseline replacement, Codex/Claude/Cursor/VS Code integration, provider token or financial savings, cloud/team operation, signing, notarization, public release, or safe-deployment certification.
 
-### Phase 6 — Connectors, value, and release
+### Phase 6 — Desktop productization, tray, alerts, and project lifecycle
+
+- implemented a global desktop shell with Command Center, Projects, Alerts, and Settings;
+- implemented project search/filter/action menus, notification mute, disconnect/reconnect, relocation, and source-safe local-data deletion;
+- implemented durable deduplicated local alerts, unread/read/resolved lifecycle, direct local routes, and real verification/regression/gate event production;
+- implemented persistent native-notification preferences and Quiet Mode with one-hour, until-tomorrow, until-off, and critical-override behavior;
+- implemented a translated macOS/Windows tray/menu foundation, single-instance handling, close-to-background monitoring, explicit Quit, and Start at Login;
+- implemented truthful per-project capability modes for source-only and source-plus-runtime projects;
+- added migration `0006_desktop_productization` while preserving migrations `0001` through `0005`;
+- preserved the non-negotiable translation-key-only rule across English and Hebrew RTL desktop surfaces and translated native tray resources;
+- added a synthetic-data Phase 6 screenshot/PDF handoff under `docs/phase-6-desktop-productization-2026-08-24/`.
+
+Phase 6 does **not** add accounts, cloud sync, source or evidence upload, automatic repair, MCP/CLI connectors, external CI merge enforcement, signing, notarization, or a public release. Native-notification click routing remains platform-limited until a verified plugin callback is available; the persistent in-app alert always carries the exact destination.
+
+### Phase 7 — Connectors, value, and release
 
 - MCP and CLI;
 - IDE/model adapters;

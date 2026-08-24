@@ -52,6 +52,9 @@ class Project(Base):
     current_worktree_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
     detection_payload_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
     archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    disconnected_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    source_available: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    notifications_muted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
 
 class ProjectGitSnapshot(Base):
@@ -910,3 +913,97 @@ class AuditEvent(Base):
     event_type: Mapped[str] = mapped_column(String(120), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     details_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+
+
+class Alert(Base):
+    __tablename__ = "alerts"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("projects.id"), nullable=True
+    )
+    change_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    behavior_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    regression_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    gate_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    severity: Mapped[str] = mapped_column(String(20), nullable=False)
+    category: Mapped[str] = mapped_column(String(30), nullable=False)
+    title_key: Mapped[str] = mapped_column(String(160), nullable=False)
+    summary_key: Mapped[str] = mapped_column(String(160), nullable=False)
+    parameters_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    route_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    deduplication_key: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class NotificationPreference(Base):
+    __tablename__ = "notification_preferences"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
+    native_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    regression_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    blocked_gate_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    needs_review_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    project_errors_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    verified_complete_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    regression_resolved_enabled: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False
+    )
+    show_behavior_name: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    show_project_name: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    hide_details: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    critical_override: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class ProjectNotificationPreference(Base):
+    __tablename__ = "project_notification_preferences"
+
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), primary_key=True)
+    muted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class QuietModeState(Base):
+    __tablename__ = "quiet_mode_state"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    ends_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    until_turned_off: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    allow_critical: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class ApplicationPreference(Base):
+    __tablename__ = "application_preferences"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
+    keep_running_on_close: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    start_at_login: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class ProjectLifecycleEvent(Base):
+    __tablename__ = "project_lifecycle_events"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    event_type: Mapped[str] = mapped_column(String(80), nullable=False)
+    details_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class ProjectDisconnectionRecord(Base):
+    __tablename__ = "project_disconnection_records"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    display_name: Mapped[str] = mapped_column(String(240), nullable=False)
+    repository_identity_json: Mapped[str] = mapped_column(Text, nullable=False)
+    disconnected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    reconnected_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

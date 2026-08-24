@@ -610,7 +610,7 @@ def test_phase5_migration_preserves_existing_project_rows(
             (project_id, "Preserved Phase Project", str(tmp_path / "source"), now),
         )
     upgraded = LocalDatabase(paths)
-    assert upgraded.migrate() == "0005_verification_regression_gate"
+    assert upgraded.migrate() == "0006_desktop_productization"
     with upgraded.engine.connect() as connection:
         row = connection.execute(
             text("SELECT display_name, root_path FROM projects WHERE id = :id"), {"id": project_id}

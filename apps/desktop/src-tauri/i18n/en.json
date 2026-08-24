@@ -1,0 +1,11 @@
+{
+  "tray.open": "Open MellowYak",
+  "tray.status": "Monitoring locally",
+  "tray.alerts": "Open Alerts",
+  "tray.quietHour": "Quiet for one hour",
+  "tray.quietTomorrow": "Quiet until tomorrow",
+  "tray.endQuiet": "End quiet mode",
+  "tray.settings": "Settings",
+  "tray.quit": "Quit MellowYak"
+  ,"tray.tooltip": "MellowYak local monitoring"
+}

@@ -1,5 +1,6 @@
 import { open } from "@tauri-apps/plugin-dialog";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { listen } from "@tauri-apps/api/event";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   analyzeChange,
   cancelProjectScan,
@@ -13,7 +14,10 @@ import {
   getProject,
   listBehaviorCandidates,
   listBehaviors,
+  listAlerts,
   listProjects,
+  getNotificationSettings,
+  getQuietMode,
   loadStartup,
   openDataFolder,
   openProjectFolder,
@@ -21,6 +25,10 @@ import {
   setChangeIntent,
   setProjectMonitoring,
   startProjectScan,
+  startQuietMode,
+  stopQuietMode,
+  showDesktopNotification,
+  takePendingDesktopRoute,
   updateBehaviorCandidate,
   type BehaviorCandidate,
   type Change,
@@ -33,15 +41,17 @@ import {
   type ProtectedBehavior,
   type SetupSnapshot,
   type StartupStatus,
+  type LocalAlert,
 } from "./api";
-import { useI18n, type Locale } from "./i18n";
+import { useI18n, type Locale, type TranslationKey } from "./i18n";
 import { mascotAssets, type MascotId } from "./mascots";
 import { BehaviorsScreen } from "./BehaviorsScreen";
 import { ChangeCockpit } from "./ChangeCockpit";
 import { StartupAnimation, startupStepKeys } from "./StartupAnimation";
 import { useDesktopUpdater, type UpdaterState } from "./updater";
+import { AlertsScreen, CapabilitiesCard, CommandCenter, ProjectsScreen, SettingsScreen } from "./ProductScreens";
 
-type Screen = "home" | "add" | "project" | "change" | "impact" | "behaviors";
+type Screen = "home" | "projects" | "alerts" | "settings" | "add" | "project" | "change" | "impact" | "behaviors";
 type Tone = "good" | "warn" | "neutral";
 
 function StatusRow({ label, value, tone = "neutral" }: { label: string; value: string; tone?: Tone }) {
@@ -72,9 +82,11 @@ function readiness(project: Project, t: Translator): { label: string; tone: Tone
 }
 
 function Header({ home, locale, setLocale, t, updater }: { home: () => void; locale: Locale; setLocale: (locale: Locale) => void; t: Translator; updater: UpdaterState }) {
+  const navigate = (destination: string) => window.dispatchEvent(new CustomEvent("mellowyak:navigate", { detail: destination }));
   return <><header className="brand-bar">
-      <button className="brand-button" onClick={home} aria-label={t("brand.home")}><span className="mark">{t("brand.mark")}</span></button>
+      <button className="brand-button" onClick={home} aria-label={t("brand.home")}><img className="brand-icon" src="/mellowyak-app-icon.png" alt={t("brand.iconAlt")} /></button>
       <div><div className="brand-name">{t("brand.name")}</div><div className="tagline">{t("brand.tagline")}</div></div>
+      <nav className="global-nav" aria-label={t("shell.navLabel")}><button onClick={() => navigate("home")}>{t("shell.nav.home")}</button><button onClick={() => navigate("projects")}>{t("shell.nav.projects")}</button><button onClick={() => navigate("alerts")}>{t("shell.nav.alerts")}</button><button onClick={() => navigate("settings")}>{t("shell.nav.settings")}</button></nav>
       <div className="principle">{t("brand.principle")}</div>
       <label className="language-picker"><span>{t("language.label")}</span><select aria-label={t("language.label")} value={locale} onChange={(event) => setLocale(event.target.value as Locale)}><option value="en">{t("language.en")}</option><option value="he">{t("language.he")}</option></select></label>
     </header>{updater.phase !== "idle" && <section className="update-banner" role="status"><div><strong>{t("update.availableTitle")}</strong><span>{updater.phase === "available" ? t("update.availableBody", { version: updater.version ?? t("common.unknown") }) : updater.phase === "installing" ? t("update.installing") : t("update.relaunching")}</span></div><button className="primary" disabled={updater.phase !== "available"} onClick={() => void updater.install()}>{updater.phase === "available" ? t("update.install") : updater.phase === "installing" ? t("update.installing") : t("update.relaunching")}</button></section>}</>;
@@ -163,8 +175,84 @@ export function App() {
   const [startupSlow, setStartupSlow] = useState(false);
   const [startupAttempt, setStartupAttempt] = useState(0);
   const [focusBehaviorId, setFocusBehaviorId] = useState<string | null>(null);
+  const [alerts, setAlerts] = useState<LocalAlert[]>([]);
+  const notifiedAlerts = useRef(new Set<string>());
+  const notificationsPrimed = useRef(false);
+
+  const productT = useCallback((key: string, parameters: Record<string, string | number> = {}) => t(key as TranslationKey, parameters), [t]);
 
   const reloadProjects = useCallback(async () => setProjects(await listProjects()), []);
+  const reloadAlerts = useCallback(async () => setAlerts(await listAlerts("all")), []);
+
+  useEffect(() => {
+    const navigate = (event: Event) => {
+      const destination = (event as CustomEvent<string>).detail as Screen;
+      if (["home", "projects", "alerts", "settings"].includes(destination)) setScreen(destination);
+    };
+    window.addEventListener("mellowyak:navigate", navigate);
+    return () => window.removeEventListener("mellowyak:navigate", navigate);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const route = (destination: string) => window.dispatchEvent(new CustomEvent("mellowyak:navigate", { detail: destination }));
+    const cleanups: Array<() => void> = [];
+    void listen<string>("mellowyak:navigate", (event) => route(event.payload)).then((cleanup) => active ? cleanups.push(cleanup) : cleanup()).catch(() => undefined);
+    void listen<string>("mellowyak:quiet", (event) => {
+      if (event.payload === "off") void stopQuietMode();
+      else void startQuietMode(event.payload as "one_hour" | "until_tomorrow");
+    }).then((cleanup) => active ? cleanups.push(cleanup) : cleanup()).catch(() => undefined);
+    void takePendingDesktopRoute().then((destination) => { if (destination) route(destination); }).catch(() => undefined);
+    return () => { active = false; cleanups.forEach((cleanup) => cleanup()); };
+  }, []);
+
+  useEffect(() => {
+    if (startupVisible) return;
+    let active = true;
+    const poll = async () => {
+      try {
+        const items = await listAlerts("all");
+        if (!active) return;
+        setAlerts(items);
+        if (!notificationsPrimed.current) {
+          items.forEach((item) => notifiedAlerts.current.add(item.id));
+          notificationsPrimed.current = true;
+          return;
+        }
+        const fresh = items.filter((item) => !notifiedAlerts.current.has(item.id) && !item.resolved);
+        fresh.forEach((item) => notifiedAlerts.current.add(item.id));
+        if (!fresh.length) return;
+        const [preferences, quiet] = await Promise.all([getNotificationSettings(), getQuietMode()]);
+        if (!preferences.native_enabled) return;
+        for (const item of fresh) {
+          const critical = item.severity === "CRITICAL";
+          if (quiet.active && !(critical && preferences.critical_override)) continue;
+          if (projects.find((project) => project.id === item.project_id)?.notifications_muted) continue;
+          const categoryEnabled = item.category === "REGRESSION"
+            ? preferences.regression_enabled
+            : item.title_key === "alerts.blockedTitle"
+              ? preferences.blocked_gate_enabled
+              : item.title_key === "alerts.reviewTitle"
+                ? preferences.needs_review_enabled
+                : item.title_key === "alerts.verifiedTitle"
+                  ? preferences.verified_complete_enabled
+                  : preferences.project_errors_enabled;
+          if (!categoryEnabled) continue;
+          const parameters = item.parameters as Record<string, string | number>;
+          const redactDetails = preferences.hide_details
+            || (!preferences.show_project_name && "project" in parameters)
+            || (!preferences.show_behavior_name && "behavior" in parameters);
+          const summary = redactDetails
+            ? productT("alerts.privateSummary")
+            : productT(item.summary_key, parameters);
+          await showDesktopNotification(productT(item.title_key, parameters), summary, "alerts").catch(() => undefined);
+        }
+      } catch { /* the local engine reports its own recoverable state */ }
+    };
+    void poll();
+    const interval = window.setInterval(() => void poll(), 5000);
+    return () => { active = false; window.clearInterval(interval); };
+  }, [productT, projects, startupVisible]);
 
   useEffect(() => {
     let active = true;
@@ -184,6 +272,7 @@ export function App() {
         if (!active) return;
         setSnapshot(setup);
         setProjects(saved);
+        void reloadAlerts().catch(() => undefined);
         const minimumRemaining = Math.max(0, 800 - (Date.now() - startedAt));
         timers.push(window.setTimeout(() => {
           if (!active) return;
@@ -202,7 +291,7 @@ export function App() {
         setStartupStatus("error");
       });
     return () => { active = false; timers.forEach((timer) => window.clearTimeout(timer)); };
-  }, [startupAttempt]);
+  }, [reloadAlerts, startupAttempt]);
 
   useEffect(() => {
     if (screen !== "project" || !selected) return;
@@ -242,6 +331,10 @@ export function App() {
   const home = () => {
     setScreen("home"); setDetection(null); setError(""); setCurrentChange(null); setChangeImpact(null); setReceipt(null);
     void reloadProjects().catch(() => undefined);
+  };
+
+  const openProject = (project: Project, destination: "project" | "change" | "impact" | "behaviors" = "project") => {
+    setSelected(project); setImpact(null); setError(""); setScreen(destination);
   };
 
   const selectProjectScreen = (next: "project" | "change" | "impact" | "behaviors") => {
@@ -326,6 +419,12 @@ export function App() {
 
   if (startupVisible) return <StartupScreen status={startupStatus} failedStep={startupFailedStep} leaving={startupLeaving} error={startupError} slow={startupSlow} retry={() => setStartupAttempt((attempt) => attempt + 1)} locale={locale} setLocale={setLocale} t={t} errorText={errorText} updater={updater} />;
 
+  if (screen === "projects") return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} /><ProjectsScreen projects={projects} t={productT} openProject={openProject} reload={reloadProjects} add={() => setScreen("add")} /></main>;
+
+  if (screen === "alerts") return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} /><AlertsScreen t={productT} openRoute={(alert) => { const project = projects.find((item) => item.id === alert.project_id); if (project) openProject(project, alert.regression_id || alert.gate_id ? "change" : "project"); }} /></main>;
+
+  if (screen === "settings") return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} /><SettingsScreen t={productT} /></main>;
+
   if (screen === "add") return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} />
     <section className="page-head"><div><div className="eyebrow">{t("add.eyebrow")}</div><h1>{t("add.title")}</h1><p>{t("add.subtitle")}</p></div><button className="secondary" onClick={home}>{t("common.back")}</button></section>
     {error && <section className="panel error" role="alert">{errorText(error)}</section>}
@@ -407,9 +506,12 @@ export function App() {
           <div className="button-row"><button className="secondary" onClick={() => void openProjectFolder(selected.id)}>{t("common.openFolder")}</button><button className="secondary" onClick={() => void setProjectMonitoring(selected.id, selected.monitoring_status !== "active")}>{selected.monitoring_status === "active" ? t("project.pauseMonitoring") : t("project.resumeMonitoring")}</button></div>
         </section>
         <section className="panel impact-panel"><h2>{t("project.impactFoundation")}</h2><div className="metric-grid"><div><strong>{impact?.files_indexed ?? 0}</strong><span>{t("project.filesIndexed")}</span></div><div><strong>{impact?.direct_relationships ?? 0}</strong><span>{t("project.directRelationships")}</span></div><div><strong>{impact?.tests_found ?? 0}</strong><span>{t("project.testsFound")}</span></div><div><strong>{impact?.languages ?? 0}</strong><span>{t("project.languages")}</span></div></div><div className="coverage-note"><strong>{t("project.knownCoverage")}</strong><span>{t("project.coverage", { unknown: impact?.unknown_references ?? 0, unsupported: impact?.unsupported_files ?? 0, stale: impact?.stale_relationships ?? 0 })}</span></div><Tags values={selected.languages} empty={t("project.coveragePending")} /></section>
+        <CapabilitiesCard projectId={selected.id} t={productT} />
       </div>
     </main>;
   }
+
+  if (projects.length) return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} /><CommandCenter projects={projects} alerts={alerts} t={productT} openProject={openProject} goProjects={() => setScreen("projects")} goAlerts={() => setScreen("alerts")} /></main>;
 
   return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} />
     <section className="hero"><div className="hero-copy"><div className="eyebrow">{t("home.eyebrow")}</div><h1>{projects.length ? t("home.projectsTitle") : t("home.readyTitle")}</h1><p>{t("home.localData")}</p><div className="privacy-pills"><span>{t("home.noDocker")}</span><span>{t("home.noDatabase")}</span><span>{t("home.noCloud")}</span></div></div><MascotArt pose={projects.length ? "yak-peek-laptop" : "yak-wave"} t={t} className="mascot-hero" /></section>

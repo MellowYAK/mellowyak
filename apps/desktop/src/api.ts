@@ -104,7 +104,21 @@ export interface Project {
   git: GitState;
   scan: ScanRun | null;
   source_remains_local: boolean;
+  disconnected: boolean;
+  source_available: boolean;
+  notifications_muted: boolean;
 }
+
+export interface LocalAlert {
+  id: string; project_id: string | null; change_id: string | null; behavior_id: string | null;
+  regression_id: string | null; gate_id: string | null; severity: string; category: string;
+  title_key: string; summary_key: string; parameters: Record<string, unknown>;
+  route: Record<string, unknown>; read: boolean; resolved: boolean; created_at: string; updated_at: string;
+}
+
+export interface QuietMode { active: boolean; started_at: string | null; ends_at: string | null; until_turned_off: boolean; allow_critical: boolean; remaining_seconds: number | null; }
+export interface NotificationSettings { native_enabled: boolean; regression_enabled: boolean; blocked_gate_enabled: boolean; needs_review_enabled: boolean; project_errors_enabled: boolean; verified_complete_enabled: boolean; regression_resolved_enabled: boolean; show_behavior_name: boolean; show_project_name: boolean; hide_details: boolean; critical_override: boolean; }
+export interface ProjectCapabilities { mode: string; source_available: boolean; runtime_available: boolean; available: string[]; unavailable: string[]; future_only: string[]; source_remains_local: true; }
 
 export interface ImpactSummary {
   files_indexed: number;
@@ -480,7 +494,8 @@ async function engineFetch<T>(path: string, init?: RequestInit): Promise<T> {
     const payload = (await response.json().catch(() => null)) as { detail?: string } | null;
     throw new Error(payload?.detail ?? `LOCAL_ENGINE_${response.status}`);
   }
-  return (await response.json()) as T;
+  const body = await response.text();
+  return (body ? JSON.parse(body) : {}) as T;
 }
 
 export async function loadSetupSnapshot(): Promise<SetupSnapshot> {
@@ -758,6 +773,28 @@ export async function openProjectFolder(projectId: string): Promise<void> {
     body: "{}",
   });
 }
+
+export async function listAlerts(state = "all"): Promise<LocalAlert[]> { return (await engineFetch<{alerts: LocalAlert[]}>(`/alerts?state=${encodeURIComponent(state)}`)).alerts; }
+export async function unreadAlertCount(): Promise<number> { return (await engineFetch<{count:number}>("/alerts/unread-count")).count; }
+export async function setAlertState(id: string, action: "read"|"unread"|"resolve"): Promise<LocalAlert> { return engineFetch<LocalAlert>(`/alerts/${encodeURIComponent(id)}/${action}`, {method:"POST",body:"{}"}); }
+export async function clearResolvedAlerts(): Promise<number> { return (await engineFetch<{cleared:number}>("/alerts/clear-resolved",{method:"POST",body:"{}"})).cleared; }
+export async function getNotificationSettings(): Promise<NotificationSettings> { return engineFetch<NotificationSettings>("/settings/notifications"); }
+export async function putNotificationSettings(value: Partial<NotificationSettings>): Promise<NotificationSettings> { return engineFetch<NotificationSettings>("/settings/notifications",{method:"PUT",body:JSON.stringify(value)}); }
+export async function getQuietMode(): Promise<QuietMode> { return engineFetch<QuietMode>("/settings/quiet-mode"); }
+export async function startQuietMode(duration: "one_hour"|"until_tomorrow"|"until_off", allowCritical=false): Promise<QuietMode> { return engineFetch<QuietMode>("/settings/quiet-mode/start",{method:"POST",body:JSON.stringify({duration,allow_critical:allowCritical})}); }
+export async function stopQuietMode(): Promise<QuietMode> { return engineFetch<QuietMode>("/settings/quiet-mode/stop",{method:"POST",body:"{}"}); }
+export async function getProjectCapabilities(projectId:string): Promise<ProjectCapabilities> { return engineFetch<ProjectCapabilities>(`/projects/${encodeURIComponent(projectId)}/capabilities`); }
+export async function setProjectMuted(projectId:string, muted:boolean): Promise<void> { await engineFetch(`/projects/${encodeURIComponent(projectId)}/notification-preferences`,{method:"PUT",body:JSON.stringify({muted})}); }
+export async function disconnectProject(projectId:string): Promise<void> { await engineFetch(`/projects/${encodeURIComponent(projectId)}/disconnect`,{method:"POST",body:"{}"}); }
+export async function deletionPreview(projectId:string): Promise<Record<string,unknown>> { return engineFetch(`/projects/${encodeURIComponent(projectId)}/deletion-preview`); }
+export async function deleteProjectLocalData(projectId:string, confirmation:string): Promise<void> { await engineFetch(`/projects/${encodeURIComponent(projectId)}/delete-local-data`,{method:"POST",body:JSON.stringify({confirmation})}); }
+export async function getBackgroundStatus(): Promise<Record<string,boolean>> { return engineFetch("/app/background-status"); }
+export async function putBackgroundStatus(value:Record<string,boolean>): Promise<Record<string,boolean>> { return engineFetch("/app/background-status",{method:"PUT",body:JSON.stringify(value)}); }
+export async function setDesktopCloseBehavior(enabled:boolean): Promise<void> { await invoke("set_keep_running_on_close",{enabled}); }
+export async function getDesktopStartAtLogin(): Promise<boolean> { return invoke<boolean>("get_start_at_login"); }
+export async function setDesktopStartAtLogin(enabled:boolean): Promise<boolean> { return invoke<boolean>("set_start_at_login",{enabled}); }
+export async function takePendingDesktopRoute(): Promise<string|null> { return invoke<string|null>("take_pending_route"); }
+export async function showDesktopNotification(title:string,body:string,route:string): Promise<void> { await invoke("show_native_notification",{title,body,route}); }
 
 export async function createProtectionPlan(projectId: string, changeId: string): Promise<ProtectionPlan> {
   return engineFetch<ProtectionPlan>(`/projects/${encodeURIComponent(projectId)}/changes/${encodeURIComponent(changeId)}/protection-plan`, { method: "POST", body: "{}" });

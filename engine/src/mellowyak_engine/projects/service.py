@@ -363,13 +363,16 @@ class ProjectService:
             "git": self._git_dict(latest_git),
             "scan": self._scan_dict(latest_scan),
             "source_remains_local": True,
+            "disconnected": project.disconnected_at is not None,
+            "source_available": Path(project.canonical_root_path or project.root_path).is_dir(),
+            "notifications_muted": project.notifications_muted,
         }
 
     def list(self) -> list[dict[str, Any]]:
         with self.sessions() as session:
             projects = session.scalars(
                 select(Project)
-                .where(Project.archived_at.is_(None))
+                .where(Project.archived_at.is_(None), Project.disconnected_at.is_(None))
                 .order_by(Project.updated_at.desc())
             ).all()
             return [self.serialize(session, project) for project in projects]

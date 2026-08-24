@@ -12,6 +12,9 @@ from fastapi.responses import JSONResponse, Response
 from mellowyak_engine import APP_VERSION, ENGINE_VERSION
 from mellowyak_engine.api.schemas import (
     ActionResponse,
+    AlertListResponse,
+    AlertResponse,
+    BackgroundSettingsRequest,
     BaselineAcceptRequest,
     BaselineRevokeRequest,
     BehaviorBaselineResponse,
@@ -43,16 +46,21 @@ from mellowyak_engine.api.schemas import (
     InstallationResponse,
     LocalEventListResponse,
     MonitoringResponse,
+    NotificationSettingsRequest,
     OpenDataFolderResponse,
     PrivacySettingsResponse,
     ProjectCreateRequest,
+    ProjectDeleteRequest,
     ProjectDetectionResponse,
     ProjectDetectRequest,
     ProjectListResponse,
+    ProjectNotificationRequest,
+    ProjectRelocateRequest,
     ProjectResponse,
     ProtectedBehaviorListResponse,
     ProtectedBehaviorResponse,
     ProtectionPlanResponse,
+    QuietModeStartRequest,
     ReadinessResponse,
     RegressionListResponse,
     RepairContextCopyResponse,
@@ -64,6 +72,7 @@ from mellowyak_engine.api.schemas import (
     ScanFindingListResponse,
     ScanRunResponse,
     StoragePathsResponse,
+    UnreadCountResponse,
     VerificationRunResponse,
     VerificationStartRequest,
 )
@@ -78,6 +87,7 @@ from mellowyak_engine.gate.service import GateError, GateService
 from mellowyak_engine.impact.models import TraversalPolicy
 from mellowyak_engine.impact.service import ImpactService, ImpactServiceError
 from mellowyak_engine.monitoring.service import MonitoringService
+from mellowyak_engine.productization.service import ProductizationError, ProductizationService
 from mellowyak_engine.projects.service import ProjectError, ProjectService
 from mellowyak_engine.protection.service import ProtectionPlanError, ProtectionPlanService
 from mellowyak_engine.regression.service import RegressionService
@@ -111,6 +121,7 @@ class EngineRuntime:
     regressions: RegressionService
     repair: RepairContextService
     verification: VerificationService
+    productization: ProductizationService
 
 
 def _open_folder(path: str) -> str:
@@ -153,6 +164,7 @@ def create_app(settings: EngineSettings) -> FastAPI:
     gate = GateService(database.sessions, events, evidence)
     regressions = RegressionService(database.sessions, events)
     repair = RepairContextService(database.sessions, paths.root, events)
+    productization = ProductizationService(database.sessions, paths.root, events)
     verification = VerificationService(
         database.sessions,
         evidence,
@@ -182,6 +194,7 @@ def create_app(settings: EngineSettings) -> FastAPI:
         regressions=regressions,
         repair=repair,
         verification=verification,
+        productization=productization,
     )
 
     app = FastAPI(
@@ -194,7 +207,7 @@ def create_app(settings: EngineSettings) -> FastAPI:
         CORSMiddleware,
         allow_origins=list(settings.allowed_origins),
         allow_credentials=False,
-        allow_methods=["GET", "POST", "DELETE"],
+        allow_methods=["GET", "POST", "PUT", "DELETE"],
         allow_headers=["Authorization", "Content-Type"],
     )
 
@@ -1070,9 +1083,28 @@ def create_app(settings: EngineSettings) -> FastAPI:
         project_id: str, change_id: str, request: VerificationStartRequest
     ) -> VerificationRunResponse:
         try:
-            return VerificationRunResponse(
-                **verification.start(project_id, change_id, request.plan_id, request.item_ids)
-            )
+            result = verification.start(project_id, change_id, request.plan_id, request.item_ids)
+            project = projects.get(project_id)
+            for finding in regressions.list(project_id):
+                if finding.get("change_id") == change_id and finding.get("status") == "DETECTED":
+                    productization.create_alert(
+                        project_id=project_id,
+                        change_id=change_id,
+                        regression_id=str(finding["id"]),
+                        category="REGRESSION",
+                        severity="CRITICAL",
+                        title_key="alerts.regressionTitle",
+                        summary_key="alerts.regressionSummary",
+                        parameters={"project": project["display_name"]},
+                        deduplication_key=f"regression:{finding['id']}",
+                        route={
+                            "screen": "change",
+                            "project_id": project_id,
+                            "change_id": change_id,
+                            "regression_id": finding["id"],
+                        },
+                    )
+            return VerificationRunResponse(**result)
         except (VerificationError, GateError) as error:
             raise phase5_error(error) from error
 
@@ -1159,7 +1191,33 @@ def create_app(settings: EngineSettings) -> FastAPI:
         project_id: str, change_id: str, request: VerificationStartRequest
     ) -> GateDecisionResponse:
         try:
-            return GateDecisionResponse(**gate.evaluate(project_id, change_id, request.plan_id))
+            result = gate.evaluate(project_id, change_id, request.plan_id)
+            project = projects.get(project_id)
+            alert_values = {
+                "BLOCKED": ("HIGH", "alerts.blockedTitle", "alerts.blockedSummary"),
+                "NEEDS_REVIEW": ("WARNING", "alerts.reviewTitle", "alerts.reviewSummary"),
+                "VERIFIED_COMPLETE": ("INFO", "alerts.verifiedTitle", "alerts.verifiedSummary"),
+            }
+            if result["state"] in alert_values:
+                severity, title_key, summary_key = alert_values[result["state"]]
+                productization.create_alert(
+                    project_id=project_id,
+                    change_id=change_id,
+                    gate_id=str(result["id"]),
+                    category="GATE",
+                    severity=severity,
+                    title_key=title_key,
+                    summary_key=summary_key,
+                    parameters={"project": project["display_name"]},
+                    deduplication_key=f"gate:{project_id}:{change_id}:{result['state']}",
+                    route={
+                        "screen": "change",
+                        "project_id": project_id,
+                        "change_id": change_id,
+                        "gate_id": result["id"],
+                    },
+                )
+            return GateDecisionResponse(**result)
         except GateError as error:
             raise phase5_error(error) from error
 
@@ -1224,6 +1282,165 @@ def create_app(settings: EngineSettings) -> FastAPI:
             return RepairContextSaveResponse(**repair.save_local(project_id, context_id))
         except RepairContextError as error:
             raise phase5_error(error) from error
+
+    def product_error(error: ProductizationError) -> HTTPException:
+        code = str(error)
+        return HTTPException(status_code=404 if code.endswith("NOT_FOUND") else 409, detail=code)
+
+    @app.get("/alerts", response_model=AlertListResponse, dependencies=[Depends(guard)])
+    def list_alerts(
+        project_id: str | None = None,
+        state: str = "all",
+        severity: str | None = None,
+        category: str | None = None,
+    ) -> AlertListResponse:
+        return AlertListResponse(
+            alerts=productization.list_alerts(
+                project_id=project_id, state=state, severity=severity, category=category
+            )
+        )
+
+    @app.get(
+        "/alerts/unread-count", response_model=UnreadCountResponse, dependencies=[Depends(guard)]
+    )
+    def unread_alert_count() -> UnreadCountResponse:
+        return UnreadCountResponse(count=productization.unread_count())
+
+    @app.post(
+        "/alerts/{alert_id}/read", response_model=AlertResponse, dependencies=[Depends(guard)]
+    )
+    def read_alert(alert_id: str) -> AlertResponse:
+        try:
+            return AlertResponse(**productization.set_alert_state(alert_id, "read"))
+        except ProductizationError as error:
+            raise product_error(error) from error
+
+    @app.post(
+        "/alerts/{alert_id}/unread", response_model=AlertResponse, dependencies=[Depends(guard)]
+    )
+    def unread_alert(alert_id: str) -> AlertResponse:
+        try:
+            return AlertResponse(**productization.set_alert_state(alert_id, "unread"))
+        except ProductizationError as error:
+            raise product_error(error) from error
+
+    @app.post(
+        "/alerts/{alert_id}/resolve", response_model=AlertResponse, dependencies=[Depends(guard)]
+    )
+    def resolve_alert(alert_id: str) -> AlertResponse:
+        try:
+            return AlertResponse(**productization.set_alert_state(alert_id, "resolve"))
+        except ProductizationError as error:
+            raise product_error(error) from error
+
+    @app.post("/alerts/clear-resolved", dependencies=[Depends(guard)])
+    def clear_resolved_alerts() -> dict[str, int]:
+        return {"cleared": productization.clear_resolved()}
+
+    @app.get("/settings/notifications", dependencies=[Depends(guard)])
+    def notification_settings() -> dict[str, object]:
+        return productization.notification_settings()
+
+    @app.put("/settings/notifications", dependencies=[Depends(guard)])
+    def update_notification_settings(request: NotificationSettingsRequest) -> dict[str, object]:
+        return productization.update_notification_settings(request.model_dump(exclude_none=True))
+
+    @app.get("/settings/quiet-mode", dependencies=[Depends(guard)])
+    def quiet_mode() -> dict[str, object]:
+        return productization.quiet()
+
+    @app.post("/settings/quiet-mode/start", dependencies=[Depends(guard)])
+    def start_quiet_mode(request: QuietModeStartRequest) -> dict[str, object]:
+        try:
+            return productization.start_quiet(request.duration, request.allow_critical)
+        except ProductizationError as error:
+            raise product_error(error) from error
+
+    @app.post("/settings/quiet-mode/stop", dependencies=[Depends(guard)])
+    def stop_quiet_mode() -> dict[str, object]:
+        return productization.stop_quiet()
+
+    @app.get("/projects/{project_id}/notification-preferences", dependencies=[Depends(guard)])
+    def project_notification_preferences(project_id: str) -> dict[str, object]:
+        try:
+            return productization.project_notifications(project_id)
+        except ProductizationError as error:
+            raise product_error(error) from error
+
+    @app.put("/projects/{project_id}/notification-preferences", dependencies=[Depends(guard)])
+    def update_project_notification_preferences(
+        project_id: str, request: ProjectNotificationRequest
+    ) -> dict[str, object]:
+        try:
+            return productization.project_notifications(project_id, request.muted)
+        except ProductizationError as error:
+            raise product_error(error) from error
+
+    @app.get("/projects/{project_id}/capabilities", dependencies=[Depends(guard)])
+    def project_capabilities(project_id: str) -> dict[str, object]:
+        try:
+            return productization.capabilities(project_id)
+        except ProductizationError as error:
+            raise product_error(error) from error
+
+    @app.get("/projects/{project_id}/deletion-preview", dependencies=[Depends(guard)])
+    def project_deletion_preview(project_id: str) -> dict[str, object]:
+        try:
+            return productization.lifecycle_preview(project_id)
+        except ProductizationError as error:
+            raise product_error(error) from error
+
+    @app.post("/projects/{project_id}/disconnect", dependencies=[Depends(guard)])
+    def disconnect_project(project_id: str) -> dict[str, object]:
+        monitoring.pause(project_id)
+        try:
+            return productization.disconnect(project_id)
+        except ProductizationError as error:
+            raise product_error(error) from error
+
+    @app.post("/projects/{project_id}/reconnect", dependencies=[Depends(guard)])
+    def reconnect_project(project_id: str) -> dict[str, object]:
+        try:
+            result = productization.reconnect(project_id)
+            monitoring.start(project_id)
+            return result
+        except ProductizationError as error:
+            raise product_error(error) from error
+
+    @app.post("/projects/{project_id}/relocate", dependencies=[Depends(guard)])
+    def relocate_project(project_id: str, request: ProjectRelocateRequest) -> dict[str, object]:
+        try:
+            return productization.relocate(
+                project_id, request.path, request.confirm_identity_change
+            )
+        except ProductizationError as error:
+            raise product_error(error) from error
+
+    @app.post("/projects/{project_id}/delete-local-data", dependencies=[Depends(guard)])
+    def delete_project_local_data(
+        project_id: str, request: ProjectDeleteRequest
+    ) -> dict[str, object]:
+        monitoring.pause(project_id)
+        try:
+            return productization.delete_local_data(project_id, request.confirmation)
+        except ProductizationError as error:
+            raise product_error(error) from error
+
+    @app.get("/app/background-status", dependencies=[Depends(guard)])
+    def background_status() -> dict[str, object]:
+        return productization.background()
+
+    @app.put("/app/background-status", dependencies=[Depends(guard)])
+    def update_background_status(request: BackgroundSettingsRequest) -> dict[str, object]:
+        return productization.background(request.keep_running_on_close, request.start_at_login)
+
+    @app.get("/app/start-at-login", dependencies=[Depends(guard)])
+    def start_at_login() -> dict[str, object]:
+        return productization.background()
+
+    @app.put("/app/start-at-login", dependencies=[Depends(guard)])
+    def update_start_at_login(request: BackgroundSettingsRequest) -> dict[str, object]:
+        return productization.background(start_at_login=request.start_at_login)
 
     @app.get("/events", response_model=LocalEventListResponse, dependencies=[Depends(guard)])
     def local_events(after: int = Query(default=0, ge=0)) -> LocalEventListResponse:

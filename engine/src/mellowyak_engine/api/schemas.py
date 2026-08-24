@@ -143,6 +143,9 @@ class ProjectResponse(BaseModel):
     git: GitStateResponse
     scan: ScanRunResponse | None
     source_remains_local: bool
+    disconnected: bool = False
+    source_available: bool = True
+    notifications_muted: bool = False
 
 
 class ProjectListResponse(BaseModel):
@@ -356,6 +359,70 @@ class LocalEventResponse(BaseModel):
 
 class LocalEventListResponse(BaseModel):
     events: list[LocalEventResponse]
+
+
+class AlertResponse(BaseModel):
+    id: str
+    project_id: str | None = None
+    change_id: str | None = None
+    behavior_id: str | None = None
+    regression_id: str | None = None
+    gate_id: str | None = None
+    severity: str
+    category: str
+    title_key: str
+    summary_key: str
+    parameters: dict[str, object]
+    route: dict[str, object]
+    read: bool
+    resolved: bool
+    created_at: str
+    updated_at: str
+
+
+class AlertListResponse(BaseModel):
+    alerts: list[AlertResponse]
+
+
+class UnreadCountResponse(BaseModel):
+    count: int
+
+
+class NotificationSettingsRequest(BaseModel):
+    native_enabled: bool | None = None
+    regression_enabled: bool | None = None
+    blocked_gate_enabled: bool | None = None
+    needs_review_enabled: bool | None = None
+    project_errors_enabled: bool | None = None
+    verified_complete_enabled: bool | None = None
+    regression_resolved_enabled: bool | None = None
+    show_behavior_name: bool | None = None
+    show_project_name: bool | None = None
+    hide_details: bool | None = None
+    critical_override: bool | None = None
+
+
+class QuietModeStartRequest(BaseModel):
+    duration: str
+    allow_critical: bool = False
+
+
+class ProjectNotificationRequest(BaseModel):
+    muted: bool
+
+
+class ProjectRelocateRequest(BaseModel):
+    path: str
+    confirm_identity_change: bool = False
+
+
+class ProjectDeleteRequest(BaseModel):
+    confirmation: str
+
+
+class BackgroundSettingsRequest(BaseModel):
+    keep_running_on_close: bool | None = None
+    start_at_login: bool | None = None
 
 
 class BehaviorDraftRequest(BaseModel):
