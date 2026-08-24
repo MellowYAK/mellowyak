@@ -1,5 +1,9 @@
 # Phase 3 Reverse Impact and Context Receipt validation
 
+## Startup asset matte correction
+
+The eight startup frames are extracted deterministically from the canonical source sheet. The source contains a baked light checkerboard and gray shadow rather than real transparency, so extraction now removes the connected neutral matte and one contaminated neutral edge pixel. All frames retain a shared 320×363 canvas and were reviewed against the application's dark navy background to prevent visible cutout halos.
+
 - Date: 2026-08-24
 - Scope: Phase 3 static impact/context foundations plus required macOS startup and English/Hebrew UI corrections; user-directed mascot and updater foundations were added afterward without changing the Phase 3 intelligence claims
 - Overall local status: VERIFIED_WORKING

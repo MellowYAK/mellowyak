@@ -9,11 +9,53 @@ from pathlib import Path
 
 from PIL import Image
 
+BACKGROUND_MIN_CHANNEL = 110
+BACKGROUND_MAX_CHROMA = 40
+EDGE_MATTE_MIN_CHANNEL = 120
+EDGE_MATTE_MAX_CHROMA = 70
+
 
 def is_baked_background(pixel: tuple[int, int, int]) -> bool:
-    """Match only the bright, near-neutral checkerboard baked into the source."""
+    """Match the connected neutral checkerboard and its baked gray shadow."""
 
-    return min(pixel) >= 228 and max(pixel) - min(pixel) <= 14
+    return (
+        min(pixel) >= BACKGROUND_MIN_CHANNEL
+        and max(pixel) - min(pixel) <= BACKGROUND_MAX_CHROMA
+    )
+
+
+def remove_neutral_edge_matte(image: Image.Image) -> None:
+    """Drop one contaminated boundary pixel without eroding colored artwork."""
+
+    width, height = image.size
+    pixels = image.load()
+    alpha = image.getchannel("A")
+    alpha_pixels = alpha.load()
+    contaminated: list[tuple[int, int]] = []
+
+    for y in range(1, height - 1):
+        for x in range(1, width - 1):
+            if not alpha_pixels[x, y]:
+                continue
+            touches_transparency = any(
+                not alpha_pixels[x + offset_x, y + offset_y]
+                for offset_x in (-1, 0, 1)
+                for offset_y in (-1, 0, 1)
+                if offset_x or offset_y
+            )
+            if not touches_transparency:
+                continue
+            red, green, blue, _ = pixels[x, y]
+            if (
+                min(red, green, blue) >= EDGE_MATTE_MIN_CHANNEL
+                and max(red, green, blue) - min(red, green, blue)
+                <= EDGE_MATTE_MAX_CHROMA
+            ):
+                contaminated.append((x, y))
+
+    for x, y in contaminated:
+        red, green, blue, _ = pixels[x, y]
+        pixels[x, y] = (red, green, blue, 0)
 
 
 def remove_connected_background(frame: Image.Image) -> Image.Image:
@@ -54,6 +96,7 @@ def remove_connected_background(frame: Image.Image) -> Image.Image:
             if background[y * width + x]:
                 red, green, blue, _ = output[x, y]
                 output[x, y] = (red, green, blue, 0)
+    remove_neutral_edge_matte(rgba)
     return rgba
 
 
