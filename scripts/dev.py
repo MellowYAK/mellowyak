@@ -79,6 +79,10 @@ def package() -> None:
     run("npm", "run", "tauri", "build", cwd=DESKTOP)
 
 
+def install_macos() -> None:
+    run(require_venv(), str(ROOT / "scripts" / "install_macos_app.py"))
+
+
 def development() -> None:
     engine_build()
     run("npm", "run", "tauri", "dev", cwd=DESKTOP)
@@ -106,6 +110,7 @@ COMMANDS = {
     "engine-build": engine_build,
     "desktop-build": desktop_build,
     "package": package,
+    "install-macos": install_macos,
     "clean": clean,
 }
 

@@ -7,6 +7,7 @@ on:
       - "apps/desktop/**"
       - "engine/**"
       - "scripts/build_engine.py"
+      - "scripts/validate_packaged_phase3.py"
       - ".github/workflows/package-smoke.yml"
 
 permissions:
@@ -67,3 +68,8 @@ jobs:
       - name: Build platform package without publishing
         run: npm run tauri build -- --bundles ${{ matrix.bundles }}
         working-directory: apps/desktop
+      - name: Validate packaged Phase 3 flow (macOS)
+        if: runner.os == 'macOS'
+        run: >-
+          python scripts/validate_packaged_phase3.py
+          apps/desktop/src-tauri/target/release/bundle/macos/MellowYak.app/Contents/MacOS/mellowyak-engine

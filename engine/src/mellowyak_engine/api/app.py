@@ -12,12 +12,21 @@ from fastapi.responses import JSONResponse
 from mellowyak_engine import APP_VERSION, ENGINE_VERSION
 from mellowyak_engine.api.schemas import (
     ActionResponse,
+    BehaviorCandidateListResponse,
+    BehaviorCandidateResponse,
+    ChangeImpactResponse,
+    ChangeIntentRequest,
     ChangeListResponse,
+    ContextReceiptResponse,
+    CurrentChangeResponse,
     GitStateResponse,
     HandshakeResponse,
     HealthResponse,
+    ImpactAnalyzeRequest,
+    ImpactPathListResponse,
     ImpactSearchResponse,
     ImpactSummaryResponse,
+    ImpactUnknownListResponse,
     InstallationResponse,
     LocalEventListResponse,
     MonitoringResponse,
@@ -36,6 +45,8 @@ from mellowyak_engine.api.schemas import (
 from mellowyak_engine.core.events import LocalEventBus
 from mellowyak_engine.core.logging import configure_logging
 from mellowyak_engine.db.database import LocalDatabase
+from mellowyak_engine.impact.models import TraversalPolicy
+from mellowyak_engine.impact.service import ImpactService, ImpactServiceError
 from mellowyak_engine.monitoring.service import MonitoringService
 from mellowyak_engine.projects.service import ProjectError, ProjectService
 from mellowyak_engine.scanning.service import ScanCoordinator, SourceScanner
@@ -57,6 +68,7 @@ class EngineRuntime:
     projects: ProjectService
     scans: ScanCoordinator
     monitoring: MonitoringService
+    impact: ImpactService
 
 
 def _open_folder(path: str) -> str:
@@ -91,6 +103,7 @@ def create_app(settings: EngineSettings) -> FastAPI:
     projects = ProjectService(database.sessions, installation.id, events)
     scans = ScanCoordinator(SourceScanner(database.sessions, events))
     monitoring = MonitoringService(projects, scans)
+    impact = ImpactService(database.sessions, events)
     runtime = EngineRuntime(
         settings=settings,
         paths=paths,
@@ -103,6 +116,7 @@ def create_app(settings: EngineSettings) -> FastAPI:
         projects=projects,
         scans=scans,
         monitoring=monitoring,
+        impact=impact,
     )
 
     app = FastAPI(
@@ -132,6 +146,14 @@ def create_app(settings: EngineSettings) -> FastAPI:
         status = 404 if error.code in {"PROJECT_NOT_FOUND", "PROJECT_ROOT_UNAVAILABLE"} else 400
         if error.code == "PROJECT_ALREADY_CONNECTED":
             status = 409
+        return HTTPException(status_code=status, detail=error.code)
+
+    def impact_error(error: ImpactServiceError) -> HTTPException:
+        status = (
+            404 if error.code.endswith("_NOT_FOUND") or error.code == "PROJECT_NOT_FOUND" else 409
+        )
+        if error.code in {"TASK_INTENT_TOO_LONG", "BEHAVIOR_ACTION_INVALID"}:
+            status = 400
         return HTTPException(status_code=status, detail=error.code)
 
     @app.get("/handshake", response_model=HandshakeResponse, include_in_schema=True)
@@ -296,6 +318,155 @@ def create_app(settings: EngineSettings) -> FastAPI:
     )
     def project_changes(project_id: str) -> ChangeListResponse:
         return ChangeListResponse(changes=projects.changes(project_id))
+
+    @app.get(
+        "/projects/{project_id}/changes/current",
+        response_model=CurrentChangeResponse,
+        dependencies=[Depends(guard)],
+    )
+    def current_change(project_id: str) -> CurrentChangeResponse:
+        try:
+            return CurrentChangeResponse(**impact.current_change(project_id))
+        except ImpactServiceError as error:
+            raise impact_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/changes/{change_id}",
+        response_model=CurrentChangeResponse,
+        dependencies=[Depends(guard)],
+    )
+    def change_detail(project_id: str, change_id: str) -> CurrentChangeResponse:
+        try:
+            return CurrentChangeResponse(**impact.get_change(project_id, change_id))
+        except ImpactServiceError as error:
+            raise impact_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/changes/{change_id}/intent",
+        response_model=CurrentChangeResponse,
+        dependencies=[Depends(guard)],
+    )
+    def change_intent(
+        project_id: str, change_id: str, request: ChangeIntentRequest
+    ) -> CurrentChangeResponse:
+        try:
+            return CurrentChangeResponse(**impact.set_intent(project_id, change_id, request.intent))
+        except ImpactServiceError as error:
+            raise impact_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/changes/{change_id}/analyze",
+        response_model=ChangeImpactResponse,
+        dependencies=[Depends(guard)],
+    )
+    def analyze_change(
+        project_id: str, change_id: str, request: ImpactAnalyzeRequest
+    ) -> ChangeImpactResponse:
+        try:
+            policy = TraversalPolicy(**request.model_dump())
+            return ChangeImpactResponse(**impact.analyze(project_id, change_id, policy))
+        except ImpactServiceError as error:
+            raise impact_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/changes/{change_id}/impact",
+        response_model=ChangeImpactResponse,
+        dependencies=[Depends(guard)],
+    )
+    def change_impact(project_id: str, change_id: str) -> ChangeImpactResponse:
+        try:
+            return ChangeImpactResponse(**impact.get_impact(project_id, change_id))
+        except ImpactServiceError as error:
+            raise impact_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/changes/{change_id}/impact/paths",
+        response_model=ImpactPathListResponse,
+        dependencies=[Depends(guard)],
+    )
+    def change_impact_paths(project_id: str, change_id: str) -> ImpactPathListResponse:
+        try:
+            return ImpactPathListResponse(paths=impact.paths(project_id, change_id))
+        except ImpactServiceError as error:
+            raise impact_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/changes/{change_id}/unknowns",
+        response_model=ImpactUnknownListResponse,
+        dependencies=[Depends(guard)],
+    )
+    def change_unknowns(project_id: str, change_id: str) -> ImpactUnknownListResponse:
+        try:
+            return ImpactUnknownListResponse(unknowns=impact.unknowns(project_id, change_id))
+        except ImpactServiceError as error:
+            raise impact_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/changes/{change_id}/context-receipt",
+        response_model=ContextReceiptResponse,
+        dependencies=[Depends(guard)],
+    )
+    def create_context_receipt(project_id: str, change_id: str) -> ContextReceiptResponse:
+        try:
+            return ContextReceiptResponse(**impact.create_context_receipt(project_id, change_id))
+        except ImpactServiceError as error:
+            raise impact_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/changes/{change_id}/context-receipt",
+        response_model=ContextReceiptResponse,
+        dependencies=[Depends(guard)],
+    )
+    def get_context_receipt(project_id: str, change_id: str) -> ContextReceiptResponse:
+        try:
+            return ContextReceiptResponse(**impact.get_context_receipt(project_id, change_id))
+        except ImpactServiceError as error:
+            raise impact_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/behavior-candidates",
+        response_model=BehaviorCandidateListResponse,
+        dependencies=[Depends(guard)],
+    )
+    def behavior_candidates(project_id: str) -> BehaviorCandidateListResponse:
+        try:
+            return BehaviorCandidateListResponse(candidates=impact.behavior_candidates(project_id))
+        except ImpactServiceError as error:
+            raise impact_error(error) from error
+
+    def candidate_action(
+        project_id: str, candidate_id: str, action: str
+    ) -> BehaviorCandidateResponse:
+        try:
+            return BehaviorCandidateResponse(
+                **impact.set_candidate_status(project_id, candidate_id, action)
+            )
+        except ImpactServiceError as error:
+            raise impact_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/behavior-candidates/{candidate_id}/dismiss",
+        response_model=BehaviorCandidateResponse,
+        dependencies=[Depends(guard)],
+    )
+    def dismiss_candidate(project_id: str, candidate_id: str) -> BehaviorCandidateResponse:
+        return candidate_action(project_id, candidate_id, "dismiss")
+
+    @app.post(
+        "/projects/{project_id}/behavior-candidates/{candidate_id}/keep",
+        response_model=BehaviorCandidateResponse,
+        dependencies=[Depends(guard)],
+    )
+    def keep_candidate(project_id: str, candidate_id: str) -> BehaviorCandidateResponse:
+        return candidate_action(project_id, candidate_id, "keep")
+
+    @app.post(
+        "/projects/{project_id}/behavior-candidates/{candidate_id}/prepare",
+        response_model=BehaviorCandidateResponse,
+        dependencies=[Depends(guard)],
+    )
+    def prepare_candidate(project_id: str, candidate_id: str) -> BehaviorCandidateResponse:
+        return candidate_action(project_id, candidate_id, "prepare")
 
     @app.get(
         "/projects/{project_id}/impact/summary",

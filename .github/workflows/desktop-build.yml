@@ -67,6 +67,11 @@ jobs:
         run: |
           python scripts/build_engine.py
           npm --prefix apps/desktop run tauri build -- --bundles ${{ matrix.bundles }}
+      - name: Validate packaged Phase 3 flow (macOS)
+        if: runner.os == 'macOS'
+        run: >-
+          python scripts/validate_packaged_phase3.py
+          apps/desktop/src-tauri/target/release/bundle/macos/MellowYak.app/Contents/MacOS/mellowyak-engine
       - name: Record immutable source identity
         shell: bash
         run: |

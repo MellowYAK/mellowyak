@@ -1,0 +1,167 @@
+{
+  "schema": "mellowyak.mascot_usage.v1",
+  "sheet": "assets/mascot/sheet/mellowyak-sheet.png",
+  "localizationPolicy": "translation_keys_only",
+  "poses": {
+    "yak-neutral": {
+      "file": "assets/mascot/poses/yak-neutral.png",
+      "meaningKey": "mascot.meaning.neutral",
+      "primaryScreens": ["screen.welcome", "screen.firstSetup", "screen.homeEmpty"],
+      "secondaryScreens": ["screen.projectsEmpty", "screen.about"],
+      "recommendedSizesPx": [96, 160, 240],
+      "tone": "neutral",
+      "role": "supportive",
+      "v1Core": true
+    },
+    "yak-wave": {
+      "file": "assets/mascot/poses/yak-wave.png",
+      "meaningKey": "mascot.meaning.wave",
+      "primaryScreens": ["screen.welcome", "screen.onboarding", "screen.projectsEmpty"],
+      "secondaryScreens": ["surface.successGreeting"],
+      "recommendedSizesPx": [120, 180, 240],
+      "tone": "helpful",
+      "role": "supportive",
+      "v1Core": true
+    },
+    "yak-thinking": {
+      "file": "assets/mascot/poses/yak-thinking.png",
+      "meaningKey": "mascot.meaning.thinking",
+      "primaryScreens": ["screen.changeCockpit", "state.impactAnalysis"],
+      "secondaryScreens": ["screen.regressionRepair", "state.waiting"],
+      "recommendedSizesPx": [72, 120, 180],
+      "tone": "helpful",
+      "role": "supportive",
+      "v1Core": true
+    },
+    "yak-peek-laptop": {
+      "file": "assets/mascot/poses/yak-peek-laptop.png",
+      "meaningKey": "mascot.meaning.peekLaptop",
+      "primaryScreens": ["screen.home", "state.passiveMonitoring"],
+      "secondaryScreens": ["surface.backgroundObservation"],
+      "recommendedSizesPx": [96, 160, 220],
+      "tone": "watchful",
+      "role": "decorative",
+      "v1Core": false
+    },
+    "yak-wink-thumbsup": {
+      "file": "assets/mascot/poses/yak-wink-thumbsup.png",
+      "meaningKey": "mascot.meaning.winkThumbsup",
+      "primaryScreens": ["surface.successConfirmation", "screen.value"],
+      "secondaryScreens": ["screen.onboardingComplete"],
+      "recommendedSizesPx": [72, 120, 180],
+      "tone": "success",
+      "role": "supportive",
+      "v1Core": false
+    },
+    "yak-warning-stop": {
+      "file": "assets/mascot/poses/yak-warning-stop.png",
+      "meaningKey": "mascot.meaning.warningStop",
+      "primaryScreens": ["state.blocked", "state.incompleteSetup"],
+      "secondaryScreens": ["surface.reviewNeeded"],
+      "recommendedSizesPx": [64, 96, 144],
+      "tone": "warning",
+      "role": "state-critical",
+      "v1Core": false
+    },
+    "yak-teaching-map": {
+      "file": "assets/mascot/poses/yak-teaching-map.png",
+      "meaningKey": "mascot.meaning.teachingMap",
+      "primaryScreens": ["screen.impactMap", "surface.walkthrough"],
+      "secondaryScreens": ["screen.connectors", "surface.helperPanel"],
+      "recommendedSizesPx": [96, 160, 220],
+      "tone": "helpful",
+      "role": "supportive",
+      "v1Core": false
+    },
+    "yak-security-shield": {
+      "file": "assets/mascot/poses/yak-security-shield.png",
+      "meaningKey": "mascot.meaning.securityShield",
+      "primaryScreens": ["screen.firstSetup", "screen.privacy", "state.localOnly"],
+      "secondaryScreens": ["screen.settings", "screen.protectedBehaviors"],
+      "recommendedSizesPx": [80, 140, 200],
+      "tone": "trust",
+      "role": "supportive",
+      "v1Core": true
+    },
+    "yak-working-laptop": {
+      "file": "assets/mascot/poses/yak-working-laptop.png",
+      "meaningKey": "mascot.meaning.workingLaptop",
+      "primaryScreens": ["state.initialScan", "state.indexing", "state.projectProcessing"],
+      "secondaryScreens": ["screen.connectors", "state.activeMonitoring"],
+      "recommendedSizesPx": [72, 120, 180],
+      "tone": "active",
+      "role": "supportive",
+      "v1Core": true
+    },
+    "yak-search-inspect": {
+      "file": "assets/mascot/poses/yak-search-inspect.png",
+      "meaningKey": "mascot.meaning.searchInspect",
+      "primaryScreens": ["screen.addProject", "screen.sourceInspection", "screen.projectMap"],
+      "secondaryScreens": ["screen.evidenceEmpty", "screen.impactMap"],
+      "recommendedSizesPx": [88, 144, 210],
+      "tone": "helpful",
+      "role": "supportive",
+      "v1Core": false
+    },
+    "yak-alert-point": {
+      "file": "assets/mascot/poses/yak-alert-point.png",
+      "meaningKey": "mascot.meaning.alertPoint",
+      "primaryScreens": ["state.issueFound", "surface.attentionRequired"],
+      "secondaryScreens": ["screen.regressionRepairFuture"],
+      "recommendedSizesPx": [64, 96, 144],
+      "tone": "warning",
+      "role": "state-critical",
+      "v1Core": true
+    },
+    "yak-success-check": {
+      "file": "assets/mascot/poses/yak-success-check.png",
+      "meaningKey": "mascot.meaning.successCheck",
+      "primaryScreens": ["state.projectReady", "surface.milestoneComplete"],
+      "secondaryScreens": ["state.verificationPassFuture"],
+      "recommendedSizesPx": [64, 96, 160],
+      "tone": "success",
+      "role": "state-critical",
+      "v1Core": true
+    },
+    "yak-confused": {
+      "file": "assets/mascot/poses/yak-confused.png",
+      "meaningKey": "mascot.meaning.confused",
+      "primaryScreens": ["state.unknown", "state.unsupported", "state.needsInput"],
+      "secondaryScreens": ["surface.noData"],
+      "recommendedSizesPx": [72, 120, 180],
+      "tone": "unknown",
+      "role": "state-critical",
+      "v1Core": false
+    },
+    "yak-sleeping": {
+      "file": "assets/mascot/poses/yak-sleeping.png",
+      "meaningKey": "mascot.meaning.sleeping",
+      "primaryScreens": ["state.idle", "state.noActivity", "state.passiveMonitoring"],
+      "secondaryScreens": ["screen.home"],
+      "recommendedSizesPx": [88, 144, 210],
+      "tone": "idle",
+      "role": "supportive",
+      "v1Core": true
+    },
+    "yak-celebrate": {
+      "file": "assets/mascot/poses/yak-celebrate.png",
+      "meaningKey": "mascot.meaning.celebrate",
+      "primaryScreens": ["screen.onboardingComplete", "state.projectConnected", "surface.milestone"],
+      "secondaryScreens": ["state.verificationSuccessFuture"],
+      "recommendedSizesPx": [96, 160, 220],
+      "tone": "success",
+      "role": "decorative",
+      "v1Core": false
+    },
+    "yak-relaxed-chair": {
+      "file": "assets/mascot/poses/yak-relaxed-chair.png",
+      "meaningKey": "mascot.meaning.relaxedChair",
+      "primaryScreens": ["screen.value", "state.dashboardCalm"],
+      "secondaryScreens": ["surface.passiveFirst"],
+      "recommendedSizesPx": [120, 180, 240],
+      "tone": "calm",
+      "role": "decorative",
+      "v1Core": false
+    }
+  }
+}

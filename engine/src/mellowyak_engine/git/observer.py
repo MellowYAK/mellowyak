@@ -6,6 +6,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from dulwich import porcelain
+from dulwich.diff_tree import tree_changes
 from dulwich.errors import NotGitRepository
 from dulwich.repo import Repo
 
@@ -164,3 +165,27 @@ def observe_git(path: Path) -> GitState:
         ignored_count=0,
         worktree_fingerprint=fingerprint,
     )
+
+
+def committed_changed_paths(
+    path: Path, base_sha: str | None, head_sha: str | None
+) -> tuple[str, ...]:
+    """Return a deterministic, read-only tree delta without invoking Git commands."""
+    if not base_sha or not head_sha or base_sha == head_sha:
+        return ()
+    repo = discover_repository(path.expanduser().resolve(strict=True))
+    if repo is None or repo.bare:
+        return ()
+    try:
+        base = repo[base_sha.encode("ascii")]
+        head = repo[head_sha.encode("ascii")]
+        changes = tree_changes(repo.object_store, base.tree, head.tree)
+        paths = {
+            _text_path(entry.path)
+            for change in changes
+            for entry in (change.old, change.new)
+            if entry is not None and entry.path is not None
+        }
+        return tuple(sorted(paths))
+    except (KeyError, ValueError, TypeError):
+        return ()

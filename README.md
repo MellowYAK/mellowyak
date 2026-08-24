@@ -1,3 +1,6 @@
+> [!CAUTION]
+> **NON-NEGOTIABLE UI LOCALIZATION RULE:** No user-facing UI text may be hardcoded anywhere in MellowYak. Every label, message, title, placeholder, accessible name, and mascot description must be rendered from a translation key. English and Hebrew catalogs must stay complete, and Hebrew UI must render right-to-left. Run `python3 scripts/check_ui_translation_keys.py` before every commit.
+
 <div align="center">
 
 # MellowYak
@@ -663,7 +666,7 @@ The intended principle is:
 
 ## Project status
 
-MellowYak Phase 2 now has a working local Project, Git, Source Scan, and Impact foundation. It is not a released product. The desktop can select a real folder through the native OS picker, persist the project locally, observe Git without modifying it, run a bounded source scan, and show honest readiness and relationship coverage. Windows builds remain CI-configured rather than locally runtime-verified on this macOS revision.
+MellowYak Phase 3 now has a working local Project, Git, Source Scan, bounded Reverse Impact, and Context Receipt foundation. It is not a released product. The desktop can detect exact local changes, traverse known static project relationships, explain related entities and paths, expose unknown/stale boundaries, and generate a bounded metadata-only Context Receipt. This is not regression protection or behavior verification. Windows and Linux remain CI-configured rather than runtime-verified on this macOS revision.
 
 The complete workflow described in this README is the product direction. Implementation must advance through verified stages.
 
@@ -695,11 +698,21 @@ Phase 2 does **not** claim complete blast-radius knowledge or regression protect
 
 ### Phase 3 — Impact expansion and context
 
-- deeper framework/runtime relationship adapters;
-- selected, reviewed APC Project MAP concepts without copied APC source;
-- revision-aware impact traversal beyond the Phase 2 direct relationship foundation;
-- explainable context selection;
-- explicit unknown coverage.
+- implemented stable committed `base → HEAD` and dirty `HEAD + worktree fingerprint` Change identity;
+- implemented deterministic `reverse-impact-v1` traversal over known static project relationships;
+- implemented separate parsed and heuristic treatment, bounded depth/results/paths, and visible truncation reasons;
+- implemented revision-bound explainable paths plus terminal unknown and stale boundaries;
+- implemented optional deterministic task-intent ranking without embeddings or model calls;
+- implemented `mellowyak.context_receipt.v1` with explicit budgets, per-item reasons, exclusions, zero source bytes, and no upload;
+- implemented Change Detail and Impact Explorer desktop views;
+- implemented translation-key-only product copy with complete English and Hebrew dictionaries and document-level RTL in Hebrew;
+- implemented asynchronous sidecar startup so a slow packaged-engine handshake reports a UI state instead of crashing the macOS application;
+- implemented one authoritative startup pipeline tied to real health, local storage/database, readiness/privacy capability, project-discovery and final-readiness events; its eight-frame MellowYak animation never reports ready before an empty or populated project list is renderable;
+- implemented non-verified Behavior Candidates derived from impacted tests;
+- implemented SQLite migration `0003_reverse_impact_context` while preserving prior project data;
+- reviewed selected APC Project MAP and source-map-first concepts read-only, with clean rewrites and documented provenance.
+
+Phase 3 does **not** implement Protected Behaviors, runtime capture, automatic or selective test execution, PASS/FAIL results, Last Known Good evidence, Completion Gate, Regression Detected, Repair Context, connectors, token savings, accounts, cloud sync, signing, or release publishing.
 
 ### Phase 4 — Behaviors and evidence
 
@@ -788,6 +801,7 @@ python3 scripts/dev.py typecheck
 python3 scripts/dev.py engine-build
 python3 scripts/dev.py desktop-build
 python3 scripts/dev.py package
+python3 scripts/dev.py install-macos
 python3 scripts/dev.py clean
 ```
 
@@ -815,6 +829,10 @@ packages/
 
 assets/
   brand/
+  mascot/
+    sheet/
+    poses/
+    manifest/
 
 docs/
   architecture/
@@ -825,7 +843,13 @@ docs/
 scripts/
 ```
 
-Generated installers, local databases, evidence files, virtual environments, `node_modules`, Rust build output, and secrets must not be committed.
+Generated installers, local databases, evidence files, virtual environments, `node_modules`, Rust build output, and secrets must not be committed. Local macOS iteration uses `install-macos` to update `/Applications/MellowYak.app` directly; DMG, Windows NSIS `.exe`, Linux AppImage/DEB, and signed updater metadata belong only in GitHub Releases. See [`docs/RELEASES_AND_UPDATES.md`](docs/RELEASES_AND_UPDATES.md).
+
+The mascot source sheet, 16 transparent pose exports, translation-key-only manifest, placement guide, and deterministic extraction command are documented in [`assets/mascot/manifest/mascot-usage.md`](assets/mascot/manifest/mascot-usage.md). Recreate the crops with `python3 scripts/extract_mascot_sheet.py <source.png> assets/mascot`; Pillow is included in the development toolchain. Mascot accessible descriptions are translation keys in both English and Hebrew, never hardcoded JSX text.
+
+The eight-frame startup animation source, deterministic background normalization and shared-canvas extraction contract are documented in [`assets/mascot/loading/README.md`](assets/mascot/loading/README.md). Startup copy is translation-key-only, Hebrew is RTL, frame playback is preloaded and visibility-aware, and reduced motion uses a static frame.
+
+The current Phase 3 UI review contains 24 full-resolution English/Hebrew screenshots, including real startup and narrow-window states, design notes, a 25-page PDF, the app-icon master, both mascot sheets, and an implementation/APC-extraction summary in [`docs/ui-review/phase-3-2026-08-24/`](docs/ui-review/phase-3-2026-08-24/PHASE_3_SUMMARY.md). All screenshot data is synthetic.
 
 The canonical source may be Git-backed, as it is for MellowYak, but Git is not a requirement for every future APC-managed project. MellowYak desktop artifacts are generated from source and uploaded as CI artifacts; built binaries are not committed to source history. The optional future APC integration is an authenticated, project-scoped API adapter. MellowYak does not copy APC PHP, MariaDB, tenant, task, or UI code and does not require an APC server to run.
 

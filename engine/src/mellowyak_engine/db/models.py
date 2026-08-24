@@ -193,6 +193,200 @@ class ScanFinding(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
+class ProjectChange(Base):
+    __tablename__ = "project_changes"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    logical_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    change_kind: Mapped[str] = mapped_column(String(40), nullable=False)
+    revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    base_head_sha: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    head_sha: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    worktree_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    changed_paths_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    task_intent: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(40), nullable=False, default="change_detected")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (UniqueConstraint("project_id", "logical_key"),)
+
+
+class ImpactAnalysis(Base):
+    __tablename__ = "impact_analyses"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    change_id: Mapped[str] = mapped_column(
+        String(64), ForeignKey("project_changes.id"), nullable=False
+    )
+    analysis_revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    base_head_sha: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    head_sha: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    worktree_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    scan_revision: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    algorithm_version: Mapped[str] = mapped_column(String(40), nullable=False)
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    changed_file_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    impacted_node_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    unknown_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    stale_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    heuristic_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    truncated: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    truncation_reasons_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    duration_ms: Mapped[float] = mapped_column(Float, nullable=False, default=0)
+    stale: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    stale_reasons_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (UniqueConstraint("project_id", "change_id", "analysis_revision"),)
+
+
+class ImpactAnalysisInput(Base):
+    __tablename__ = "impact_analysis_inputs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    analysis_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("impact_analyses.id"), nullable=False
+    )
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    changed_files_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    task_intent: Mapped[str | None] = mapped_column(Text, nullable=True)
+    traversal_policy_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class ImpactAnalysisResult(Base):
+    __tablename__ = "impact_analysis_results"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    analysis_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("impact_analyses.id"), nullable=False
+    )
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    node_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("impact_nodes.id"), nullable=True
+    )
+    node_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    display_name: Mapped[str] = mapped_column(Text, nullable=False)
+    relative_path: Mapped[str | None] = mapped_column(Text, nullable=True)
+    impact_class: Mapped[str] = mapped_column(String(40), nullable=False)
+    minimum_depth: Mapped[int] = mapped_column(Integer, nullable=False)
+    strongest_provenance: Mapped[str] = mapped_column(String(40), nullable=False)
+    stale: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    unknown: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    explanation: Mapped[str] = mapped_column(Text, nullable=False)
+    path_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    ranking_score: Mapped[float] = mapped_column(Float, nullable=False, default=0)
+    ranking_reasons_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    unknown_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class ImpactAnalysisPath(Base):
+    __tablename__ = "impact_analysis_paths"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    analysis_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("impact_analyses.id"), nullable=False
+    )
+    result_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("impact_analysis_results.id"), nullable=False
+    )
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    depth: Mapped[int] = mapped_column(Integer, nullable=False)
+    path_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class ContextReceipt(Base):
+    __tablename__ = "context_receipts"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    change_id: Mapped[str] = mapped_column(
+        String(64), ForeignKey("project_changes.id"), nullable=False
+    )
+    analysis_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("impact_analyses.id"), nullable=False
+    )
+    receipt_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    request_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    source_revision_json: Mapped[str] = mapped_column(Text, nullable=False)
+    constraints_json: Mapped[str] = mapped_column(Text, nullable=False)
+    unknowns_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    excluded_context_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    relationship_paths_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    size_metrics_json: Mapped[str] = mapped_column(Text, nullable=False)
+    truncated: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    stale: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (UniqueConstraint("project_id", "receipt_key"),)
+
+
+class ContextReceiptItem(Base):
+    __tablename__ = "context_receipt_items"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    receipt_id: Mapped[str] = mapped_column(
+        String(64), ForeignKey("context_receipts.id"), nullable=False
+    )
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    relative_path: Mapped[str] = mapped_column(Text, nullable=False)
+    item_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    reason_selected: Mapped[str] = mapped_column(Text, nullable=False)
+    relationship_provenance: Mapped[str] = mapped_column(String(40), nullable=False)
+    relevance_class: Mapped[str] = mapped_column(String(40), nullable=False)
+    stale: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    size_bytes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    content_eligible: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    selection_reasons_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+
+
+class BehaviorCandidate(Base):
+    __tablename__ = "behavior_candidates"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    source_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    source_key: Mapped[str] = mapped_column(Text, nullable=False)
+    title: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(40), nullable=False, default="CANDIDATE")
+    evidence_state: Mapped[str] = mapped_column(String(40), nullable=False, default="none")
+    verification_state: Mapped[str] = mapped_column(
+        String(40), nullable=False, default="not_configured"
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    kept_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (UniqueConstraint("project_id", "source_type", "source_key"),)
+
+
+class BehaviorCandidateLink(Base):
+    __tablename__ = "behavior_candidate_links"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    behavior_candidate_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("behavior_candidates.id"), nullable=False
+    )
+    change_id: Mapped[str | None] = mapped_column(
+        String(64), ForeignKey("project_changes.id"), nullable=True
+    )
+    impact_node_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("impact_nodes.id"), nullable=True
+    )
+    relation_type: Mapped[str] = mapped_column(String(40), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "project_id", "behavior_candidate_id", "change_id", "impact_node_id", "relation_type"
+        ),
+    )
+
+
 class EngineRun(Base):
     __tablename__ = "engine_runs"
 

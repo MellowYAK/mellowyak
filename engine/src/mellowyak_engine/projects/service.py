@@ -469,7 +469,6 @@ class ProjectService:
                 select(ImpactNode)
                 .where(
                     ImpactNode.project_id == project_id,
-                    ImpactNode.stale.is_(False),
                     or_(
                         ImpactNode.label.ilike(f"%{term}%"),
                         ImpactNode.stable_key.ilike(f"%{term}%"),
@@ -482,9 +481,18 @@ class ProjectService:
                 outgoing = session.execute(
                     select(ImpactEdge, ImpactNode)
                     .join(ImpactNode, ImpactNode.id == ImpactEdge.target_node_id)
-                    .where(ImpactEdge.source_node_id == node.id, ImpactEdge.stale.is_(False))
+                    .where(ImpactEdge.source_node_id == node.id)
                     .limit(20)
                 ).all()
+                incoming = session.execute(
+                    select(ImpactEdge, ImpactNode)
+                    .join(ImpactNode, ImpactNode.id == ImpactEdge.source_node_id)
+                    .where(ImpactEdge.target_node_id == node.id)
+                    .limit(20)
+                ).all()
+                relationship_rows = [("outgoing", edge, target) for edge, target in outgoing] + [
+                    ("incoming", edge, source) for edge, source in incoming
+                ]
                 results.append(
                     {
                         "node": {
@@ -494,14 +502,27 @@ class ProjectService:
                         },
                         "relationships": [
                             {
+                                "direction": direction,
                                 "type": edge.edge_type,
                                 "target_type": target.node_type,
                                 "target": target.label,
                                 "target_path": target.relative_path,
                                 "provenance": edge.provenance,
                                 "parser_adapter": edge.parser_adapter,
+                                "source_scan_revision": edge.source_scan_revision,
+                                "stale": edge.stale,
                             }
-                            for edge, target in outgoing
+                            for direction, edge, target in relationship_rows
+                        ],
+                        "recent_changes": [
+                            row.id
+                            for row in session.scalars(
+                                select(ProjectChangeObservation)
+                                .where(ProjectChangeObservation.project_id == project_id)
+                                .order_by(ProjectChangeObservation.observed_at.desc())
+                                .limit(20)
+                            ).all()
+                            if node.relative_path in json.loads(row.changed_paths_json)
                         ],
                     }
                 )

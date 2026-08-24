@@ -26,6 +26,7 @@ build/
 *.msi
 *.pkg
 *.spec
+*.key
 engine/.build/
 apps/desktop/src/generated/api.ts
 apps/desktop/src-tauri/binaries/mellowyak-engine-*

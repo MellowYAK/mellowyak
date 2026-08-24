@@ -1,7 +1,6 @@
 use rand::{rngs::OsRng, RngCore};
 use serde::{Deserialize, Serialize};
-use std::sync::{mpsc, Mutex};
-use std::time::Duration;
+use std::sync::Mutex;
 use tauri::{Manager, RunEvent, State};
 use tauri_plugin_shell::process::{CommandChild, CommandEvent};
 use tauri_plugin_shell::ShellExt;
@@ -22,8 +21,9 @@ struct EngineBootstrap {
 }
 
 struct EngineState {
-    bootstrap: EngineBootstrap,
+    bootstrap: Mutex<Option<EngineBootstrap>>,
     child: Mutex<Option<CommandChild>>,
+    startup_error: Mutex<Option<String>>,
 }
 
 fn random_session_token() -> String {
@@ -33,8 +33,18 @@ fn random_session_token() -> String {
 }
 
 #[tauri::command]
-fn engine_bootstrap(state: State<'_, EngineState>) -> EngineBootstrap {
-    state.bootstrap.clone()
+fn engine_bootstrap(state: State<'_, EngineState>) -> Result<EngineBootstrap, String> {
+    if let Ok(bootstrap) = state.bootstrap.lock() {
+        if let Some(value) = bootstrap.as_ref() {
+            return Ok(value.clone());
+        }
+    }
+    if let Ok(startup_error) = state.startup_error.lock() {
+        if let Some(value) = startup_error.as_ref() {
+            return Err(value.clone());
+        }
+    }
+    Err("ENGINE_STARTING".into())
 }
 
 fn stop_engine(app: &tauri::AppHandle) {
@@ -47,8 +57,21 @@ fn stop_engine(app: &tauri::AppHandle) {
     }
 }
 
+fn fail_engine_start(state: &EngineState, message: String) {
+    if let Ok(mut error) = state.startup_error.lock() {
+        *error = Some(message);
+    }
+    if let Ok(mut child_slot) = state.child.lock() {
+        if let Some(child) = child_slot.take() {
+            let _ = child.kill();
+        }
+    }
+}
+
 pub fn run() {
     let app = tauri::Builder::default()
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![engine_bootstrap])
@@ -65,50 +88,65 @@ pub fn run() {
                     "MELLOWYAK_ALLOWED_ORIGINS",
                     "tauri://localhost,http://tauri.localhost,http://localhost:1420,http://127.0.0.1:1420",
                 );
-            let (mut events, child) = command.spawn()?;
-            let (handshake_tx, handshake_rx) = mpsc::sync_channel::<Result<SidecarHandshake, String>>(1);
-
+            let (mut events, child) = match command.spawn() {
+                Ok(value) => value,
+                Err(error) => {
+                    app.manage(EngineState {
+                        bootstrap: Mutex::new(None),
+                        child: Mutex::new(None),
+                        startup_error: Mutex::new(Some(format!("SIDECAR_START_ERROR:{error}"))),
+                    });
+                    return Ok(());
+                }
+            };
+            app.manage(EngineState {
+                bootstrap: Mutex::new(None),
+                child: Mutex::new(Some(child)),
+                startup_error: Mutex::new(None),
+            });
+            let app_handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
                 while let Some(event) = events.recv().await {
-                    match event {
+                    let result = match event {
                         CommandEvent::Stdout(bytes) => {
                             let line = String::from_utf8_lossy(&bytes);
-                            let parsed = serde_json::from_str::<SidecarHandshake>(line.trim())
-                                .map_err(|_| "SIDECAR_HANDSHAKE_INVALID".to_string());
-                            let _ = handshake_tx.send(parsed);
-                            break;
+                            serde_json::from_str::<SidecarHandshake>(line.trim())
+                                .map_err(|_| "SIDECAR_HANDSHAKE_INVALID".to_string())
                         }
                         CommandEvent::Error(message) => {
-                            let _ = handshake_tx.send(Err(format!("SIDECAR_START_ERROR:{message}")));
-                            break;
+                            Err(format!("SIDECAR_START_ERROR:{message}"))
                         }
                         CommandEvent::Terminated(_) => {
-                            let _ = handshake_tx.send(Err("SIDECAR_EXITED_BEFORE_HANDSHAKE".into()));
-                            break;
+                            Err("SIDECAR_EXITED_BEFORE_HANDSHAKE".into())
                         }
-                        _ => {}
+                        _ => continue,
+                    };
+                    if let Some(state) = app_handle.try_state::<EngineState>() {
+                        match result {
+                            Ok(handshake)
+                                if handshake.schema == "mellowyak.sidecar.handshake.v1"
+                                    && handshake.mode == "local"
+                                    && handshake.host == "127.0.0.1"
+                                    && handshake.port > 0 =>
+                            {
+                                if let Ok(mut bootstrap) = state.bootstrap.lock() {
+                                    *bootstrap = Some(EngineBootstrap {
+                                        host: handshake.host,
+                                        port: handshake.port,
+                                        token,
+                                    });
+                                }
+                            }
+                            Ok(_) => {
+                                fail_engine_start(&state, "SIDECAR_HANDSHAKE_REJECTED".into());
+                            }
+                            Err(message) => {
+                                fail_engine_start(&state, message);
+                            }
+                        }
                     }
+                    break;
                 }
-            });
-
-            let handshake = handshake_rx
-                .recv_timeout(Duration::from_secs(20))
-                .map_err(|_| "SIDECAR_HANDSHAKE_TIMEOUT")??;
-            if handshake.schema != "mellowyak.sidecar.handshake.v1"
-                || handshake.mode != "local"
-                || handshake.host != "127.0.0.1"
-                || handshake.port == 0
-            {
-                let _ = child.kill();
-                return Err("SIDECAR_HANDSHAKE_REJECTED".into());
-            }
-            app.manage(EngineState {
-                bootstrap: EngineBootstrap {
-                    host: handshake.host,
-                    port: handshake.port,
-                    token,
-                },
-                child: Mutex::new(Some(child)),
             });
             Ok(())
         })

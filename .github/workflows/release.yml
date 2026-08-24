@@ -1,0 +1,107 @@
+name: Signed installers and in-app updates
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Linux prerequisites
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Install dependencies
+        run: |
+          python -m venv engine/.venv
+          engine/.venv/bin/python -m pip install -e './engine[dev]'
+          npm ci --prefix apps/desktop
+      - name: Verify source, translations, and contracts
+        run: |
+          test "v$(node -p \"require('./apps/desktop/src-tauri/tauri.conf.json').version\")" = "$GITHUB_REF_NAME"
+          engine/.venv/bin/python scripts/export_openapi.py
+          npm --prefix apps/desktop run contract:generate
+          engine/.venv/bin/python -m pytest engine
+          engine/.venv/bin/python -m ruff check engine scripts
+          engine/.venv/bin/python -m ruff format --check engine scripts
+          python scripts/check_ui_translation_keys.py
+          npm --prefix apps/desktop test
+          npm --prefix apps/desktop run typecheck
+          cargo fmt --check --manifest-path apps/desktop/src-tauri/Cargo.toml
+          cargo check --manifest-path apps/desktop/src-tauri/Cargo.toml
+
+  release:
+    needs: verify
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-15
+            bundles: app,dmg
+          - platform: windows-2025
+            bundles: nsis
+          - platform: ubuntu-24.04
+            bundles: appimage,deb
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Linux prerequisites
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install build dependencies (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          python -m venv engine/.venv
+          engine/.venv/bin/python -m pip install -e './engine[dev]'
+          npm ci --prefix apps/desktop
+      - name: Install build dependencies (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          python -m venv engine/.venv
+          engine/.venv/Scripts/python.exe -m pip install -e './engine[dev]'
+          npm ci --prefix apps/desktop
+      - name: Build platform sidecar
+        run: python scripts/build_engine.py
+      - uses: tauri-apps/tauri-action@action-v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: apps/desktop
+          tagName: v__VERSION__
+          releaseName: MellowYak v__VERSION__
+          releaseBody: Install MellowYak from the platform package attached to this release. Existing signed installations receive future updates in-app.
+          releaseDraft: false
+          prerelease: false
+          uploadUpdaterJson: true
+          updaterJsonPreferNsis: true
+          retryAttempts: 2
+          args: --bundles ${{ matrix.bundles }} --config src-tauri/tauri.release.conf.json

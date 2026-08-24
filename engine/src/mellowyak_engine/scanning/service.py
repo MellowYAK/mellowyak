@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import posixpath
 import threading
 import time
 import uuid
@@ -225,7 +226,7 @@ class SourceScanner:
             )
             candidates.extend(base / f"index{suffix}" for suffix in (".ts", ".tsx", ".js", ".jsx"))
         for candidate in candidates:
-            normalized = candidate.as_posix().lstrip("./")
+            normalized = posixpath.normpath(candidate.as_posix()).removeprefix("./")
             if normalized in paths:
                 return normalized
         return None

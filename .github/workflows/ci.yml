@@ -45,6 +45,7 @@ jobs:
           engine/.venv/bin/python -m ruff format --check engine scripts
       - name: UI tests, types and build
         run: |
+          python ../../scripts/check_ui_translation_keys.py
           npm test
           npm run typecheck
           npm run build
