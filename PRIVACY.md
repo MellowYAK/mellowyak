@@ -1,5 +1,20 @@
 # Privacy
 
+## Phase 10 Product Truth and daily workflow
+
+Phase 10 adds read-only local aggregates for Home, Project Overview, Activity/Episode Detail,
+Regression Detail and Diagnostics. These responses join existing local metadata and remain bounded,
+project-scoped and privacy-safe; detailed paths, hashes, IDs and provenance stay behind explicit
+technical disclosure. No source bytes are added to SQLite or uploaded.
+
+The 36 delivered screenshots and packaged validators use deterministic synthetic or disposable data.
+No registered real project, APC data, user database, provider history, cloud service, analytics
+endpoint or model API was used. Diagnostics continues to alias the data root, hides bearer tokens and
+reports no outbound product network. Support bundles remain local, bounded and review-before-share.
+
+Same-source platform tooling and artifact manifests add no telemetry. Windows, Linux and Apple
+Silicon workflow configuration is not runtime evidence and does not change the local data contract.
+
 ## Phase 9 Technical Preview lifecycle and support data
 
 Phase 9 stores onboarding completion, local project-location history, diagnostic run summaries,

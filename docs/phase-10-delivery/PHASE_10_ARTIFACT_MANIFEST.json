@@ -1,0 +1,1760 @@
+{
+  "created_at": "2026-08-25T12:14:46.629316+00:00",
+  "files": [
+    {
+      "path": ".DS_Store",
+      "sha256": "d8fd72fe43bf8b427a380eab95380153e100a94d180ba744ead968c3d7ce9344",
+      "size_bytes": 6148
+    },
+    {
+      "path": "dmg/MellowYak_0.2.0-preview.1_x64.dmg",
+      "sha256": "2b43debaaa4b2ec11bf585b0f42693ada35fcf80c0b8d23d108171fe579fb8c8",
+      "size_bytes": 389109699
+    },
+    {
+      "path": "dmg/bundle_dmg.sh",
+      "sha256": "3b21448e5eef9b7c4f6bd8593e6c5f577ee5c64db2a237a4908e63fb6d81a89e",
+      "size_bytes": 19300
+    },
+    {
+      "path": "dmg/icon.icns",
+      "sha256": "72d2c96b424907bc3c099938cfa591f864c0a6d1f3b0f35f15b52df06e280ebc",
+      "size_bytes": 2727069
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Info.plist",
+      "sha256": "b1e1ce5bbf5f128a0c34d63fdfe98f6bb49ce18566e212641e5cd6ef2d1f2186",
+      "size_bytes": 998
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/MacOS/mellowyak-desktop",
+      "sha256": "f29d89ad283238376bbddaa26abef9ec0c5cf18f2fd4f2f85075271d3287a138",
+      "size_bytes": 22722824
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/MacOS/mellowyak-engine",
+      "sha256": "bd906b599fa68d4edc83a9c69eb34f213251a0c14ec6175d8c6f716446a02d18",
+      "size_bytes": 75282096
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/DEPENDENCIES_VALIDATED",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/INSTALLATION_COMPLETE",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/ABOUT",
+      "sha256": "34d078ce3003087a8374e7c6156fda374769b8047d6ddaf419d66414aa48edfb",
+      "size_bytes": 248
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Google Chrome for Testing Framework",
+      "sha256": "a2915e6591134b56ee281c34bc4193d49c4422c283a2b75c10b64cf646367552",
+      "size_bytes": 255906780
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Google Chrome for Testing Framework",
+      "sha256": "a2915e6591134b56ee281c34bc4193d49c4422c283a2b75c10b64cf646367552",
+      "size_bytes": 255906780
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Helpers/Google Chrome for Testing Helper (Alerts).app/Contents/Info.plist",
+      "sha256": "f6a3c1892f76f46eecbe478f08bcb648b37ab30281673cd71974d2691dff21ea",
+      "size_bytes": 1905
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Helpers/Google Chrome for Testing Helper (Alerts).app/Contents/MacOS/Google Chrome for Testing Helper (Alerts)",
+      "sha256": "4da050b6cb1a8cc1324b42aefddb92d89816740158ef95b58c0b4e2bf9be9d8f",
+      "size_bytes": 40416
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Helpers/Google Chrome for Testing Helper (Alerts).app/Contents/PkgInfo",
+      "sha256": "82502191c9484b04d685374f9879a0066069c49b8acae7a04b01d38d07e8eca0",
+      "size_bytes": 8
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Helpers/Google Chrome for Testing Helper (Alerts).app/Contents/Resources/Assets.car",
+      "sha256": "e70466610b4bdbb61098baf07d342e8e21a67c34cfd2c53e400d3e588ed2cc4c",
+      "size_bytes": 1362712
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Helpers/Google Chrome for Testing Helper (Alerts).app/Contents/Resources/app.icns",
+      "sha256": "3be5d5276c19c48925acc2c6a7896ce238d73b1ca8b74c30724799e2d28223ae",
+      "size_bytes": 94689
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Helpers/Google Chrome for Testing Helper (Alerts).app/Contents/Resources/base.lproj/InfoPlist.strings",
+      "sha256": "b978a9cb5bd3109d3198f4f8387517511326986f2549b2a5bb968816f61ebda0",
+      "size_bytes": 96
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Helpers/Google Chrome for Testing Helper (GPU).app/Contents/Info.plist",
+      "sha256": "0cbf85f5e41680d024f031c2e84d98ed28af47cf7ab5707b8347ba4cde5262c6",
+      "size_bytes": 1578
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Helpers/Google Chrome for Testing Helper (GPU).app/Contents/MacOS/Google Chrome for Testing Helper (GPU)",
+      "sha256": "31b21841715b62ebbef5366095985b0ef9499b3f9bd47890404d7b3494e72245",
+      "size_bytes": 40416
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Helpers/Google Chrome for Testing Helper (GPU).app/Contents/PkgInfo",
+      "sha256": "82502191c9484b04d685374f9879a0066069c49b8acae7a04b01d38d07e8eca0",
+      "size_bytes": 8
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Helpers/Google Chrome for Testing Helper (Renderer).app/Contents/Info.plist",
+      "sha256": "111e937d21f6c8ffad6a81efbedb8fc12b271c521dfd5ec696c04d840777c6f4",
+      "size_bytes": 1602
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Helpers/Google Chrome for Testing Helper (Renderer).app/Contents/MacOS/Google Chrome for Testing Helper (Renderer)",
+      "sha256": "c4d3a2ef8ddd54fd9e0e76c2ad08ed735c468502765dd386475a41089a7956b7",
+      "size_bytes": 40416
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Helpers/Google Chrome for Testing Helper (Renderer).app/Contents/PkgInfo",
+      "sha256": "82502191c9484b04d685374f9879a0066069c49b8acae7a04b01d38d07e8eca0",
+      "size_bytes": 8
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Helpers/Google Chrome for Testing Helper.app/Contents/Info.plist",
+      "sha256": "9c90f22fa594c239dae783503f490021f8c8a4b2249b88795854e8de1dc9c5a2",
+      "size_bytes": 1560
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Helpers/Google Chrome for Testing Helper.app/Contents/MacOS/Google Chrome for Testing Helper",
+      "sha256": "7fc443966ff9de0f84d202f444cdd75192354039e6f8d515ebbd2dce358196bc",
+      "size_bytes": 40416
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Helpers/Google Chrome for Testing Helper.app/Contents/PkgInfo",
+      "sha256": "82502191c9484b04d685374f9879a0066069c49b8acae7a04b01d38d07e8eca0",
+      "size_bytes": 8
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Helpers/app_mode_loader",
+      "sha256": "8b112a008329a3aef53f610afb0cbab454533714a48fcc06461c1a82984efcc8",
+      "size_bytes": 1099204
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Helpers/chrome_crashpad_handler",
+      "sha256": "f97944f8775130d977974851e9a7608b396660fa733d2c082ac987df453c0931",
+      "size_bytes": 1714132
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Helpers/web_app_shortcut_copier",
+      "sha256": "d00df0238016df430d50dc237bfff38a98faccabab9d9474e49b5933836ec173",
+      "size_bytes": 12568
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Libraries/IwaKeyDistribution/iwa-key-distribution.pb",
+      "sha256": "23b9c5c5f1aff41e7cf105f6c4eddf643cb019ebcc67cd8e3458dff61c17e0ed",
+      "size_bytes": 3263
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Libraries/IwaKeyDistribution/manifest.json",
+      "sha256": "e7fe0fb6d9dd649d6287a4b6aff979b7dfce14b1f337cd185664fecc0169fb96",
+      "size_bytes": 114
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Libraries/MEIPreload/manifest.json",
+      "sha256": "44844cf3dde6e80087ae0e6bf0d9326d7ef7d23326d24ac83af0850be26923d2",
+      "size_bytes": 238
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Libraries/MEIPreload/preloaded_data.pb",
+      "sha256": "c6070a157b4e28d16fbccbd233e93846ddb070c85e1a1bc64469b7a5f1424fad",
+      "size_bytes": 8254
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Libraries/PrivacySandboxAttestationsPreloaded/manifest.json",
+      "sha256": "51c311a4ba03140bcd1c827f8d93dba50cadda736925903b26e95609275dbffd",
+      "size_bytes": 122
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Libraries/PrivacySandboxAttestationsPreloaded/privacy-sandbox-attestations.dat",
+      "sha256": "59e345dc13aedee9ea46b92e58300ecaca944aaea9384c7af885400ac2ae8806",
+      "size_bytes": 7624
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Libraries/WidevineCdm/LICENSE",
+      "sha256": "20de375707692099b3132084695377ce5fec0aec05813dedcce094b8eda44386",
+      "size_bytes": 473
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Libraries/WidevineCdm/_platform_specific/mac_x64/libwidevinecdm.dylib",
+      "sha256": "d3c79aa47b5821e171fde7088ffe1b8620985e56ead79ecd53be91bf87280431",
+      "size_bytes": 22565792
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Libraries/WidevineCdm/manifest.json",
+      "sha256": "e9352994ffa438f2ee5fcbf4eab7cf1578b79422a8005d38aff8db440f1b7ac0",
+      "size_bytes": 830
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Libraries/libEGL.dylib",
+      "sha256": "864b9b5e9c976b1aee5cb97dfcb3b73ffdb80b4515a3955b07fa668eea26989f",
+      "size_bytes": 58332
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Libraries/libGLESv2.dylib",
+      "sha256": "d033add7964d6b5e5cdc4793140fa1b1dfbb0a50ed593c8285c13a225b441b44",
+      "size_bytes": 7276824
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Libraries/libvk_swiftshader.dylib",
+      "sha256": "dd416621775604d5da980a7adc776873ae8ce902751b5329aca4c0fed22ed785",
+      "size_bytes": 4526624
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Libraries/libvulkan.dylib",
+      "sha256": "cd4055d3f6ec97658b8de281baec38dc7ab18b2fa1a679e4bf98fd1e159e41c5",
+      "size_bytes": 454568
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Libraries/vk_swiftshader_icd.json",
+      "sha256": "d717d915e31e7c27948b80b36ab34e2d897888114c5c7d0af835f93eb53e58f5",
+      "size_bytes": 110
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/Info.plist",
+      "sha256": "d3698074d65001f027756ca8c36c6f6c1ffc9135434780928eae932a16b11838",
+      "size_bytes": 1098
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/af.lproj/locale.pak",
+      "sha256": "0cd4e78e03b59b22e32e39a2c3a5943793b6ebb00a9384d668d97f8c1669b57a",
+      "size_bytes": 641359
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/af_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/af_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/af_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/am.lproj/locale.pak",
+      "sha256": "efceb99eaec6252ff7e04b630c14911d4881d9e4898e9ba3acc4375ee19ddc70",
+      "size_bytes": 1039007
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/am_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/am_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/am_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/app_mode-Info.plist",
+      "sha256": "7874af23ba253c02ae2343f4460da9a686e24c9ab44f2d8188fe1bab9cbaf234",
+      "size_bytes": 1598
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ar.lproj/locale.pak",
+      "sha256": "871fe9d37309b02f77cf687de948c4f4ba20210768caad0889b10ee58d161d32",
+      "size_bytes": 1148098
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ar_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ar_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ar_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/bg.lproj/locale.pak",
+      "sha256": "9529fd748c4cf673b7a97777ee46830d35f0a317f0ddcf82738665b21dea7e3c",
+      "size_bytes": 1188410
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/bg_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/bg_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/bg_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/bn.lproj/locale.pak",
+      "sha256": "430c642371b5143e38539ab5b80e674dd63d4182103bd9ea3e26aeff0bb94395",
+      "size_bytes": 1519899
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/bn_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/bn_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/bn_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ca.lproj/locale.pak",
+      "sha256": "be1777f99c3378c8aa817095c112ae961418c78cf24661ed1e74a835766b6a8b",
+      "size_bytes": 731015
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ca_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ca_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ca_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/chrome_100_percent.pak",
+      "sha256": "e073344f0c0b8132cbc0cbab366b725ff4ea7446ce763dfb1cbb07dcf307d08e",
+      "size_bytes": 652092
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/chrome_200_percent.pak",
+      "sha256": "e5f6645e0b709c0f23da877c8ddcec2083b3ecb4246bf685d468bf66fa0e0133",
+      "size_bytes": 1292369
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/cs.lproj/locale.pak",
+      "sha256": "57f50cba3594fa526ac88371a1ed20199b361eea19a3d4b7846852d1b69fcb60",
+      "size_bytes": 749811
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/cs_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/cs_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/cs_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/da.lproj/locale.pak",
+      "sha256": "44f59b5c589bf94d1407bb5442bb14d61dcfc9f9d943027b6118a1c3ad97dde4",
+      "size_bytes": 676374
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/da_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/da_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/da_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/de.lproj/locale.pak",
+      "sha256": "304468d8bcafde1b4e76107941c8b64a0368d6288b4c4e5d96a63936f8586d27",
+      "size_bytes": 732492
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/de_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/de_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/de_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/el.lproj/locale.pak",
+      "sha256": "2df7fda48a4668220a072738cb1867e5623fadf645f1dd4d1f672389dde976d8",
+      "size_bytes": 1302829
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/el_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/el_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/el_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/en.lproj/locale.pak",
+      "sha256": "c44f89867a4835afe863375aaa7b3bd0c6efee813c234dd99f681a6500cdd7ac",
+      "size_bytes": 593710
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/en_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/en_GB.lproj/locale.pak",
+      "sha256": "4d7e929f0ec44c740982740568d326063199ac545f8dc4d9a6700f37d7a277d1",
+      "size_bytes": 586210
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/en_GB_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/en_GB_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/en_GB_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/en_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/en_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/es.lproj/locale.pak",
+      "sha256": "ca60188b14b98cb30f343b9f900fe0c88c960234996dc2d1a9d3b301577cdbec",
+      "size_bytes": 711547
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/es_419.lproj/locale.pak",
+      "sha256": "17b2cf27c94c9cdf15eeed5d9764f78d63bc3941539d979dfc06a31319f9e7b5",
+      "size_bytes": 717125
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/es_419_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/es_419_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/es_419_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/es_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/es_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/es_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/et.lproj/locale.pak",
+      "sha256": "4755f5b2d93b3278b00da0073734e39211910cf46059c001eea0234bffdd6e18",
+      "size_bytes": 652447
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/et_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/et_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/et_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/fa.lproj/locale.pak",
+      "sha256": "9ae16e7626f3eb0aaa6c7782a67b3f89427b2b85fa53709e60a1fe4494fd2b6e",
+      "size_bytes": 1070327
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/fa_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/fa_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/fa_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/fi.lproj/locale.pak",
+      "sha256": "96df2fae5c96b4ac3785d817522bb5870c3ad9d73fab5ee70c90cf00c97b2a5c",
+      "size_bytes": 662183
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/fi_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/fi_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/fi_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/fil.lproj/locale.pak",
+      "sha256": "7ee66cbacc5394e20a692c317c8588377243c1fa45c617c36f5b27cb8a828468",
+      "size_bytes": 749760
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/fil_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/fil_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/fil_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/fr.lproj/locale.pak",
+      "sha256": "00867f3c2ee6fbfa0768f747005f7d8a32f03ef3934513b99b12e836d890f7b2",
+      "size_bytes": 775776
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/fr_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/fr_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/fr_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/gpu_shader_cache.bin",
+      "sha256": "d3fc3a27c1d9a651f5d470e0f6ef2e06094ec5ad58c68b497b22b312442fdb8d",
+      "size_bytes": 968826
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/gu.lproj/locale.pak",
+      "sha256": "8ebe01804d0b68572d406c86ae694fb43cd9de983f5513f4bdcab8516c3f8ab5",
+      "size_bytes": 1506107
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/gu_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/gu_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/gu_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/he.lproj/locale.pak",
+      "sha256": "529986eadc508b946c5c2af271ff0cd0343cd0e20e09922463995577de20631e",
+      "size_bytes": 940477
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/he_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/he_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/he_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/hi.lproj/locale.pak",
+      "sha256": "1a838585ebe54b87d47de3b8ffd19f855ff3ddda92e9dea3abd42d4674ee06fd",
+      "size_bytes": 1607206
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/hi_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/hi_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/hi_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/hr.lproj/locale.pak",
+      "sha256": "d7486d79c40f35df0c8949708f20d210c009a74a08b197d3bb12debdb843c935",
+      "size_bytes": 722190
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/hr_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/hr_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/hr_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/hu.lproj/locale.pak",
+      "sha256": "a90ef4375b6e1908e79735abffe14bb4b008f2e10865ba43892595323804a5b9",
+      "size_bytes": 773280
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/hu_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/hu_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/hu_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/icudtl.dat",
+      "sha256": "9f48c7f9c7c94d516a14870707e910ab94d75ae640ff6842c4af53276cd26ebe",
+      "size_bytes": 10876560
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/id.lproj/locale.pak",
+      "sha256": "6dbd9c26d0c3e72f59816b0954af5eea7412eebd5cc3eee9e729746a90a5c848",
+      "size_bytes": 643447
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/id_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/id_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/id_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/install.sh",
+      "sha256": "1b541faca17a7a1a124d9e288fd27bf66785f3667d788243383ab17700489b69",
+      "size_bytes": 6377
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/it.lproj/locale.pak",
+      "sha256": "ef7e3b8761e312cf6f935c1002eba96fc103f81d37d2ca5026d42f47d8c2e364",
+      "size_bytes": 707254
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/it_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/it_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/it_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ja.lproj/locale.pak",
+      "sha256": "92c23d5f7a22674d14941423b393ddc2544245f4b2ecb3eb5ae5ae3e8337ff64",
+      "size_bytes": 855775
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ja_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ja_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ja_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/kn.lproj/locale.pak",
+      "sha256": "e22c2ec182c78e7bca09f90bf85ae563dcb4ba560ec6005fe1dda69e52fda2f0",
+      "size_bytes": 1724868
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/kn_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/kn_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/kn_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ko.lproj/locale.pak",
+      "sha256": "6cd2813c2a716f77057f0669c0c1b332f9c2a01c2bc1c4658bfbc7255c05bc55",
+      "size_bytes": 725690
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ko_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ko_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ko_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/lt.lproj/locale.pak",
+      "sha256": "ccdbe9f164cb7a1e1a4fbb5d5f1ee62d0ac46b0bd595d55c66917526a450867f",
+      "size_bytes": 786724
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/lt_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/lt_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/lt_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/lv.lproj/locale.pak",
+      "sha256": "18db80b5ae5015f5c80a78773d19020f92b4d5ad9389cad15c1095b83e3328a3",
+      "size_bytes": 784119
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/lv_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/lv_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/lv_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ml.lproj/locale.pak",
+      "sha256": "6781e10e6a6e8538e23d70db08faf2e5eb0b750c3c005462de30387bd3e6fd1c",
+      "size_bytes": 1776249
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ml_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ml_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ml_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/mr.lproj/locale.pak",
+      "sha256": "4ba305a12b9f075634cf5c2678e69899f38cd6ac9fdcbae1696d055cb563de08",
+      "size_bytes": 1472928
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/mr_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/mr_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/mr_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ms.lproj/locale.pak",
+      "sha256": "4681fcad9b0d87e8e4f7b55be199d11684d3baf78f13a96e0e315cabacd91e2f",
+      "size_bytes": 675160
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ms_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ms_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ms_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/nb.lproj/locale.pak",
+      "sha256": "9f95c49380f8ba0bccdb18e1bc8016947e172a73ffc5fd6833700a492aaa60b7",
+      "size_bytes": 644035
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/nb_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/nb_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/nb_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/nl.lproj/locale.pak",
+      "sha256": "f9bf0bfde1a27e3fe2f285b45be85e94ce79583a3e9bc74780f0dc899252f5bb",
+      "size_bytes": 671758
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/nl_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/nl_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/nl_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/pl.lproj/locale.pak",
+      "sha256": "16a6bd2ff383d23c0b278afb55991ce634fe21f8b7cefd716fa5ca5310e23ab4",
+      "size_bytes": 751394
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/pl_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/pl_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/pl_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/product_logo_32.png",
+      "sha256": "ae841ee4a539c13ac00e29c6e0f85369f2e280b22659a876093bd61cd34be172",
+      "size_bytes": 2018
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/pt_BR.lproj/locale.pak",
+      "sha256": "600d9559e7e3cae2e6e1a77992fb1fbf9910826dfe3dd44d20ccdf7267aeedc2",
+      "size_bytes": 703634
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/pt_BR_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/pt_BR_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/pt_BR_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/pt_PT.lproj/locale.pak",
+      "sha256": "b21c5f8392251919a4ea918d9aca76199c6651f7b8d76862215e11df7737515b",
+      "size_bytes": 708612
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/pt_PT_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/pt_PT_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/pt_PT_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/resources.pak",
+      "sha256": "98dcb6131b75add56aa2e2a638ab51ada5cd9a70bb6b00f24d532d31a5b55eea",
+      "size_bytes": 18196431
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ro.lproj/locale.pak",
+      "sha256": "f204b2fc4bb99e74cb0bda967334f365701fedc0026487dc9dced139a48bdff6",
+      "size_bytes": 734821
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ro_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ro_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ro_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ru.lproj/locale.pak",
+      "sha256": "f95f1f625cf03b69c916f89f579ef2dda1eeb5077dd589746d65bca32258db90",
+      "size_bytes": 1212727
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ru_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ru_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ru_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/sk.lproj/locale.pak",
+      "sha256": "9d00f98de491d306b66350c95bc2f4d3829efcd07c736d33b97361892030c36c",
+      "size_bytes": 761919
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/sk_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/sk_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/sk_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/sl.lproj/locale.pak",
+      "sha256": "281455be020f8a921b047c4455e8bc8d3cb3a05b398525fbc1a65622df83c563",
+      "size_bytes": 729871
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/sl_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/sl_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/sl_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/sr.lproj/locale.pak",
+      "sha256": "e8fb20c98233f33b78a4fc581350e1379da079ca937344db2e8577752ba5f13d",
+      "size_bytes": 1120122
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/sr_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/sr_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/sr_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/sv.lproj/locale.pak",
+      "sha256": "fd97ad376f62e2db94b05d8da9f8d66238149aea57d7166911971bb1bebd4915",
+      "size_bytes": 653248
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/sv_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/sv_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/sv_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/sw.lproj/locale.pak",
+      "sha256": "1f92773296e40ab687736748a3c29b169a6cf7a06320601eef2f6ba581f1bb86",
+      "size_bytes": 694049
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/sw_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/sw_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/sw_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ta.lproj/locale.pak",
+      "sha256": "650cc6939937089ff814b44362d3230a7f7ff5553fbaee17477ebf547b13d256",
+      "size_bytes": 1770596
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ta_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ta_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ta_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/te.lproj/locale.pak",
+      "sha256": "1d50f931d2246a5d3eff80b8d76786fbc2ca009557be01aa0bbc91b60988c450",
+      "size_bytes": 1636471
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/te_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/te_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/te_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/th.lproj/locale.pak",
+      "sha256": "26bd8383eb70ec206acfdd0f75e3532bd15a1eb9237d0145ee611594fab93e4a",
+      "size_bytes": 1375047
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/th_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/th_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/th_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/tr.lproj/locale.pak",
+      "sha256": "95b79f9c32511270e8e031aa267689edb10e345ef22dcb47ad6f48d3c9bc5b5d",
+      "size_bytes": 705583
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/tr_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/tr_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/tr_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/uk.lproj/locale.pak",
+      "sha256": "580af7c1e50febc55db514fd426a92520d6b42e332609c6353be11fdfe816849",
+      "size_bytes": 1220390
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/uk_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/uk_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/uk_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ur.lproj/locale.pak",
+      "sha256": "8e460abfea5d1ad2f11a71ec55abc727ecc9320ae59585e861605f667c83043a",
+      "size_bytes": 1049865
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ur_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ur_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/ur_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/v8_context_snapshot.x86_64.bin",
+      "sha256": "845548861c6dc8cbc0f111bc3d9646319a54897e0d005b525812863b146b96f6",
+      "size_bytes": 740440
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/vi.lproj/locale.pak",
+      "sha256": "fc12e91500bba0b7a9da62c65d116ea9db544bde93103d45e655acf5fb08526d",
+      "size_bytes": 838127
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/vi_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/vi_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/vi_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/zh_CN.lproj/locale.pak",
+      "sha256": "5972e385012f6a5fc699a41aab8523544305b5febab4387e4513946554ec0ac4",
+      "size_bytes": 599452
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/zh_CN_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/zh_CN_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/zh_CN_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/zh_TW.lproj/locale.pak",
+      "sha256": "387d3455dad41a3052cf7fe5700d74202c1e70ea4be9da2466c41f293a2a6b08",
+      "size_bytes": 593339
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/zh_TW_FEMININE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/zh_TW_MASCULINE.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/151.0.7922.34/Resources/zh_TW_NEUTER.lproj/locale.pak",
+      "sha256": "ca73097bd968b363b7145e86b64f3c595e533808b0763dc8863a27fc363cfa51",
+      "size_bytes": 18
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Info.plist",
+      "sha256": "ab9c30716b623d8dc87232115e618ae116311fa28290fe2d9f59e65451a99ef3",
+      "size_bytes": 18239
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing",
+      "sha256": "97136324f0a487d9fef8eee50341a1b433a05bc4228daae5b1ac19d18ff068fb",
+      "size_bytes": 26964
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/PkgInfo",
+      "sha256": "2e923178639849f5232473c3ae9fa451a9df4bc41751b2bf2d40045bc13ddcff",
+      "size_bytes": 8
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/Assets.car",
+      "sha256": "e70466610b4bdbb61098baf07d342e8e21a67c34cfd2c53e400d3e588ed2cc4c",
+      "size_bytes": 1362712
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/af.lproj/InfoPlist.strings",
+      "sha256": "f817350064b26defd7711c08cd111e293f0ca5ccb6cb718a2c3bcb31a911f7f2",
+      "size_bytes": 1076
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/am.lproj/InfoPlist.strings",
+      "sha256": "ad2edf365989bc9caa694c8e35ef456170cb51777de57552e2d312a184baa738",
+      "size_bytes": 1726
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/app.icns",
+      "sha256": "3be5d5276c19c48925acc2c6a7896ce238d73b1ca8b74c30724799e2d28223ae",
+      "size_bytes": 94689
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/ar.lproj/InfoPlist.strings",
+      "sha256": "a6a19254b2afb47262692614a5c3923ddf5093a67375a2832eb25259f5d4479c",
+      "size_bytes": 1971
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/bg.lproj/InfoPlist.strings",
+      "sha256": "1328f79a1054d8c7d0ee7cdd5a4ae1c83aa4de491c34f44d76edd3ae9e47f88f",
+      "size_bytes": 1776
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/bn.lproj/InfoPlist.strings",
+      "sha256": "b26c88c360d0da05a50ff60c4ca1799b01cf374e8406d84e8becf2332ce5cc71",
+      "size_bytes": 2299
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/ca.lproj/InfoPlist.strings",
+      "sha256": "c7a0b3084fdad58ee3bdfdeef0455a424af8094263600d192951737dba76ef3e",
+      "size_bytes": 1138
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/com.google.chrome.for.testing.manifest/Contents/Resources/com.google.chrome.for.testing.manifest",
+      "sha256": "795f82e5455156fc9710662c67002f470e79a0a067e1fba705d9ba35e375bb79",
+      "size_bytes": 174277
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/com.google.chrome.for.testing.manifest/Contents/Resources/en.lproj/Localizable.strings",
+      "sha256": "692cc7c61df34f8cf5c3d399f33151f27ac96a1333f16b7105241e37f7cdb0c8",
+      "size_bytes": 381350
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/cs.lproj/InfoPlist.strings",
+      "sha256": "c440edb0eb847ca19977d263c6a03cc7fe140c6817745873e4f26eb2e9cdb943",
+      "size_bytes": 1195
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/da.lproj/InfoPlist.strings",
+      "sha256": "8b4743540869858d519039d2439e842e42d5c8e0544fcffabcd0c4f614aa2afc",
+      "size_bytes": 1062
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/de.lproj/InfoPlist.strings",
+      "sha256": "9d33fa452b82b2eb9191fb9c4df2794390ff17a8e6c5e3128a951569cf4c3121",
+      "size_bytes": 1128
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/el.lproj/InfoPlist.strings",
+      "sha256": "1e2782765fc32c5816f79fac1adb1496b1171015e475230ae74cdde6f734de72",
+      "size_bytes": 1963
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/en.lproj/InfoPlist.strings",
+      "sha256": "38cd3a6d7af6444ef7a982478318113ff775328a22cd898726466eeb46dcf14f",
+      "size_bytes": 1119
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/en_GB.lproj/InfoPlist.strings",
+      "sha256": "2429184d1a12fcdf3107889e06f8c0fa42c9b0fd745026b4581dfddab21d3774",
+      "size_bytes": 1119
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/es.lproj/InfoPlist.strings",
+      "sha256": "247b349b1adf238e9cd094c7eafc327f3f1b90de7bec51591aa215e28d093d9c",
+      "size_bytes": 1219
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/es_419.lproj/InfoPlist.strings",
+      "sha256": "ccfb141d6bc0b31c9fa86843ebd280273ce9a4fcd67f34f9e6f9fbc4c39d982b",
+      "size_bytes": 1203
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/et.lproj/InfoPlist.strings",
+      "sha256": "c6aae433b6596b1286c450b52414ba5949ffd7e5a75a268dd28edb4d9850402b",
+      "size_bytes": 1268
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/fa.lproj/InfoPlist.strings",
+      "sha256": "ef10e72d459e59c846b876f8d984d8636aae8d52d6b9887304dc4ece7d356c4d",
+      "size_bytes": 1799
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/fi.lproj/InfoPlist.strings",
+      "sha256": "dac65acbfe62834f73d8d1a5e2a91fd2a1181ca3a3e146f488d6c2e1feffa9c6",
+      "size_bytes": 1187
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/fil.lproj/InfoPlist.strings",
+      "sha256": "2ec36b2a40cc278ecfa94fbcb4abfb951802a376a2a9f04055dacb02ecd4a8b8",
+      "size_bytes": 1294
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/fr.lproj/InfoPlist.strings",
+      "sha256": "d6df49d1306f9f5050b85777d09cb10082b2ed7fe44d9af1f969ec12cde74ff6",
+      "size_bytes": 1496
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/gu.lproj/InfoPlist.strings",
+      "sha256": "d76796adcc0a7157d8954b2582eaff5008a525c7fb2a61e7cfce95a90255c97e",
+      "size_bytes": 2098
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/he.lproj/InfoPlist.strings",
+      "sha256": "27955838b024496c27199932b9e9d61648ed9de7cd6ebf3ac710ea92f506f2f4",
+      "size_bytes": 1330
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/hi.lproj/InfoPlist.strings",
+      "sha256": "9fc6b2ee7a7de4fdc90d0802175ef5a0054a9be76723470292fa76ec59cf8927",
+      "size_bytes": 2138
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/hr.lproj/InfoPlist.strings",
+      "sha256": "aec433f9e128cc023976cf8a8b90f447fc86314d23192c75ef13a10213f5decf",
+      "size_bytes": 1164
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/hu.lproj/InfoPlist.strings",
+      "sha256": "9d9296ede45098b33519108cd9ba3c56ce9ceb812e1eb57ef5db04f1a52a1253",
+      "size_bytes": 1319
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/id.lproj/InfoPlist.strings",
+      "sha256": "d420a21ffb4d44672cc9685b3cbae757835f468f27e24f6ffe8299e2bda806b7",
+      "size_bytes": 1179
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/it.lproj/InfoPlist.strings",
+      "sha256": "cad4af990d5007fc8f2cb8848759255208f378a277776857fa75b3dfcb2ffdfa",
+      "size_bytes": 1243
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/ja.lproj/InfoPlist.strings",
+      "sha256": "aa312f8f6ba2e8f0c89403ad341fb4550bdeca0851a6c226ad873bd3369bf171",
+      "size_bytes": 1608
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/kn.lproj/InfoPlist.strings",
+      "sha256": "10fba4bfd74523e9474a797d1f957444af9bf35357c6fe28e68d45f124feb1b8",
+      "size_bytes": 2829
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/ko.lproj/InfoPlist.strings",
+      "sha256": "e9a8d8f14f31a91e034142dca76547437aadc673fa3a09c2076f6a39c024d319",
+      "size_bytes": 1478
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/lt.lproj/InfoPlist.strings",
+      "sha256": "80f999922dfaf2c5358137d42ee296f7a6f646f43f4878f456f51d9e9d756800",
+      "size_bytes": 1471
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/lv.lproj/InfoPlist.strings",
+      "sha256": "3457a0a3f88c8b59a53e1849e34571c06c17e66e0dd6e18ee93bddad1ebaca53",
+      "size_bytes": 1283
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/ml.lproj/InfoPlist.strings",
+      "sha256": "baad1e0a2fa898ef76d3cef11f860a4d7e4f2c9fad700b79d25043e8e10f3e06",
+      "size_bytes": 2711
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/mr.lproj/InfoPlist.strings",
+      "sha256": "c7bb837a1d98c421108f1b9597faaa240b592942081c835ab29df5d6ead4f888",
+      "size_bytes": 2184
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/ms.lproj/InfoPlist.strings",
+      "sha256": "e3bb4227a1b00a0fd440742d38353cb2309fb8dc1a5976edbfd236e2dcf2ba4e",
+      "size_bytes": 1276
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/nb.lproj/InfoPlist.strings",
+      "sha256": "5fc9a3e797af2d3ceee91e8d0403e2f13464e5c0e49477af4ed95cd668deacb8",
+      "size_bytes": 1108
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/nl.lproj/InfoPlist.strings",
+      "sha256": "cdb0216d06b8ff962b0af0cb9d3a0ef7daa3ea0fbd8a5867d95d58b715ae181f",
+      "size_bytes": 1111
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/pl.lproj/InfoPlist.strings",
+      "sha256": "9693ea1a8fb2f54dcd241cbd21715f74655e9439f67b30909806fa037e9d22ff",
+      "size_bytes": 1213
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/pt_BR.lproj/InfoPlist.strings",
+      "sha256": "528cb6fea986262b92038d05f86b0f16ecf03c0d9270f335c90b636357868aa0",
+      "size_bytes": 1141
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/pt_PT.lproj/InfoPlist.strings",
+      "sha256": "03df8852234a59bd1f67c4989f07a2e734e1116352bfad8e659ea034f1a3ef3d",
+      "size_bytes": 1213
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/ro.lproj/InfoPlist.strings",
+      "sha256": "c562e16dbdfd3b4db51d1a260cffa1dcf01509a63d3bd5608cf5af5bf4bb56ca",
+      "size_bytes": 1236
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/ru.lproj/InfoPlist.strings",
+      "sha256": "ebf64d737ccc9927d18b079c27d60e0f257c474e36554cf7346aa0b6a43f7919",
+      "size_bytes": 1774
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/scripting.sdef",
+      "sha256": "cd0453c2e166a0b664f8ea1d1ac04b53a54eed14835569b6104a7823dbb950f2",
+      "size_bytes": 16777
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/sk.lproj/InfoPlist.strings",
+      "sha256": "4cbc029aac219e24bee716763bd48f143a84a7daf975dfe1532e7bffc24bb094",
+      "size_bytes": 1163
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/sl.lproj/InfoPlist.strings",
+      "sha256": "9493dd8bda3049f7b7d111803ceef1742ec80a310f89f1a1ce04fe59e5364c24",
+      "size_bytes": 1253
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/sr.lproj/InfoPlist.strings",
+      "sha256": "274c834b846d090f04a6209faf8060797f13e133d54ba149bfc5ecd202cc274c",
+      "size_bytes": 1601
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/sv.lproj/InfoPlist.strings",
+      "sha256": "ac898343026fdaab87510a9ec16f2ab678b96729536a158dba6705a0f9d9ffd6",
+      "size_bytes": 1153
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/sw.lproj/InfoPlist.strings",
+      "sha256": "f56687f99388d61e8943648febadfe631ab49c6ac3c92cf858bdfecea7901721",
+      "size_bytes": 1164
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/ta.lproj/InfoPlist.strings",
+      "sha256": "b403f9dfec1108711c55210f81583570a672614e4ccc115fd18ab4fa6debde66",
+      "size_bytes": 2522
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/te.lproj/InfoPlist.strings",
+      "sha256": "964fe9577b89810ed00c5fbcbffd45ae345721e6acd0cf52c528699d62e88a82",
+      "size_bytes": 2862
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/th.lproj/InfoPlist.strings",
+      "sha256": "d8fca375ef63499458be59bb6eb71fe2b25b289996bfa9a8d3e73682777a03ef",
+      "size_bytes": 2324
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/tr.lproj/InfoPlist.strings",
+      "sha256": "0b1862ff76197aa0a09a952b98746d278fb6145966fc74bbfe760e3a0378c0b5",
+      "size_bytes": 1346
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/uk.lproj/InfoPlist.strings",
+      "sha256": "6df139400335ae58a8c765b4fa7d23d07f55488dd0a2f5389d4e963d77f11308",
+      "size_bytes": 1647
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/ur.lproj/InfoPlist.strings",
+      "sha256": "dee9a286187e3e5cdda594f280935170dfc912d68fdd986769310e63f70f18ce",
+      "size_bytes": 1613
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/vi.lproj/InfoPlist.strings",
+      "sha256": "6d2a9f688367a0503e279fe1f5681280acbdf3441e77fc4cb649efb781791ea0",
+      "size_bytes": 1523
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/zh_CN.lproj/InfoPlist.strings",
+      "sha256": "bd9c5ece589b62bda2297688f8cce1e77466edc2f5b5a79e954c7d749265efc4",
+      "size_bytes": 1257
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/Resources/zh_TW.lproj/InfoPlist.strings",
+      "sha256": "63090067068ab9a3e67449824a74bcaf25f1557608eed6c7758c5e2c117011b4",
+      "size_bytes": 1103
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/PrivacySandboxAttestationsPreloaded/manifest.json",
+      "sha256": "51c311a4ba03140bcd1c827f8d93dba50cadda736925903b26e95609275dbffd",
+      "size_bytes": 122
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/PrivacySandboxAttestationsPreloaded/privacy-sandbox-attestations.dat",
+      "sha256": "59e345dc13aedee9ea46b92e58300ecaca944aaea9384c7af885400ac2ae8806",
+      "size_bytes": 7624
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/resources/accessibility/reading_mode_gdocs_helper/content.js",
+      "sha256": "6c0aeaaf9a71ad68aa45764c111e70bb23aa0fbf406644a375b6b709cbbe4b6e",
+      "size_bytes": 439
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/resources/accessibility/reading_mode_gdocs_helper/gdocs_script.js",
+      "sha256": "d291adabcfcb1a4a4a2ffacdd9d04fdb473ab0d6903556bef7446be9c3646d86",
+      "size_bytes": 1425
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/resources/accessibility/reading_mode_gdocs_helper_manifest.json",
+      "sha256": "7a2287740188deb6844477bfd9ae3cc3d71c2dfe273f3fa11a939dea34955522",
+      "size_bytes": 2375
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/browser/manifest.json",
+      "sha256": "c2dd09444e40c961ab4ff76db0dfa20f0b5a7719d9187c5f93c14a275d12cb06",
+      "size_bytes": 195
+    },
+    {
+      "path": "macos/MellowYak.app/Contents/Resources/icon.icns",
+      "sha256": "72d2c96b424907bc3c099938cfa591f864c0a6d1f3b0f35f15b52df06e280ebc",
+      "size_bytes": 2727069
+    },
+    {
+      "path": "macos/rw.40577.MellowYak_0.1.0_x64.dmg",
+      "sha256": "886b49951fe37761e7381d202fd2520358c08cbbdb37785c12a2f396f07c24b4",
+      "size_bytes": 64002048
+    },
+    {
+      "path": "macos/rw.70925.MellowYak_0.1.0_x64.dmg",
+      "sha256": "caf873e5153ac9d907fb553823f8a42b61e9020253952309bfbc95b2ee2236ac",
+      "size_bytes": 798005760
+    },
+    {
+      "path": "share/create-dmg/support/eula-resources-template.xml",
+      "sha256": "7d61d948ba7f118306d61107fead78f04e3338585e2ec729abb65d5d2e21012d",
+      "size_bytes": 2376
+    },
+    {
+      "path": "share/create-dmg/support/template.applescript",
+      "sha256": "13727c7930c50be639a1eb191e893f1ebc72c270268d4611391b41410a3e862a",
+      "size_bytes": 1828
+    }
+  ],
+  "platform": "macos-intel-x86_64",
+  "schema": "mellowyak.artifact_manifest.v2",
+  "source": {
+    "commit": "699add76f61d05cb38e86541a7a193b8f459a06b+phase10-worktree",
+    "tracked_tree_clean": false
+  },
+  "validation": {
+    "runtime_accepted": true,
+    "status": "VERIFIED_WORKING"
+  },
+  "versions": {
+    "application": "0.2.0-preview.1",
+    "database_schema": "0009_technical_preview_readiness",
+    "engine": "0.2.0-preview.1"
+  }
+}

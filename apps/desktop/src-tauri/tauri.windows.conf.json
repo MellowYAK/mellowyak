@@ -1,5 +1,12 @@
 {
   "bundle": {
-    "targets": ["nsis"]
+    "targets": ["nsis"],
+    "windows": {
+      "allowDowngrades": false,
+      "webviewInstallMode": {
+        "type": "embedBootstrapper",
+        "silent": true
+      }
+    }
   }
 }

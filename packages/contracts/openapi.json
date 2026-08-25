@@ -1588,6 +1588,77 @@
         "title": "DemoLabResponse",
         "type": "object"
       },
+      "DiagnosticsFactResponse": {
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value"
+          }
+        },
+        "required": [
+          "key",
+          "state",
+          "value"
+        ],
+        "title": "DiagnosticsFactResponse",
+        "type": "object"
+      },
+      "DiagnosticsOverviewAggregateResponse": {
+        "properties": {
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "object"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/DiagnosticsFactResponse"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "last_self_test": {
+            "title": "Last Self Test",
+            "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "platform": {
+            "additionalProperties": true,
+            "title": "Platform",
+            "type": "object"
+          },
+          "privacy": {
+            "additionalProperties": true,
+            "title": "Privacy",
+            "type": "object"
+          }
+        },
+        "required": [
+          "facts",
+          "counts",
+          "privacy",
+          "platform",
+          "last_self_test",
+          "limitations"
+        ],
+        "title": "DiagnosticsOverviewAggregateResponse",
+        "type": "object"
+      },
       "DiagnosticsResponse": {
         "properties": {
           "architecture": {
@@ -1750,6 +1821,80 @@
           "projects"
         ],
         "title": "DisconnectedProjectListResponse",
+        "type": "object"
+      },
+      "EpisodeDetailAggregateResponse": {
+        "properties": {
+          "changed": {
+            "additionalProperties": {
+              "items": {},
+              "type": "array"
+            },
+            "title": "Changed",
+            "type": "object"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/ProductTruthCheckResponse"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "episode": {
+            "additionalProperties": true,
+            "title": "Episode",
+            "type": "object"
+          },
+          "may_be_affected": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "May Be Affected",
+            "type": "array"
+          },
+          "not_checked": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Not Checked",
+            "type": "array"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "result": {
+            "additionalProperties": true,
+            "title": "Result",
+            "type": "object"
+          },
+          "technical": {
+            "additionalProperties": true,
+            "title": "Technical",
+            "type": "object"
+          },
+          "unknowns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unknowns",
+            "type": "array"
+          }
+        },
+        "required": [
+          "project_id",
+          "episode",
+          "changed",
+          "may_be_affected",
+          "checks",
+          "not_checked",
+          "result",
+          "technical",
+          "unknowns"
+        ],
+        "title": "EpisodeDetailAggregateResponse",
         "type": "object"
       },
       "EvidenceArtifactResponse": {
@@ -2208,6 +2353,67 @@
           "uptime_seconds"
         ],
         "title": "HealthResponse",
+        "type": "object"
+      },
+      "HomeSummaryResponse": {
+        "properties": {
+          "attention": {
+            "items": {
+              "$ref": "#/components/schemas/ProductTruthProjectSummaryResponse"
+            },
+            "title": "Attention",
+            "type": "array"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "object"
+          },
+          "known": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Known",
+            "type": "array"
+          },
+          "projects": {
+            "items": {
+              "$ref": "#/components/schemas/ProductTruthProjectSummaryResponse"
+            },
+            "title": "Projects",
+            "type": "array"
+          },
+          "recent_activity": {
+            "items": {
+              "$ref": "#/components/schemas/ProductTruthActivityResponse"
+            },
+            "title": "Recent Activity",
+            "type": "array"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "unknowns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unknowns",
+            "type": "array"
+          }
+        },
+        "required": [
+          "state",
+          "counts",
+          "projects",
+          "attention",
+          "recent_activity",
+          "known",
+          "unknowns"
+        ],
+        "title": "HomeSummaryResponse",
         "type": "object"
       },
       "HumanVerificationRequest": {
@@ -3900,6 +4106,345 @@
         "title": "ProductSelfTestResponse",
         "type": "object"
       },
+      "ProductTruthActivityResponse": {
+        "properties": {
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "entity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Id"
+          },
+          "entity_type": {
+            "title": "Entity Type",
+            "type": "string"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "facts": {
+            "additionalProperties": true,
+            "title": "Facts",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "event_type",
+          "created_at",
+          "entity_type",
+          "entity_id",
+          "state",
+          "facts"
+        ],
+        "title": "ProductTruthActivityResponse",
+        "type": "object"
+      },
+      "ProductTruthCheckResponse": {
+        "properties": {
+          "attempt_count": {
+            "title": "Attempt Count",
+            "type": "integer"
+          },
+          "behavior_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Behavior Id"
+          },
+          "behavior_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Behavior Name"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "duration_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Ms"
+          },
+          "evidence": {
+            "additionalProperties": true,
+            "title": "Evidence",
+            "type": "object"
+          },
+          "expected": {
+            "additionalProperties": true,
+            "title": "Expected",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "observed": {
+            "additionalProperties": true,
+            "title": "Observed",
+            "type": "object"
+          },
+          "result": {
+            "title": "Result",
+            "type": "string"
+          },
+          "runtime_profile_version_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runtime Profile Version Id"
+          },
+          "source_identity": {
+            "additionalProperties": true,
+            "title": "Source Identity",
+            "type": "object"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "behavior_id",
+          "behavior_name",
+          "result",
+          "status",
+          "source_identity",
+          "runtime_profile_version_id",
+          "duration_ms",
+          "attempt_count",
+          "expected",
+          "observed",
+          "evidence",
+          "limitations",
+          "completed_at"
+        ],
+        "title": "ProductTruthCheckResponse",
+        "type": "object"
+      },
+      "ProductTruthProjectSummaryResponse": {
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "last_activity_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Activity At"
+          },
+          "last_episode": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Episode"
+          },
+          "last_save_point": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Save Point"
+          },
+          "latest_check": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProductTruthCheckResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "monitoring_state": {
+            "title": "Monitoring State",
+            "type": "string"
+          },
+          "open_regression_count": {
+            "title": "Open Regression Count",
+            "type": "integer"
+          },
+          "protected_behavior_count": {
+            "title": "Protected Behavior Count",
+            "type": "integer"
+          },
+          "recovery_required_count": {
+            "title": "Recovery Required Count",
+            "type": "integer"
+          },
+          "runtime_state": {
+            "title": "Runtime State",
+            "type": "string"
+          },
+          "source_available": {
+            "title": "Source Available",
+            "type": "boolean"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "display_name",
+          "state",
+          "monitoring_state",
+          "source_available",
+          "runtime_state",
+          "last_episode",
+          "last_save_point",
+          "protected_behavior_count",
+          "latest_check",
+          "open_regression_count",
+          "recovery_required_count",
+          "last_activity_at",
+          "limitations"
+        ],
+        "title": "ProductTruthProjectSummaryResponse",
+        "type": "object"
+      },
+      "ProjectActivityAggregateResponse": {
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ProductTruthActivityResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "project_id",
+          "items",
+          "offset",
+          "limit",
+          "total",
+          "has_more"
+        ],
+        "title": "ProjectActivityAggregateResponse",
+        "type": "object"
+      },
       "ProjectCreateRequest": {
         "properties": {
           "display_name": {
@@ -4111,6 +4656,75 @@
           "muted"
         ],
         "title": "ProjectNotificationRequest",
+        "type": "object"
+      },
+      "ProjectOverviewAggregateResponse": {
+        "properties": {
+          "known": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Known",
+            "type": "array"
+          },
+          "last_known_good": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Known Good"
+          },
+          "latest_checks": {
+            "items": {
+              "$ref": "#/components/schemas/ProductTruthCheckResponse"
+            },
+            "title": "Latest Checks",
+            "type": "array"
+          },
+          "project": {
+            "$ref": "#/components/schemas/ProductTruthProjectSummaryResponse"
+          },
+          "recent_activity": {
+            "items": {
+              "$ref": "#/components/schemas/ProductTruthActivityResponse"
+            },
+            "title": "Recent Activity",
+            "type": "array"
+          },
+          "source_identity": {
+            "additionalProperties": true,
+            "title": "Source Identity",
+            "type": "object"
+          },
+          "storage": {
+            "additionalProperties": true,
+            "title": "Storage",
+            "type": "object"
+          },
+          "unknowns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unknowns",
+            "type": "array"
+          }
+        },
+        "required": [
+          "project",
+          "source_identity",
+          "last_known_good",
+          "latest_checks",
+          "storage",
+          "recent_activity",
+          "known",
+          "unknowns"
+        ],
+        "title": "ProjectOverviewAggregateResponse",
         "type": "object"
       },
       "ProjectRelocateRequest": {
@@ -4604,6 +5218,81 @@
           "created_at"
         ],
         "title": "RecoveryBundleResponse",
+        "type": "object"
+      },
+      "RegressionDetailAggregateResponse": {
+        "properties": {
+          "behavior": {
+            "additionalProperties": true,
+            "title": "Behavior",
+            "type": "object"
+          },
+          "changed": {
+            "additionalProperties": true,
+            "title": "Changed",
+            "type": "object"
+          },
+          "current": {
+            "$ref": "#/components/schemas/ProductTruthCheckResponse"
+          },
+          "evidence_timeline": {
+            "items": {
+              "$ref": "#/components/schemas/ProductTruthActivityResponse"
+            },
+            "title": "Evidence Timeline",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "last_known_good": {
+            "additionalProperties": true,
+            "title": "Last Known Good",
+            "type": "object"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "reason_codes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reason Codes",
+            "type": "array"
+          },
+          "selection": {
+            "additionalProperties": true,
+            "title": "Selection",
+            "type": "object"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "unknowns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unknowns",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "status",
+          "behavior",
+          "last_known_good",
+          "current",
+          "changed",
+          "selection",
+          "reason_codes",
+          "evidence_timeline",
+          "unknowns"
+        ],
+        "title": "RegressionDetailAggregateResponse",
         "type": "object"
       },
       "RegressionListResponse": {
@@ -8239,6 +8928,52 @@
         "summary": "Diagnostics"
       }
     },
+    "/diagnostics/overview": {
+      "get": {
+        "operationId": "diagnostics_overview_diagnostics_overview_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiagnosticsOverviewAggregateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Diagnostics Overview"
+      }
+    },
     "/diagnostics/self-test": {
       "post": {
         "operationId": "run_diagnostic_product_self_test_diagnostics_self_test_post",
@@ -8557,6 +9292,52 @@
           }
         },
         "summary": "Health"
+      }
+    },
+    "/home/summary": {
+      "get": {
+        "operationId": "home_summary_home_summary_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeSummaryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Home Summary"
       }
     },
     "/installation": {
@@ -8966,6 +9747,84 @@
           }
         },
         "summary": "Get Project"
+      }
+    },
+    "/projects/{project_id}/activity": {
+      "get": {
+        "operationId": "project_activity_projects__project_id__activity_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectActivityAggregateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Project Activity"
       }
     },
     "/projects/{project_id}/apply-transactions/{transaction_id}": {
@@ -11914,6 +12773,70 @@
         "summary": "Get Episode Probe Selection"
       }
     },
+    "/projects/{project_id}/episodes/{episode_id}/summary": {
+      "get": {
+        "operationId": "get_episode_summary_projects__project_id__episodes__episode_id__summary_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "episode_id",
+            "required": true,
+            "schema": {
+              "title": "Episode Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EpisodeDetailAggregateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Episode Summary"
+      }
+    },
     "/projects/{project_id}/evidence": {
       "get": {
         "operationId": "list_evidence_projects__project_id__evidence_get",
@@ -13115,6 +14038,61 @@
         "summary": "Open Project Folder"
       }
     },
+    "/projects/{project_id}/overview": {
+      "get": {
+        "operationId": "project_overview_projects__project_id__overview_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectOverviewAggregateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Project Overview"
+      }
+    },
     "/projects/{project_id}/probes": {
       "get": {
         "operationId": "list_probes_projects__project_id__probes_get",
@@ -13621,6 +14599,70 @@
           }
         },
         "summary": "Get Regression"
+      }
+    },
+    "/projects/{project_id}/regressions/{regression_id}/detail": {
+      "get": {
+        "operationId": "get_regression_detail_projects__project_id__regressions__regression_id__detail_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "regression_id",
+            "required": true,
+            "schema": {
+              "title": "Regression Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegressionDetailAggregateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Regression Detail"
       }
     },
     "/projects/{project_id}/regressions/{regression_id}/repair-context": {

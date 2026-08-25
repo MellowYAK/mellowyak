@@ -1,5 +1,17 @@
 # Contributing
 
+Phase 10 changes must preserve Product Truth: status text must be supported by exact local evidence;
+impact never implies breakage; missing/stale/unknown data never becomes green; and aggregate routes
+must remain bounded, read-only and project-isolated. Keep the daily hierarchy Home → Project Overview
+→ exact Episode/regression/repair context, with paths, hashes, IDs and reason codes behind technical
+disclosure.
+
+All visible UI and accessible text must continue to come from complete English/Hebrew translation
+catalogs with Hebrew RTL. Before proposing Phase 10 work, run source suites, translation policy,
+TypeScript/Vite, Ruff/Cargo, deterministic OpenAPI, migration matrix and relevant Phase 8–10 package
+gates. A configured platform workflow is not runtime acceptance. Never commit user data, private
+project captures, generated installers, support bundles, tokens, keys, databases or snapshot stores.
+
 Phase 9 changes must preserve the Technical Preview boundary: onboarding and preferences remain
 local; reconnect/relocate never move source and require matching project identity; tray/notification
 payloads expose no source or full paths; activation routes are allowlisted; diagnostics/support

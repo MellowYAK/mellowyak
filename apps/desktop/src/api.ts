@@ -6,6 +6,12 @@ export type Readiness = paths["/readiness"]["get"]["responses"][200]["content"][
 export type Installation = paths["/installation"]["get"]["responses"][200]["content"]["application/json"];
 export type Privacy = paths["/settings/privacy"]["get"]["responses"][200]["content"]["application/json"];
 export type StoragePaths = paths["/storage/paths"]["get"]["responses"][200]["content"]["application/json"];
+export type HomeSummary = paths["/home/summary"]["get"]["responses"][200]["content"]["application/json"];
+export type ProjectTruthOverview = paths["/projects/{project_id}/overview"]["get"]["responses"][200]["content"]["application/json"];
+export type ProjectTruthActivity = paths["/projects/{project_id}/activity"]["get"]["responses"][200]["content"]["application/json"];
+export type EpisodeTruthDetail = paths["/projects/{project_id}/episodes/{episode_id}/summary"]["get"]["responses"][200]["content"]["application/json"];
+export type RegressionTruthDetail = paths["/projects/{project_id}/regressions/{regression_id}/detail"]["get"]["responses"][200]["content"]["application/json"];
+export type DiagnosticsTruthOverview = paths["/diagnostics/overview"]["get"]["responses"][200]["content"]["application/json"];
 
 export interface EngineBootstrap {
   host: "127.0.0.1" | "::1";
@@ -989,6 +995,26 @@ export async function listProjects(): Promise<Project[]> {
   return response.projects;
 }
 
+export async function getHomeSummary(): Promise<HomeSummary> {
+  return engineFetch<HomeSummary>("/home/summary");
+}
+
+export async function getProjectTruthOverview(projectId: string): Promise<ProjectTruthOverview> {
+  return engineFetch<ProjectTruthOverview>(`/projects/${encodeURIComponent(projectId)}/overview`);
+}
+
+export async function getProjectTruthActivity(projectId: string, offset = 0, limit = 25): Promise<ProjectTruthActivity> {
+  return engineFetch<ProjectTruthActivity>(`/projects/${encodeURIComponent(projectId)}/activity?offset=${offset}&limit=${limit}`);
+}
+
+export async function getEpisodeTruthDetail(projectId: string, episodeId: string): Promise<EpisodeTruthDetail> {
+  return engineFetch<EpisodeTruthDetail>(`/projects/${encodeURIComponent(projectId)}/episodes/${encodeURIComponent(episodeId)}/summary`);
+}
+
+export async function getRegressionTruthDetail(projectId: string, regressionId: string): Promise<RegressionTruthDetail> {
+  return engineFetch<RegressionTruthDetail>(`/projects/${encodeURIComponent(projectId)}/regressions/${encodeURIComponent(regressionId)}/detail`);
+}
+
 export async function getOnboarding(): Promise<OnboardingState> {
   return engineFetch<OnboardingState>("/app/onboarding");
 }
@@ -1035,12 +1061,28 @@ export async function getDiagnostics(): Promise<Diagnostics> {
   return engineFetch<Diagnostics>("/diagnostics");
 }
 
+export async function getDiagnosticsTruthOverview(): Promise<DiagnosticsTruthOverview> {
+  return engineFetch<DiagnosticsTruthOverview>("/diagnostics/overview");
+}
+
 export async function verifyStorageIntegrity(): Promise<Record<string, unknown>> {
   return engineFetch("/diagnostics/storage-integrity", { method: "POST", body: "{}" });
 }
 
 export async function exportSupportBundle(): Promise<Record<string, unknown>> {
   return engineFetch("/diagnostics/support-bundle", { method: "POST", body: "{}" });
+}
+
+export async function getSupportBundle(bundleId: string): Promise<Record<string, unknown>> {
+  return engineFetch(`/diagnostics/support-bundles/${encodeURIComponent(bundleId)}`);
+}
+
+export async function getUpdaterStatus(): Promise<Record<string, unknown>> {
+  return engineFetch("/updates/status");
+}
+
+export async function getPackageAcceptance(): Promise<Record<string, unknown>> {
+  return engineFetch("/package-acceptance");
 }
 
 export async function getActivityPreferences(): Promise<ActivityPreferences> {
@@ -1579,6 +1621,10 @@ export async function runProductSelfTest(): Promise<ProductSelfTestRun> {
 
 export async function exportProductSelfTest(runId: string): Promise<{ run_id: string; relative_path: string | null; private_paths_included: boolean; exported: boolean }> {
   return engineFetch(`/self-test/${encodeURIComponent(runId)}/export`, { method: "POST", body: "{}" });
+}
+
+export async function cancelProductSelfTest(runId: string): Promise<void> {
+  await engineFetch(`/self-test/${encodeURIComponent(runId)}/cancel`, { method: "POST", body: "{}" });
 }
 
 export function resetBootstrapForTests(): void {

@@ -40,8 +40,10 @@ from mellowyak_engine.api.schemas import (
     CurrentChangeResponse,
     DemoLabCreateRequest,
     DemoLabResponse,
+    DiagnosticsOverviewAggregateResponse,
     DiagnosticsResponse,
     DisconnectedProjectListResponse,
+    EpisodeDetailAggregateResponse,
     EvidenceArtifactResponse,
     EvidenceBundleResponse,
     EvidenceListResponse,
@@ -49,6 +51,7 @@ from mellowyak_engine.api.schemas import (
     GitStateResponse,
     HandshakeResponse,
     HealthResponse,
+    HomeSummaryResponse,
     HumanVerificationRequest,
     ImpactAnalyzeRequest,
     ImpactPathListResponse,
@@ -76,6 +79,7 @@ from mellowyak_engine.api.schemas import (
     ProbeRunResponse,
     ProbeSelectionResponse,
     ProductSelfTestResponse,
+    ProjectActivityAggregateResponse,
     ProjectCreateRequest,
     ProjectDeleteRequest,
     ProjectDetectionResponse,
@@ -83,6 +87,7 @@ from mellowyak_engine.api.schemas import (
     ProjectListResponse,
     ProjectLocationRequest,
     ProjectNotificationRequest,
+    ProjectOverviewAggregateResponse,
     ProjectRelocateRequest,
     ProjectResponse,
     ProtectedBehaviorListResponse,
@@ -91,6 +96,7 @@ from mellowyak_engine.api.schemas import (
     QuietModeStartRequest,
     ReadinessResponse,
     RecoveryBundleResponse,
+    RegressionDetailAggregateResponse,
     RegressionListResponse,
     RepairCandidateResponse,
     RepairContextCopyResponse,
@@ -141,6 +147,7 @@ from mellowyak_engine.impact.models import TraversalPolicy
 from mellowyak_engine.impact.service import ImpactService, ImpactServiceError
 from mellowyak_engine.monitoring.service import MonitoringService
 from mellowyak_engine.probes.service import ProbeService, ProbeServiceError
+from mellowyak_engine.product_truth.service import ProductTruthService
 from mellowyak_engine.productization.service import ProductizationError, ProductizationService
 from mellowyak_engine.projects.service import ProjectError, ProjectService
 from mellowyak_engine.protection.service import ProtectionPlanError, ProtectionPlanService
@@ -211,6 +218,7 @@ class EngineRuntime:
     demo_lab: DemoLabService
     self_test: ProductSelfTestService
     technical_preview: TechnicalPreviewService
+    product_truth: ProductTruthService
 
 
 def _open_folder(path: str) -> str:
@@ -265,6 +273,7 @@ def create_app(settings: EngineSettings) -> FastAPI:
         installation.id,
         events,
     )
+    product_truth = ProductTruthService(database.sessions, technical_preview)
     probes = ProbeService(database.sessions, events, snapshots, productization)
     episodes.bind_selection_callback(probes.select_impacted)
     repair_workspaces = RepairWorkspaceService(database.sessions, paths.root, events, _open_folder)
@@ -325,6 +334,7 @@ def create_app(settings: EngineSettings) -> FastAPI:
         demo_lab=demo_lab,
         self_test=self_test,
         technical_preview=technical_preview,
+        product_truth=product_truth,
     )
 
     app = FastAPI(
@@ -468,6 +478,10 @@ def create_app(settings: EngineSettings) -> FastAPI:
     def list_projects() -> ProjectListResponse:
         return ProjectListResponse(projects=projects.list())
 
+    @app.get("/home/summary", response_model=HomeSummaryResponse, dependencies=[Depends(guard)])
+    def home_summary() -> HomeSummaryResponse:
+        return HomeSummaryResponse(**product_truth.home_summary())
+
     @app.get(
         "/projects/disconnected",
         response_model=DisconnectedProjectListResponse,
@@ -516,6 +530,17 @@ def create_app(settings: EngineSettings) -> FastAPI:
             return ProjectResponse(**projects.get(project_id))
         except ProjectError as error:
             raise project_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/overview",
+        response_model=ProjectOverviewAggregateResponse,
+        dependencies=[Depends(guard)],
+    )
+    def project_overview(project_id: str) -> ProjectOverviewAggregateResponse:
+        try:
+            return ProjectOverviewAggregateResponse(**product_truth.project_overview(project_id))
+        except ValueError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
 
     @app.post(
         "/projects/{project_id}/scan",
@@ -1385,6 +1410,21 @@ def create_app(settings: EngineSettings) -> FastAPI:
         except RuntimeError as error:
             raise phase5_error(error) from error
 
+    @app.get(
+        "/projects/{project_id}/regressions/{regression_id}/detail",
+        response_model=RegressionDetailAggregateResponse,
+        dependencies=[Depends(guard)],
+    )
+    def get_regression_detail(
+        project_id: str, regression_id: str
+    ) -> RegressionDetailAggregateResponse:
+        try:
+            return RegressionDetailAggregateResponse(
+                **product_truth.regression_detail(project_id, regression_id)
+            )
+        except ValueError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+
     @app.post(
         "/projects/{project_id}/regressions/{regression_id}/repair-context",
         response_model=RepairContextResponse,
@@ -1788,6 +1828,23 @@ def create_app(settings: EngineSettings) -> FastAPI:
             raise phase7_error(error) from error
 
     @app.get(
+        "/projects/{project_id}/activity",
+        response_model=ProjectActivityAggregateResponse,
+        dependencies=[Depends(guard)],
+    )
+    def project_activity(
+        project_id: str,
+        offset: int = Query(default=0, ge=0),
+        limit: int = Query(default=25, ge=1, le=50),
+    ) -> ProjectActivityAggregateResponse:
+        try:
+            return ProjectActivityAggregateResponse(
+                **product_truth.activity(project_id, offset, limit)
+            )
+        except ValueError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+
+    @app.get(
         "/projects/{project_id}/episodes/{episode_id}",
         response_model=SourceEpisodeResponse,
         dependencies=[Depends(guard)],
@@ -1797,6 +1854,19 @@ def create_app(settings: EngineSettings) -> FastAPI:
             return SourceEpisodeResponse(**episodes.get(project_id, episode_id))
         except ValueError as error:
             raise phase7_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/episodes/{episode_id}/summary",
+        response_model=EpisodeDetailAggregateResponse,
+        dependencies=[Depends(guard)],
+    )
+    def get_episode_summary(project_id: str, episode_id: str) -> EpisodeDetailAggregateResponse:
+        try:
+            return EpisodeDetailAggregateResponse(
+                **product_truth.episode_detail(project_id, episode_id)
+            )
+        except ValueError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
 
     @app.get(
         "/projects/{project_id}/episodes/{episode_id}/probe-selection",
@@ -2423,6 +2493,14 @@ def create_app(settings: EngineSettings) -> FastAPI:
     )
     def diagnostics() -> DiagnosticsResponse:
         return DiagnosticsResponse(**technical_preview.diagnostics())
+
+    @app.get(
+        "/diagnostics/overview",
+        response_model=DiagnosticsOverviewAggregateResponse,
+        dependencies=[Depends(guard)],
+    )
+    def diagnostics_overview() -> DiagnosticsOverviewAggregateResponse:
+        return DiagnosticsOverviewAggregateResponse(**product_truth.diagnostics_overview())
 
     @app.post("/diagnostics/storage-integrity", dependencies=[Depends(guard)])
     def storage_integrity() -> dict[str, object]:

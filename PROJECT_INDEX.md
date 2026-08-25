@@ -1,6 +1,6 @@
 # MellowYak project index
 
-Phase 9 source-of-truth pointers:
+Phase 10 source-of-truth pointers:
 
 ## Product and policy
 
@@ -14,6 +14,11 @@ Phase 9 source-of-truth pointers:
 - [`docs/phase-7-delivery/README.md`](docs/phase-7-delivery/README.md) — portable Phase 7 implementation, verification, screenshot, APC, and research handoff
 - [`docs/phase-8-delivery/README.md`](docs/phase-8-delivery/README.md) — Phase 8 validated-repair implementation, exact evidence, screenshots, and morning handoff
 - [`docs/phase-9-delivery/README.md`](docs/phase-9-delivery/README.md) — Phase 9 Technical Preview implementation, package/updater evidence, screenshots/PDF, and operator handoff
+- [`docs/phase-10-delivery/README.md`](docs/phase-10-delivery/README.md) — Phase 10 Product Truth implementation, exact package evidence, 36 screenshots/PDF, and operator handoff
+- [`docs/product/DAILY_WORKFLOW_GUIDE.md`](docs/product/DAILY_WORKFLOW_GUIDE.md) — Home-to-Apply daily workflow
+- [`docs/product/PROJECT_OVERVIEW_GUIDE.md`](docs/product/PROJECT_OVERVIEW_GUIDE.md) — evidence-bounded project status
+- [`docs/product/ACTIVITY_AND_REGRESSION_GUIDE.md`](docs/product/ACTIVITY_AND_REGRESSION_GUIDE.md) — Episodes, regressions, repair, Apply, and rollback
+- [`docs/product/DIAGNOSTICS_AND_SELF_TEST_GUIDE.md`](docs/product/DIAGNOSTICS_AND_SELF_TEST_GUIDE.md) — diagnostics, support, and disposable Self-Test
 - [`docs/product/TECHNICAL_PREVIEW_GUIDE.md`](docs/product/TECHNICAL_PREVIEW_GUIDE.md) — first run, background lifecycle, disconnected source, diagnostics, updates, and activity modes
 - [`docs/product/TROUBLESHOOTING.md`](docs/product/TROUBLESHOOTING.md) — Technical Preview recovery and failure guidance
 - [`docs/product/VALIDATED_REPAIR_GUIDE.md`](docs/product/VALIDATED_REPAIR_GUIDE.md) — candidate validation and explicit Apply workflow
@@ -54,6 +59,10 @@ Phase 9 source-of-truth pointers:
 - [`docs/architecture/ADR-0032-transaction-rollback.md`](docs/architecture/ADR-0032-transaction-rollback.md)
 - [`docs/architecture/ADR-0033-demo-lab-and-product-self-test.md`](docs/architecture/ADR-0033-demo-lab-and-product-self-test.md)
 - [`docs/architecture/ADR-0034-technical-preview-readiness.md`](docs/architecture/ADR-0034-technical-preview-readiness.md)
+- [`docs/architecture/ADR-0035-product-truth-aggregates.md`](docs/architecture/ADR-0035-product-truth-aggregates.md)
+- [`docs/architecture/ADR-0036-project-activity-timeline.md`](docs/architecture/ADR-0036-project-activity-timeline.md)
+- [`docs/architecture/ADR-0037-operational-status-language.md`](docs/architecture/ADR-0037-operational-status-language.md)
+- [`docs/architecture/ADR-0038-same-source-cross-platform-delivery.md`](docs/architecture/ADR-0038-same-source-cross-platform-delivery.md)
 - [`docs/migration/APC_TO_MELLOWYAK_MATRIX.md`](docs/migration/APC_TO_MELLOWYAK_MATRIX.md)
 - [`docs/migration/APC_EXTRACTION_BOUNDARY.md`](docs/migration/APC_EXTRACTION_BOUNDARY.md)
 - [`docs/migration/PHASE_3_APC_IMPACT_CONTEXT_EXTRACTION.md`](docs/migration/PHASE_3_APC_IMPACT_CONTEXT_EXTRACTION.md)
@@ -166,6 +175,12 @@ Phase 9 source-of-truth pointers:
 - Phase 9 technical sources: [`docs/research/PHASE_9_TECHNICAL_SOURCES.md`](docs/research/PHASE_9_TECHNICAL_SOURCES.md)
 - Phase 9 validation: [`docs/validation/PHASE_9_TECHNICAL_PREVIEW_READINESS_REPORT.md`](docs/validation/PHASE_9_TECHNICAL_PREVIEW_READINESS_REPORT.md)
 - Phase 9 visual/product handoff: [`docs/phase-9-delivery/README.md`](docs/phase-9-delivery/README.md)
+- Phase 10 execution plan: [`docs/implementation/PHASE_10_EXECUTION_PLAN.md`](docs/implementation/PHASE_10_EXECUTION_PLAN.md)
+- Phase 10 Product Truth audit: [`docs/implementation/PHASE_10_PRODUCT_TRUTH_AUDIT.md`](docs/implementation/PHASE_10_PRODUCT_TRUTH_AUDIT.md)
+- Phase 10 UX sources: [`docs/research/PHASE_10_PRODUCT_UX_SOURCES.md`](docs/research/PHASE_10_PRODUCT_UX_SOURCES.md)
+- Phase 10 validation: [`docs/validation/PHASE_10_PRODUCT_TRUTH_VALIDATION_REPORT.md`](docs/validation/PHASE_10_PRODUCT_TRUTH_VALIDATION_REPORT.md)
+- Phase 10 UI map: [`docs/ui/PHASE_10_UI_SCREENS.md`](docs/ui/PHASE_10_UI_SCREENS.md)
+- Phase 10 visual/product handoff: [`docs/phase-10-delivery/README.md`](docs/phase-10-delivery/README.md)
 
 Phase 8 adds deterministic candidate patches, workspace-bound validation, deliberate Safe Apply,
 fresh safety snapshots, hash preconditions, transaction-only rollback, recovery bundles, portable
@@ -177,3 +192,7 @@ Phase 9 adds Technical Preview onboarding, source-safe project relocation, priva
 diagnostics/support, deterministic signed-update fixtures, install/upgrade/package acceptance, and
 activity modes. It does not add remote accounts, cloud/source upload, model calls, automatic source
 mutation, APC runtime coupling, signed public distribution, or unverified platform claims.
+
+Phase 10 adds read-only Product Truth aggregates and a coherent evidence-bound daily workflow without
+a new migration. It does not add new source-write authority, cloud/model integration, APC coupling,
+public release, or unverified-platform claims.

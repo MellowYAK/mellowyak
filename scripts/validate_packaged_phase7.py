@@ -29,7 +29,11 @@ EXPECTED_DATABASE_SCHEMA = "0007_runtime_snapshot_probe_foundation"
 REPORT_SCHEMA = "mellowyak.phase7_packaged_validation.v1"
 AUTH_TOKEN = "packaged-phase-seven-validation-token-2026"
 EXCLUSION_SENTINEL = b"SYNTHETIC_EXCLUSION_SENTINEL_7E31C5"
-STARTUP_TIMEOUT_SECONDS = 30.0
+# A cold Intel PyInstaller bundle can spend roughly 30 seconds unpacking and
+# importing before it emits the sidecar handshake. Keep the validation timeout
+# above that measured boundary so the validator tests the product contract,
+# rather than racing the packager's cold-start overhead.
+STARTUP_TIMEOUT_SECONDS = 90.0
 
 
 @dataclass(frozen=True)

@@ -675,17 +675,15 @@ The intended principle is:
 
 ## Project status
 
-MellowYak Phase 9 adds a coherent Technical Preview lifecycle—upgrade-safe first run, disconnected
-project recovery, identity-safe reconnect/relocate, dynamic tray, route-safe notifications,
-diagnostics, redacted support export, signed-update fixtures, install/upgrade gates, and activity
-modes—on top of Phase 8 validated repair candidates, capability-separated Safe Apply, transaction
-rollback, deterministic Demo Lab, and Product Self-Test. The product also retains multiple versioned Runtime Profiles, Git-optional Source Identity v2, settled
+MellowYak Phase 10 adds an evidence-bound daily workflow—operational Home, Project Overview,
+Activity/Episode Detail, Regression Detail, Diagnostics and meaningful First Run—on top of Phase 9
+Technical Preview lifecycle and Phase 8 validated repair safety. The product also retains multiple versioned Runtime Profiles, Git-optional Source Identity v2, settled
 Episodes, incremental content-addressed Save Points, explicit known-good milestones, Browser/API/CLI/
 Process/Test/Manual Probes, deterministic evidence states, and isolated Repair Workspaces to the
 Phase 1–6 foundation. It is not a released product. A changed file or dependency is only a reason to
 recheck; only comparable reproducible prior-PASS/current-FAIL evidence can support a confirmed
 regression. Exact completion, package, and platform status is authoritative only in
-[`docs/validation/PHASE_9_TECHNICAL_PREVIEW_READINESS_REPORT.md`](docs/validation/PHASE_9_TECHNICAL_PREVIEW_READINESS_REPORT.md).
+[`docs/validation/PHASE_10_PRODUCT_TRUTH_VALIDATION_REPORT.md`](docs/validation/PHASE_10_PRODUCT_TRUTH_VALIDATION_REPORT.md).
 
 The complete workflow described in this README is the product direction. Implementation must advance through verified stages.
 
@@ -847,6 +845,36 @@ Phase 9 implementation, exact evidence, screenshots/PDF, package inventory, plat
 security review, troubleshooting, and operator acceptance guidance are indexed in
 [`docs/phase-9-delivery/README.md`](docs/phase-9-delivery/README.md).
 
+### Phase 10 — Product Truth and daily workflow
+
+- implemented bounded read-only aggregates for Home, Project Overview, Activity/Episode Detail,
+  Regression Detail, and Diagnostics over existing Phase 1–9 records;
+- replaced acceptance-only hero states with operational status, known facts, limitations, next actions,
+  and progressive technical disclosure;
+- made First Run an accessible persisted single-choice flow with real background preferences;
+- presented checks, behaviors, confirmed regression evidence, Repair Workspace, candidate validation,
+  deliberate Apply, rollback, disconnected projects, support, updater, and activity modes as one
+  coherent product path;
+- retained translation-key-only English and Hebrew catalogs with full RTL and LTR technical tokens;
+- retained schema `0009_technical_preview_readiness`; no Phase 10 migration or dependency/license
+  change was required;
+- package-verified Phase 8, Phase 9, and Phase 10 flows on Intel macOS, installed the matching app,
+  and verified isolated native lifecycle with zero orphans;
+- added 36 deterministic synthetic screenshots plus Markdown, HTML, PDF, operator, security, package,
+  limitation, and Phase 11 readiness handoff documents;
+- pinned same-source macOS/Windows/Linux toolchains and build/validation wrappers without claiming an
+  unexecuted platform as working.
+
+Phase 10 does **not** add model/provider integration, prompt access, cloud/source upload, analytics,
+accounts, automatic repair, automatic Apply, Git push, deployment, signing, notarization, public
+release, APC runtime coupling, or real-project acceptance. Intel macOS x86_64 is locally verified;
+Apple Silicon, Windows, Linux, production updater delivery, and physical notification-click behavior
+remain explicitly unverified.
+
+Phase 10 implementation, exact results, screenshots/PDF, package inventory, UX/security review,
+operator walkthrough, limitations, and readiness checklist are indexed in
+[`docs/phase-10-delivery/README.md`](docs/phase-10-delivery/README.md).
+
 ---
 
 ## Built from APC—without carrying the monolith
@@ -892,11 +920,43 @@ The planned distribution is:
 
 The release requirement is one installable application with bundled runtime dependencies.
 
+### One source, native platform packages
+
+MellowYak is one product and one source tree. macOS, Windows and Linux builds use the
+same React UI, Python engine, SQLite migrations, OpenAPI contract, translation catalogs,
+version and exact Git commit. Platform code is limited to native packaging and adapters
+such as paths, file locking, tray, notifications, WebView runtime and updater selection.
+No platform maintains a separate product implementation.
+
+Native acceptance remains independent: a macOS package passing on macOS does not prove
+Windows or Linux runtime behavior. The Windows x64 workflow builds an NSIS installer and
+records source/package evidence; it may be marked fully working only after the packaged
+lifecycle is exercised on Windows. See
+[`ADR-0038`](docs/architecture/ADR-0038-same-source-cross-platform-delivery.md).
+
 ---
 
 ## Development
 
 Contributors need Python 3.11+ (Python 3.12 is the CI target), Node.js 22+, Rust stable and the Tauri prerequisites for their platform. End users will not need these toolchains after installation.
+
+Pinned platform bootstrap commands:
+
+```sh
+./scripts/bootstrap-macos.sh
+./scripts/bootstrap-linux.sh
+```
+
+```powershell
+.\scripts\bootstrap-windows.ps1
+.\scripts\build-platform.ps1 -Bundle nsis
+.\scripts\validate-windows.ps1
+```
+
+The Windows validator intentionally reports source/package verification unless a native
+operator explicitly supplies `-LifecycleVerified` after completing the documented
+lifecycle. Platform artifact manifests bind the installer to its exact commit, schema,
+architecture, validation status and SHA-256 hashes.
 
 ```sh
 python3 scripts/dev.py bootstrap

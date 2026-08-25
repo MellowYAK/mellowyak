@@ -1,0 +1,60 @@
+name: Windows x64 acceptance from shared source
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: Exact branch, tag, or commit to build
+        required: true
+        default: main
+  push:
+    branches:
+      - platform/windows-x64-acceptance
+      - ci/cross-platform-delivery
+
+permissions:
+  contents: read
+
+jobs:
+  windows-x64:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_ref || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.98.0"
+          components: rustfmt,clippy
+      - name: Bootstrap exact source tree
+        shell: pwsh
+        run: ./scripts/bootstrap-windows.ps1 -NonInteractive
+      - name: Record source identity
+        id: source
+        shell: pwsh
+        run: |
+          "commit=$(git rev-parse HEAD)" >> $env:GITHUB_OUTPUT
+          if (git status --porcelain --untracked-files=no) { throw "Bootstrap changed tracked source." }
+      - name: Build NSIS installer from exact commit
+        shell: pwsh
+        run: ./scripts/build-platform.ps1 -Platform windows-x64 -Bundle nsis
+      - name: Validate source and package without claiming native lifecycle
+        shell: pwsh
+        run: ./scripts/validate-windows.ps1 -ExpectedCommit "${{ steps.source.outputs.commit }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mellowyak-windows-x64-${{ steps.source.outputs.commit }}
+          if-no-files-found: error
+          path: |
+            build-manifest/windows-x64-artifacts.json
+            apps/desktop/src-tauri/target/release/bundle/nsis/*.exe

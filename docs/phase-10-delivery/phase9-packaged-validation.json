@@ -1,0 +1,38 @@
+{
+  "clean_install": {
+    "battery_saver_preserved_core": true,
+    "cold_start_and_flow_seconds": 21.220275,
+    "diagnostics_private": true,
+    "disconnected_project_visible": true,
+    "first_run_persisted": true,
+    "installation_identity_persisted": true,
+    "notification_routes_rejected_safely": true,
+    "relocate_preserved_history_without_source_move": true,
+    "replay_supported": true,
+    "schema": "0009_technical_preview_readiness",
+    "source_modified": false,
+    "storage_integrity": "PASS",
+    "support_bundle_redacted": true,
+    "tray_private": true,
+    "updater_fixtures": {
+      "interrupted": "REJECTED_INCOMPLETE",
+      "invalid_signature": "REJECTED",
+      "no_update": "NO_UPDATE",
+      "tampered": "REJECTED",
+      "valid": "ACCEPTED"
+    },
+    "wrong_reconnect_rejected": true
+  },
+  "external_network_used": false,
+  "phase8_upgrade": {
+    "existing_data_preserved": true,
+    "existing_user_first_run_skipped": true,
+    "from": "0008_validated_repair_apply",
+    "installation_identity_preserved": true,
+    "to": "0009_technical_preview_readiness"
+  },
+  "production_updater": "IMPLEMENTED_NOT_RUNTIME_VERIFIED",
+  "real_projects_touched": false,
+  "schema": "mellowyak.phase9.packaged-validation.v1",
+  "status": "VERIFIED_WORKING"
+}

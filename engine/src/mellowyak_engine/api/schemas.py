@@ -1239,6 +1239,123 @@ class RegressionListResponse(BaseModel):
     regressions: list[dict[str, object]]
 
 
+class ProductTruthCheckResponse(BaseModel):
+    id: str
+    name: str
+    behavior_id: str | None
+    behavior_name: str | None
+    result: str
+    status: str
+    source_identity: dict[str, object]
+    runtime_profile_version_id: str | None
+    duration_ms: float | None
+    attempt_count: int
+    expected: dict[str, object]
+    observed: dict[str, object]
+    evidence: dict[str, object]
+    limitations: list[str]
+    completed_at: str | None
+
+
+class ProductTruthActivityResponse(BaseModel):
+    id: str
+    project_id: str
+    event_type: str
+    created_at: str | None
+    entity_type: str
+    entity_id: str | None
+    state: str
+    facts: dict[str, object]
+
+
+class ProductTruthProjectSummaryResponse(BaseModel):
+    id: str
+    display_name: str
+    state: str
+    monitoring_state: str
+    source_available: bool
+    runtime_state: str
+    last_episode: dict[str, object] | None
+    last_save_point: dict[str, object] | None
+    protected_behavior_count: int
+    latest_check: ProductTruthCheckResponse | None
+    open_regression_count: int
+    recovery_required_count: int
+    last_activity_at: str | None
+    limitations: list[str]
+
+
+class HomeSummaryResponse(BaseModel):
+    state: str
+    counts: dict[str, int]
+    projects: list[ProductTruthProjectSummaryResponse]
+    attention: list[ProductTruthProjectSummaryResponse]
+    recent_activity: list[ProductTruthActivityResponse]
+    known: list[str]
+    unknowns: list[str]
+
+
+class ProjectOverviewAggregateResponse(BaseModel):
+    project: ProductTruthProjectSummaryResponse
+    source_identity: dict[str, object]
+    last_known_good: dict[str, object] | None
+    latest_checks: list[ProductTruthCheckResponse]
+    storage: dict[str, object]
+    recent_activity: list[ProductTruthActivityResponse]
+    known: list[str]
+    unknowns: list[str]
+
+
+class ProjectActivityAggregateResponse(BaseModel):
+    project_id: str
+    items: list[ProductTruthActivityResponse]
+    offset: int
+    limit: int
+    total: int
+    has_more: bool
+
+
+class EpisodeDetailAggregateResponse(BaseModel):
+    project_id: str
+    episode: dict[str, object]
+    changed: dict[str, list[object]]
+    may_be_affected: list[dict[str, object]]
+    checks: list[ProductTruthCheckResponse]
+    not_checked: list[dict[str, object]]
+    result: dict[str, object]
+    technical: dict[str, object]
+    unknowns: list[str]
+
+
+class RegressionDetailAggregateResponse(BaseModel):
+    id: str
+    project_id: str
+    status: str
+    behavior: dict[str, object]
+    last_known_good: dict[str, object]
+    current: ProductTruthCheckResponse
+    changed: dict[str, object]
+    selection: dict[str, object]
+    reason_codes: list[str]
+    evidence_timeline: list[ProductTruthActivityResponse]
+    unknowns: list[str]
+
+
+class DiagnosticsFactResponse(BaseModel):
+    key: str
+    state: str
+    value: object
+
+
+class DiagnosticsOverviewAggregateResponse(BaseModel):
+    facts: list[DiagnosticsFactResponse]
+    counts: dict[str, int]
+    privacy: dict[str, object]
+    platform: dict[str, object]
+    last_self_test: str
+    limitations: list[str]
+
+
 class RepairContextResponse(BaseModel):
     id: str
     project_id: str

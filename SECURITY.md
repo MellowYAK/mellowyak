@@ -1,5 +1,21 @@
 # Security policy
 
+## Phase 10 Product Truth boundary
+
+Product Truth routes are read-only and bounded. Home returns installation-level safe summaries;
+Project Overview, Activity, Episode and Regression Detail verify exact project ownership and reject
+cross-project entity access. Missing, stale, unavailable and unknown evidence cannot become success.
+Paths, hashes and deterministic reason codes remain progressively disclosed.
+
+Phase 10 grants no new live-source authority. Candidate validation remains workspace-confined, and
+Apply still requires validated exact identity, fresh preflight hashes, deliberate one-time
+confirmation, Safety Snapshot, durable journal and fresh live verification. Transaction rollback and
+recovery behavior remains fail-closed. Package validation used synthetic isolated roots, no external
+product network and no real project.
+
+The locally accepted Intel macOS package is unsigned and unnotarized. Same-source build workflows for
+other platforms are not proof of native security or lifecycle behavior.
+
 ## Phase 9 Technical Preview boundary
 
 Reconnect and relocate require matching stable project identity and change only local metadata; they

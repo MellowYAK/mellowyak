@@ -1,4 +1,15 @@
-# Technical Preview troubleshooting
+# Product Truth and Technical Preview troubleshooting
+
+## Home or Project Overview looks incomplete
+
+Refresh the exact project and inspect limitations. A partial response must keep missing facts unknown;
+do not infer health from an absent check or regression. Open Diagnostics if the local engine, database,
+source identity or runtime is unavailable.
+
+## Status says no confirmed issue
+
+This means no confirmed regression exists in the available comparable evidence. It does not mean all
+behaviors are covered. Review skipped, unknown, stale and unavailable checks before completion.
 
 ## App is still running after the window closes
 

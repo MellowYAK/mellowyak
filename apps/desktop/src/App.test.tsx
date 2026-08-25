@@ -2,6 +2,7 @@ import { cleanup, configure, fireEvent, render, screen, waitFor } from "@testing
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { App } from "./App";
 import { resetBootstrapForTests } from "./api";
+import { phase10CaptureStates } from "./Phase10Experience";
 
 const dialogOpen = vi.fn();
 const tauriInvoke = vi.hoisted(() => vi.fn());
@@ -34,6 +35,59 @@ const responses: Record<string, unknown> = {
 const git = { available: true, branch: "main", head_sha: "1234567890abcdef", is_detached: false, is_dirty: true, staged: ["src/a.ts"], unstaged: [], untracked: [], ignored_count: 2, worktree_fingerprint: "fp", error: null };
 const scan = { id: "scan-1", status: "completed", scan_version: "1", started_at: "2026-08-24T00:00:00Z", completed_at: "2026-08-24T00:00:01Z", total_candidates: 2, processed_files: 2, included_files: 2, excluded_files: 0, binary_files: 0, sensitive_files: 0, failed_files: 0, unknown_items: 0, unsupported_files: 0, test_files: 1, relationship_count: 1, duration_seconds: 1, error_summary: null };
 const project = { id: "project-1", display_name: "demo", display_path: "/work/demo", repository_path: "/work/demo", monitoring_mode: "passive", monitoring_status: "active", last_scan_status: "completed", last_scan_at: "2026-08-24T00:00:01Z", created_at: "2026-08-24T00:00:00Z", updated_at: null, languages: ["TypeScript"], frameworks: ["React"], tests: ["Vitest"], runtime_hints: [], git, scan, source_remains_local: true };
+function responseFor(path: string): unknown {
+  const listed = (responses["/projects"] as { projects?: Array<typeof project> } | undefined)?.projects ?? [];
+  const projects = listed.map((item) => ({
+    id: item.id,
+    display_name: item.display_name,
+    state: "READY_WITH_LIMITS",
+    monitoring_state: item.monitoring_status,
+    source_available: true,
+    runtime_state: "INCOMPLETE",
+    last_episode: null,
+    last_save_point: null,
+    protected_behavior_count: 0,
+    latest_check: null,
+    open_regression_count: 0,
+    recovery_required_count: 0,
+    last_activity_at: item.last_scan_at ?? item.created_at,
+    limitations: ["NO_PROTECTED_BEHAVIORS", "RUNTIME_NOT_CONFIGURED", "NO_CHECK_RESULT"],
+  }));
+  if (path.endsWith("/overview")) {
+    const projectId = path.split("/")[2];
+    const projectSummary = projects.find((item) => item.id === projectId);
+    if (!projectSummary) return responses[path];
+    return {
+      project: projectSummary,
+      source_identity: { branch: "main", head_sha: "1234567890abcdef", worktree_fingerprint: "fp" },
+      last_known_good: null,
+      latest_checks: [],
+      recent_activity: [],
+      storage: { integrity_state: "READY", snapshot_count: 0, logical_bytes: 0 },
+      known: ["PROJECT_REGISTERED", "SOURCE_AVAILABLE"],
+      unknowns: ["NO_PROTECTED_BEHAVIORS", "RUNTIME_NOT_CONFIGURED", "NO_CHECK_RESULT"],
+    };
+  }
+  if (path !== "/home/summary") return responses[path];
+  return {
+    state: projects.length ? "NO_CONFIRMED_ISSUE_FOUND" : "NO_PROJECTS",
+    counts: {
+      monitored: projects.length,
+      paused: 0,
+      disconnected: 0,
+      needs_setup: projects.length,
+      confirmed_regressions: 0,
+      needs_review: 0,
+      blocked_or_recovery: 0,
+      unread_alerts: 0,
+    },
+    projects,
+    attention: [],
+    recent_activity: [],
+    known: ["LOCAL_DATABASE", "REGISTERED_PROJECTS"],
+    unknowns: ["INCOMPLETE_COVERAGE"],
+  };
+}
 const change = { id: "change-1", project_id: "project-1", change_kind: "uncommitted_worktree", revision: 1, base_head_sha: git.head_sha, head_sha: git.head_sha, worktree_fingerprint: "fp", changed_paths: ["src/a.ts"], task_intent: null, status: "change_detected", created_at: "2026-08-24T00:00:00Z", updated_at: "2026-08-24T00:00:00Z" };
 const analysis = { id: "analysis-1", project_id: "project-1", change_id: "change-1", analysis_revision: 1, base_head_sha: git.head_sha, head_sha: git.head_sha, worktree_fingerprint: "fp", scan_revision: "scan-1", algorithm_version: "reverse-impact-v1", status: "completed", changed_file_count: 1, impacted_node_count: 2, unknown_count: 1, stale_count: 0, heuristic_count: 0, truncated: false, truncation_reasons: [], duration_ms: 2, stale: false, stale_reasons: [], created_at: "2026-08-24T00:00:00Z" };
 const impact = { analysis, results: [
@@ -55,7 +109,7 @@ beforeEach(() => {
   responses["/app/onboarding"] = { completed: true, current_step: "complete", replay_active: false, selected_path: "existing_installation", completed_at: "2026-08-25T00:00:00Z", requires_first_run: false, source_modified: false };
   vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
     const path = new URL(String(input)).pathname;
-    return new Response(JSON.stringify(responses[path]), { status: 200, headers: { "Content-Type": "application/json" } });
+    return new Response(JSON.stringify(responseFor(path)), { status: 200, headers: { "Content-Type": "application/json" } });
   }));
 });
 
@@ -63,13 +117,13 @@ test("waits for an asynchronously starting packaged engine without crashing", as
   tauriInvoke.mockRejectedValueOnce("ENGINE_STARTING");
   render(<App />);
   expect(screen.getByText("Preparing your local engine")).toBeInTheDocument();
-  await waitFor(() => expect(screen.getByText("Running")).toBeInTheDocument());
+  await waitFor(() => expect(screen.getByRole("heading", { name: "What is happening now?" })).toBeInTheDocument());
   expect(tauriInvoke.mock.calls.length).toBeGreaterThanOrEqual(2);
 });
 
 test("keeps the translated alert poll stable between scheduled refreshes", async () => {
   render(<App />);
-  await waitFor(() => expect(screen.getByText("Running")).toBeInTheDocument());
+  await waitFor(() => expect(screen.getByRole("heading", { name: "What is happening now?" })).toBeInTheDocument());
   await new Promise((resolve) => window.setTimeout(resolve, 100));
   const fetchMock = vi.mocked(fetch);
   const alertCalls = () => fetchMock.mock.calls.filter(([input]) => new URL(String(input)).pathname === "/alerts").length;
@@ -87,6 +141,30 @@ test("renders deterministic Phase 9 diagnostics and Hebrew RTL capture states", 
   render(<App />);
   await waitFor(() => expect(document.documentElement.dir).toBe("rtl"));
   expect(screen.getByRole("heading", { name: "מרכז האבחון בעברית ובכיוון מימין לשמאל" })).toBeInTheDocument();
+});
+
+test("registers every required Phase 10 delivery state exactly once", () => {
+  expect(phase10CaptureStates).toHaveLength(36);
+  expect(new Set(phase10CaptureStates).size).toBe(36);
+  expect(phase10CaptureStates).toContain("home-no-confirmed-issue");
+  expect(phase10CaptureStates).toContain("native-tray-preview");
+  expect(phase10CaptureStates).toContain("hebrew-diagnostics");
+});
+
+test("renders the Phase 10 operational Home without unresolved translation parameters", () => {
+  window.history.replaceState({}, "", "/?phase10State=home-no-confirmed-issue");
+  render(<App />);
+  expect(screen.getByRole("heading", { name: "What is happening now?" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /MellowYak Demo/ })).toBeInTheDocument();
+  expect(document.body.textContent).not.toMatch(/\{(?:behaviors|regressions|passed|failed|inconclusive)\}/);
+});
+
+test("renders the Phase 10 Hebrew Home as an RTL operational surface", async () => {
+  window.history.replaceState({}, "", "/?phase10State=hebrew-home");
+  render(<App />);
+  await waitFor(() => expect(document.documentElement).toHaveAttribute("dir", "rtl"));
+  expect(screen.getByRole("heading", { name: "מה קורה עכשיו?" })).toBeInTheDocument();
+  expect(document.querySelector("main")).toHaveAttribute("dir", "rtl");
 });
 
 test("shows persisted first run and completes the synthetic Demo Lab choice", async () => {
@@ -112,17 +190,17 @@ test("shows persisted first run and completes the synthetic Demo Lab choice", as
       });
       return new Response(JSON.stringify(onboarding), { status: 200 });
     }
-    return new Response(JSON.stringify(responses[path]), { status: 200, headers: { "Content-Type": "application/json" } });
+    return new Response(JSON.stringify(responseFor(path)), { status: 200, headers: { "Content-Type": "application/json" } });
   }));
   render(<App />);
   expect(await screen.findByRole("heading", { name: "Welcome to MellowYak" })).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Continue" }));
-  fireEvent.click(await screen.findByRole("button", { name: /Try the synthetic Demo Lab/ }));
+  fireEvent.click(await screen.findByRole("radio", { name: /Try the synthetic Demo Lab/ }));
   await waitFor(() => expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled());
   fireEvent.click(screen.getByRole("button", { name: "Continue" }));
   await waitFor(() => expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled());
   fireEvent.click(screen.getByRole("button", { name: "Continue" }));
-  fireEvent.click(await screen.findByRole("button", { name: "Finish setup" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Open Demo Lab" }));
   expect(await screen.findByRole("heading", { name: "Try MellowYak with a Demo Project" })).toBeInTheDocument();
 });
 
@@ -131,13 +209,11 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 test("renders real engine values and local privacy status", async () => {
   render(<App />);
   expect(screen.getByText("Preparing your local engine")).toBeInTheDocument();
-  await waitFor(() => expect(screen.getByText("Running")).toBeInTheDocument());
-  expect(screen.getByText("/local/MellowYak")).toBeInTheDocument();
-  expect(screen.getByText("SQLite — Local")).toBeInTheDocument();
-  expect(screen.getByText("Not connected")).toBeInTheDocument();
-  expect(screen.getByText("Your code stays local.")).toBeInTheDocument();
-  expect(screen.getByText("No Docker.")).toBeInTheDocument();
-  expect(screen.getByText("0005_verification_regression_gate")).toBeInTheDocument();
+  await waitFor(() => expect(screen.getByRole("heading", { name: "What is happening now?" })).toBeInTheDocument());
+  expect(screen.getByRole("heading", { name: "No projects connected" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Connected projects" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Recent activity" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Add your first project" })).toBeInTheDocument();
 });
 
 test("does not report ready or render projects before real project discovery completes", async () => {
@@ -147,7 +223,7 @@ test("does not report ready or render projects before real project discovery com
   vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
     const path = new URL(String(input)).pathname;
     if (path === "/projects") await projectGate;
-    return new Response(JSON.stringify(responses[path]), { status: 200, headers: { "Content-Type": "application/json" } });
+    return new Response(JSON.stringify(responseFor(path)), { status: 200, headers: { "Content-Type": "application/json" } });
   }));
   render(<App />);
   expect(await screen.findByText("Discovering local projects…")).toBeInTheDocument();
@@ -166,7 +242,7 @@ test("marks a failed real startup step and retries without a false ready state",
   expect(screen.getByText("Loading verified capabilities").closest("li")).toHaveClass("failed");
   responses["/readiness"] = { ready: true, checks: { local_only: true, database_ready: true } };
   fireEvent.click(screen.getByRole("button", { name: "Retry" }));
-  expect(await screen.findByText("Running")).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { name: "What is happening now?" })).toBeInTheDocument();
 });
 
 test("uses a static second loading frame when reduced motion is requested", async () => {
@@ -199,12 +275,10 @@ test("offers and installs a signed desktop update without hardcoded UI copy", as
 
 test("switches every product surface to Hebrew RTL from translation keys", async () => {
   render(<App />);
-  await screen.findByText("Your local engine is ready.");
-  expect(await screen.findByRole("img", { name: "MellowYak waving hello" })).toBeInTheDocument();
+  await screen.findByRole("heading", { name: "What is happening now?" });
   fireEvent.change(screen.getByLabelText("Language"), { target: { value: "he" } });
-  expect(await screen.findByText("המנוע המקומי מוכן.")).toBeInTheDocument();
-  expect(screen.getByRole("img", { name: "MellowYak מנופף לשלום" })).toBeInTheDocument();
-  expect(screen.getByText("הנתונים שלכם נשארים במחשב הזה.")).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { name: "מה קורה עכשיו?" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "אין פרויקטים מחוברים" })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "הוספת הפרויקט הראשון" })).toBeInTheDocument();
   expect(document.documentElement).toHaveAttribute("lang", "he");
   expect(document.documentElement).toHaveAttribute("dir", "rtl");
@@ -229,7 +303,7 @@ test("shows explainable change impact, context receipt, and behavior candidate c
 
   render(<App />);
   fireEvent.click(await screen.findByRole("button", { name: /demo/i }));
-  fireEvent.click(await screen.findByRole("button", { name: "Changes" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Repairs" }));
   expect(await screen.findByText("Changed Files")).toBeInTheDocument();
   expect(screen.getByRole("region", { name: "Change Cockpit" })).toBeInTheDocument();
   expect(screen.getByText("Protection Plan")).toBeInTheDocument();

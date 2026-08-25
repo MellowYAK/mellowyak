@@ -3,12 +3,19 @@ import { useEffect, useState } from "react";
 import {
   exportSupportBundle,
   getActivityPreferences,
+  getBackgroundStatus,
+  getDesktopStartAtLogin,
   getDiagnostics,
+  getNotificationSettings,
   listDisconnectedProjects,
   previewProjectIdentity,
   reconnectProject,
   relocateProject,
+  putBackgroundStatus,
+  putNotificationSettings,
   setActivityMode,
+  setDesktopCloseBehavior,
+  setDesktopStartAtLogin,
   updateOnboarding,
   verifyStorageIntegrity,
   type ActivityPreferences,
@@ -85,9 +92,25 @@ export function FirstRunExperience({
   onDemo: () => void;
   onComplete: (state: OnboardingState) => void;
 }) {
-  const [step, setStep] = useState(state.current_step === "complete" ? "welcome" : state.current_step);
+  const [step, setStep] = useState(state.current_step);
   const [selectedPath, setSelectedPath] = useState<OnboardingState["selected_path"]>(state.selected_path);
   const [busy, setBusy] = useState(false);
+  const [keepRunning, setKeepRunning] = useState(true);
+  const [notifications, setNotifications] = useState(true);
+  const [startAtLogin, setStartAtLogin] = useState(false);
+
+  useEffect(() => {
+    if (step !== "privacy") return;
+    void Promise.all([
+      getBackgroundStatus(),
+      getNotificationSettings(),
+      getDesktopStartAtLogin().catch(() => false),
+    ]).then(([background, notificationSettings, login]) => {
+      setKeepRunning(Boolean(background.keep_running_on_close));
+      setNotifications(notificationSettings.native_enabled);
+      setStartAtLogin(login);
+    }).catch(() => undefined);
+  }, [step]);
 
   const persist = async (next: string, complete = false) => {
     setBusy(true);
@@ -95,6 +118,33 @@ export function FirstRunExperience({
       const updated = await updateOnboarding(next, selectedPath, complete);
       if (complete) onComplete(updated);
       else setStep(next);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveBackground = async () => {
+    setBusy(true);
+    try {
+      await Promise.all([
+        setDesktopCloseBehavior(keepRunning).catch(() => undefined),
+        putBackgroundStatus({ keep_running_on_close: keepRunning, start_at_login: startAtLogin }),
+        putNotificationSettings({ native_enabled: notifications }),
+        setDesktopStartAtLogin(startAtLogin).catch(() => startAtLogin),
+      ]);
+      await persist("complete");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const finish = async () => {
+    setBusy(true);
+    try {
+      const updated = await updateOnboarding("complete", selectedPath, true);
+      onComplete(updated);
+      if (selectedPath === "real_project") onAddProject();
+      else onDemo();
     } finally {
       setBusy(false);
     }
@@ -110,21 +160,22 @@ export function FirstRunExperience({
       <span role="listitem">{t("phase9.onboarding.fact.noAccount")}</span>
       <span role="listitem">{t("phase9.onboarding.fact.noModel")}</span>
     </div>}
-    {step === "choice" && <div className="phase9-choice-grid">
-      <button className={selectedPath === "real_project" ? "selected" : ""} onClick={() => setSelectedPath("real_project")}><strong>{t("phase9.onboarding.real.title")}</strong><span>{t("phase9.onboarding.real.body")}</span></button>
-      <button className={selectedPath === "demo_lab" ? "selected" : ""} onClick={() => setSelectedPath("demo_lab")}><strong>{t("phase9.onboarding.demo.title")}</strong><span>{t("phase9.onboarding.demo.body")}</span></button>
-    </div>}
+    {step === "choice" && <fieldset className="phase9-choice-grid"><legend className="sr-only">{t("phase10.firstRun.choiceLegend")}</legend>
+      <label className={selectedPath === "real_project" ? "selected" : ""}><input type="radio" name="first-run-path" value="real_project" checked={selectedPath === "real_project"} onChange={() => setSelectedPath("real_project")} /><span className="choice-indicator" aria-hidden="true" /><span><strong>{t("phase9.onboarding.real.title")}</strong><span>{t("phase9.onboarding.real.body")}</span></span></label>
+      <label className={selectedPath === "demo_lab" ? "selected" : ""}><input type="radio" name="first-run-path" value="demo_lab" checked={selectedPath === "demo_lab"} onChange={() => setSelectedPath("demo_lab")} /><span className="choice-indicator" aria-hidden="true" /><span><strong>{t("phase9.onboarding.demo.title")}</strong><span>{t("phase9.onboarding.demo.body")}</span></span></label>
+    </fieldset>}
     {step === "privacy" && <div className="phase9-check-list">
-      <div><strong>{t("phase9.onboarding.background.title")}</strong><span>{t("phase9.onboarding.background.body")}</span></div>
-      <div><strong>{t("phase9.onboarding.tray.title")}</strong><span>{t("phase9.onboarding.tray.body")}</span></div>
-      <div><strong>{t("phase9.onboarding.notifications.title")}</strong><span>{t("phase9.onboarding.notifications.body")}</span></div>
+      <label className="toggle-row"><span><strong>{t("phase10.firstRun.keepWatching")}</strong><small>{t("phase10.firstRun.keepWatchingBody")}</small></span><input type="checkbox" checked={keepRunning} onChange={(event) => setKeepRunning(event.target.checked)} /></label>
+      <label className="toggle-row"><span><strong>{t("phase10.firstRun.notifications")}</strong><small>{t("phase10.firstRun.notificationsBody")}</small></span><input type="checkbox" checked={notifications} onChange={(event) => setNotifications(event.target.checked)} /></label>
+      <label className="toggle-row"><span><strong>{t("phase10.firstRun.startAtLogin")}</strong><small>{t("phase10.firstRun.startAtLoginBody")}</small></span><input type="checkbox" checked={startAtLogin} onChange={(event) => setStartAtLogin(event.target.checked)} /></label>
+      <details><summary>{t("phase10.firstRun.privacyDetails")}</summary><p>{t("phase10.firstRun.privacyDetailsBody")}</p></details>
     </div>}
-    {step === "complete" && <div className="phase9-complete" role="status">{t("phase9.onboarding.complete.summary")}</div>}
+    {step === "complete" && <div className="phase9-complete" role="status"><strong>{t(selectedPath === "real_project" ? "phase10.firstRun.completeProject" : "phase10.firstRun.completeDemo")}</strong><span>{t(selectedPath === "real_project" ? "phase10.firstRun.completeProjectBody" : "phase10.firstRun.completeDemoBody")}</span></div>}
     <div className="button-row">
       {step === "welcome" && <button className="primary" disabled={busy} onClick={() => void persist("choice")}>{t("phase9.action.continue")}</button>}
       {step === "choice" && <button className="primary" disabled={busy || !selectedPath} onClick={() => void persist("privacy")}>{t("phase9.action.continue")}</button>}
-      {step === "privacy" && <button className="primary" disabled={busy} onClick={() => void persist("complete")}>{t("phase9.action.continue")}</button>}
-      {step === "complete" && <button className="primary" disabled={busy} onClick={() => { if (selectedPath === "real_project") onAddProject(); else onDemo(); void persist("complete", true); }}>{t("phase9.action.finish")}</button>}
+      {step === "privacy" && <button className="primary" disabled={busy} onClick={() => void saveBackground()}>{t("phase9.action.continue")}</button>}
+      {step === "complete" && <button className="primary" disabled={busy} onClick={() => void finish()}>{t(selectedPath === "real_project" ? "phase10.firstRun.openProjectSetup" : "phase10.firstRun.openDemoLab")}</button>}
     </div>
   </section>;
 }

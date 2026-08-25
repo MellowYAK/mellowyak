@@ -1,5 +1,17 @@
 # Releases and in-app updates
 
+## Phase 10 same-source platform rule
+
+macOS, Windows and Linux packages must be built from the same committed React UI, Python engine,
+OpenAPI contract, migration head and version. Platform-specific files may select bundle format,
+signing, updater target and native lifecycle behavior; they may not fork product logic. Every artifact
+manifest records commit, platform, schema, validation status, size and SHA-256.
+
+Workflow configuration or a successful source suite is not native acceptance. Each platform must
+separately pass install/upgrade, startup, tray, notification, updater selection, migration, explicit
+Quit/orphan and uninstall/reinstall gates. Phase 10 accepts only local unsigned Intel macOS; no public
+release is authorized.
+
 ## Phase 9 Technical Preview package gate
 
 A Phase 9 package must be fresh from the exact candidate commit, report version
