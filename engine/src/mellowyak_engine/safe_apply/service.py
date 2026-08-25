@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import uuid
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -64,6 +65,14 @@ class SafeApplyService:
         "POST_VERIFYING",
         "ROLLING_BACK",
     }
+
+    @staticmethod
+    def _inject_fault(
+        fault_injector: Callable[[str], None] | None,
+        point: str,
+    ) -> None:
+        if fault_injector is not None:
+            fault_injector(point)
 
     def __init__(
         self,
@@ -346,7 +355,12 @@ class SafeApplyService:
         return transaction
 
     def confirm(
-        self, project_id: str, transaction_id: str, confirmation_nonce: str
+        self,
+        project_id: str,
+        transaction_id: str,
+        confirmation_nonce: str,
+        *,
+        fault_injector: Callable[[str], None] | None = None,
     ) -> dict[str, Any]:
         with self.sessions() as session:
             transaction = self._load_transaction(session, project_id, transaction_id)
@@ -417,6 +431,7 @@ class SafeApplyService:
         journal.append("APPLY_STARTED")
         self._journal_event(transaction_id, "APPLY_STARTED")
         self.events.publish("apply_started", project_id, {"transaction_id": transaction_id})
+        self._inject_fault(fault_injector, "after_journal_before_first_write")
         try:
             self._apply_files(
                 project_id,
@@ -425,13 +440,22 @@ class SafeApplyService:
                 workspace_root,
                 files,
                 journal,
+                fault_injector,
             )
         except (ApplyOperationError, PreflightError, OSError) as error:
             code = getattr(error, "code", "APPLY_WRITE_FAILED")
             journal.append("APPLY_FAILED", {"error_code": code})
             self._journal_event(transaction_id, "APPLY_FAILED", {"error_code": code})
             return self.rollback(project_id, transaction_id, reason=code)
-        return self._post_verify(project_id, transaction_id, project_root, workspace, journal)
+        self._inject_fault(fault_injector, "after_all_writes_before_post_verify")
+        return self._post_verify(
+            project_id,
+            transaction_id,
+            project_root,
+            workspace,
+            journal,
+            fault_injector=fault_injector,
+        )
 
     def _fail_without_write(self, transaction_id: str, candidate_id: str, code: str) -> None:
         with self.sessions.begin() as session:
@@ -454,6 +478,7 @@ class SafeApplyService:
         workspace_root: Path,
         files: list[RepairCandidateFile],
         journal: DurableJournal,
+        fault_injector: Callable[[str], None] | None = None,
     ) -> None:
         writes = [item for item in files if item.operation not in {"DELETE"}]
         deletions = [item for item in files if item.operation == "DELETE"]
@@ -479,6 +504,8 @@ class SafeApplyService:
                 project_id,
                 {"transaction_id": transaction_id, "ordinal": item.ordinal},
             )
+            if len(writes) > 0 and item is writes[0]:
+                self._inject_fault(fault_injector, "after_first_file_operation")
         for item in [*deletions, *[row for row in files if row.operation == "RENAME"]]:
             relative = item.rename_source if item.operation == "RENAME" else item.relative_path
             if relative is None:
@@ -513,6 +540,8 @@ class SafeApplyService:
         project_root: Path,
         workspace: RepairWorkspace,
         journal: DurableJournal,
+        *,
+        fault_injector: Callable[[str], None] | None = None,
     ) -> dict[str, Any]:
         now = datetime.now(UTC)
         with self.sessions.begin() as session:
@@ -559,7 +588,10 @@ class SafeApplyService:
         )
         if not required_pass:
             return self.rollback(
-                project_id, transaction_id, reason="POST_APPLY_VERIFICATION_FAILED"
+                project_id,
+                transaction_id,
+                reason="POST_APPLY_VERIFICATION_FAILED",
+                fault_injector=fault_injector,
             )
         completed = datetime.now(UTC)
         with self.sessions.begin() as session:
@@ -584,7 +616,12 @@ class SafeApplyService:
         return self.get(project_id, transaction_id)
 
     def rollback(
-        self, project_id: str, transaction_id: str, *, reason: str = "USER_REQUESTED"
+        self,
+        project_id: str,
+        transaction_id: str,
+        *,
+        reason: str = "USER_REQUESTED",
+        fault_injector: Callable[[str], None] | None = None,
     ) -> dict[str, Any]:
         with self.sessions() as session:
             transaction = self._load_transaction(session, project_id, transaction_id)
@@ -658,6 +695,11 @@ class SafeApplyService:
                     atomic_copy(source, target, entry.blob_sha256, entry.file_mode)
                 restored.append(relative)
                 journal.append("ROLLBACK_FILE_COMPLETED", {"relative_path": relative})
+                if len(restored) == 1:
+                    self._inject_fault(
+                        fault_injector,
+                        "during_rollback_after_first_restore",
+                    )
             except (PreflightError, ApplyOperationError, OSError):
                 unresolved.append(relative)
                 break

@@ -16,9 +16,30 @@ DESKTOP = ROOT / "apps" / "desktop"
 VENV = ENGINE / ".venv"
 
 
-def run(*command: str, cwd: Path = ROOT) -> None:
+def run(
+    *command: str,
+    cwd: Path = ROOT,
+    environment: dict[str, str] | None = None,
+) -> None:
     print("+", " ".join(command))
-    subprocess.run(command, cwd=cwd, check=True)
+    subprocess.run(command, cwd=cwd, check=True, env=environment)
+
+
+def release_environment() -> dict[str, str]:
+    environment = os.environ.copy()
+    existing = [
+        item
+        for item in environment.get("CARGO_ENCODED_RUSTFLAGS", "").split("\x1f")
+        if item
+    ]
+    existing.extend(
+        [
+            f"--remap-path-prefix={ROOT}=<SOURCE_ROOT>",
+            f"--remap-path-prefix={Path.home() / '.cargo'}=<CARGO_HOME>",
+        ]
+    )
+    environment["CARGO_ENCODED_RUSTFLAGS"] = "\x1f".join(existing)
+    return environment
 
 
 def venv_python() -> Path:
@@ -76,7 +97,14 @@ def desktop_build() -> None:
 
 def package() -> None:
     engine_build()
-    run("npm", "run", "tauri", "build", cwd=DESKTOP)
+    run(
+        "npm",
+        "run",
+        "tauri",
+        "build",
+        cwd=DESKTOP,
+        environment=release_environment(),
+    )
 
 
 def install_macos() -> None:

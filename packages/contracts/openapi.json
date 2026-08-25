@@ -7245,6 +7245,61 @@
         "summary": "Create Demo Lab"
       }
     },
+    "/demo-lab/{demo_id}": {
+      "get": {
+        "operationId": "get_demo_lab_demo_lab__demo_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "demo_id",
+            "required": true,
+            "schema": {
+              "title": "Demo Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoLabResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Demo Lab"
+      }
+    },
     "/demo-lab/{demo_id}/apply-valid": {
       "post": {
         "operationId": "demo_apply_valid_demo_lab__demo_id__apply_valid_post",

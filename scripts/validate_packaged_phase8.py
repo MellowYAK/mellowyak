@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import argparse
+import http.client
 import json
 import os
+import subprocess
 import tempfile
 import time
 import urllib.error
@@ -23,6 +25,12 @@ from validate_packaged_phase7 import (
 EXPECTED_DATABASE_SCHEMA = "0008_validated_repair_apply"
 REPORT_SCHEMA = "mellowyak.phase8_packaged_validation.v1"
 AUTH_TOKEN = "packaged-phase-eight-validation-token-2026"
+FAULT_POINTS = (
+    "after_journal_before_first_write",
+    "after_first_file_operation",
+    "after_all_writes_before_post_verify",
+    "during_rollback_after_first_restore",
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -68,6 +76,60 @@ def create_demo(base_url: str, parent: Path) -> dict[str, Any]:
     )
 
 
+def trigger_expected_crash(
+    base_url: str,
+    demo_id: str,
+    fault_point: str,
+    process: subprocess.Popen[str],
+) -> None:
+    try:
+        request(base_url, f"/demo-lab/{demo_id}/test-crash/{fault_point}", "POST", {})
+    except (
+        ConnectionError,
+        TimeoutError,
+        http.client.HTTPException,
+        urllib.error.URLError,
+    ):
+        pass
+    else:
+        raise AssertionError(f"fault point {fault_point} did not terminate the engine")
+    try:
+        return_code = process.wait(timeout=20)
+    except subprocess.TimeoutExpired as error:
+        raise AssertionError(
+            f"fault point {fault_point} left the engine running"
+        ) from error
+    if return_code != 86:
+        raise AssertionError(
+            f"fault point {fault_point} exited with {return_code}, expected 86"
+        )
+
+
+def assert_recovery_bundle_safe(
+    bundle_root: Path, forbidden: tuple[bytes, ...]
+) -> None:
+    required = {
+        "RECOVERY_README.md",
+        "transaction.json",
+        "journal.json",
+        "safety-snapshot.json",
+        "affected-paths.json",
+        "current-digests.json",
+        "expected-digests.json",
+        "diagnostics.json",
+    }
+    actual = {path.name for path in bundle_root.iterdir() if path.is_file()}
+    if required - actual:
+        raise AssertionError("recovery bundle omitted required redacted evidence")
+    combined = b"\n".join(
+        path.read_bytes() for path in bundle_root.iterdir() if path.is_file()
+    )
+    if any(value and value in combined for value in forbidden):
+        raise AssertionError(
+            "recovery bundle contains forbidden secret or absolute path"
+        )
+
+
 def validate(engine: Path, work_root: Path) -> dict[str, Any]:
     data_root = work_root / "data"
     demos_root = work_root / "demos"
@@ -80,6 +142,7 @@ def validate(engine: Path, work_root: Path) -> dict[str, Any]:
             "MELLOWYAK_DATA_ROOT": str(data_root),
             "MELLOWYAK_BIND_HOST": "127.0.0.1",
             "MELLOWYAK_BROWSER_HEADLESS": "1",
+            "MELLOWYAK_DEMO_TEST_MODE": "1",
         }
     )
     metrics: dict[str, float] = {}
@@ -226,6 +289,100 @@ def validate(engine: Path, work_root: Path) -> dict[str, Any]:
                 "restart recovery inspection found an unexpected pending transaction"
             )
 
+        crash_results: dict[str, str] = {}
+        for fault_point in FAULT_POINTS:
+            crash_demo = create_demo(base_url, demos_root)
+            crash_id = str(crash_demo["id"])
+            crash_project_id = str(crash_demo["project_id"])
+            crash_root = demos_root / f"MellowYak-Demo-{crash_id[:8]}"
+            sentinel = crash_root / "unrelated-sentinel.txt"
+            sentinel_bytes = f"sentinel:{fault_point}".encode()
+            sentinel.write_bytes(sentinel_bytes)
+            request(base_url, f"/demo-lab/{crash_id}/inject-regression", "POST", {})
+            request(
+                base_url, f"/demo-lab/{crash_id}/create-valid-candidate", "POST", {}
+            )
+            before_crash = (crash_root / "checkout.py").read_bytes()
+            trigger_expected_crash(base_url, crash_id, fault_point, process)
+            process = None
+
+            handle = start_engine(engine, environment, stderr_log)
+            process = handle.process
+            base_url = handle.base_url
+            assert_authentication_required(base_url)
+            recovered_demo = request(base_url, f"/demo-lab/{crash_id}")
+            transaction_id = str(recovered_demo["state"]["transaction_id"])
+            transaction = request(
+                base_url,
+                f"/projects/{crash_project_id}/apply-transactions/{transaction_id}",
+            )
+            if transaction["state"] != "ROLLED_BACK":
+                raise AssertionError(
+                    f"fault point {fault_point} did not recover by safe rollback"
+                )
+            if (crash_root / "checkout.py").read_bytes() != before_crash:
+                raise AssertionError(
+                    f"fault point {fault_point} did not restore source byte-identically"
+                )
+            if sentinel.read_bytes() != sentinel_bytes:
+                raise AssertionError(
+                    f"fault point {fault_point} changed an unrelated file"
+                )
+            journal = data_root / str(transaction["journal_relative_path"])
+            if not journal.is_file() or not json.loads(journal.read_text())["events"]:
+                raise AssertionError(f"fault point {fault_point} discarded its journal")
+            if request(base_url, "/recovery/pending").get("transactions"):
+                raise AssertionError(f"fault point {fault_point} left pending recovery")
+            crash_results[fault_point] = "ROLLED_BACK_BYTE_IDENTICAL"
+
+        recovery_demo = create_demo(base_url, demos_root)
+        recovery_id = str(recovery_demo["id"])
+        recovery_project_id = str(recovery_demo["project_id"])
+        recovery_root = demos_root / f"MellowYak-Demo-{recovery_id[:8]}"
+        request(base_url, f"/demo-lab/{recovery_id}/inject-regression", "POST", {})
+        request(base_url, f"/demo-lab/{recovery_id}/create-valid-candidate", "POST", {})
+        trigger_expected_crash(
+            base_url,
+            recovery_id,
+            "after_first_file_operation",
+            process,
+        )
+        process = None
+        (recovery_root / "checkout.py").write_bytes(b"unproven-external-change\n")
+        handle = start_engine(engine, environment, stderr_log)
+        process = handle.process
+        base_url = handle.base_url
+        recovered_demo = request(base_url, f"/demo-lab/{recovery_id}")
+        recovery_transaction_id = str(recovered_demo["state"]["transaction_id"])
+        recovery_transaction = request(
+            base_url,
+            f"/projects/{recovery_project_id}/apply-transactions/{recovery_transaction_id}",
+        )
+        if recovery_transaction["state"] != "FAILED_RECOVERY_REQUIRED":
+            raise AssertionError(
+                "unprovable recovery did not stop in RECOVERY_REQUIRED"
+            )
+        alerts = request(base_url, "/alerts")
+        if not any(
+            item.get("severity") == "CRITICAL"
+            and item.get("category") == "RECOVERY"
+            and item.get("project_id") == recovery_project_id
+            for item in alerts.get("alerts", [])
+        ):
+            raise AssertionError(
+                "RECOVERY_REQUIRED did not create a CRITICAL local alert"
+            )
+        bundle_parent = (
+            data_root / "projects" / recovery_project_id / "recovery-bundles"
+        )
+        bundle_roots = sorted(path for path in bundle_parent.iterdir() if path.is_dir())
+        if len(bundle_roots) != 1:
+            raise AssertionError("RECOVERY_REQUIRED did not create exactly one bundle")
+        assert_recovery_bundle_safe(
+            bundle_roots[0],
+            (AUTH_TOKEN.encode("utf-8"), str(work_root).encode("utf-8")),
+        )
+
         return {
             "schema": REPORT_SCHEMA,
             "status": "VERIFIED_WORKING",
@@ -247,15 +404,20 @@ def validate(engine: Path, work_root: Path) -> dict[str, Any]:
                 == "PASS",
                 "no_orphan_processes": self_test_steps.get("no_orphan_processes")
                 == "PASS",
+                "crash_fault_points": crash_results,
+                "recovery_required_stopped_writes": True,
+                "recovery_bundle_redacted": True,
                 "real_projects_touched": False,
                 "source_uploaded": False,
             },
             "counts": {
-                "demo_labs": 4,
+                "demo_labs": 4 + len(FAULT_POINTS) + 1,
                 "product_self_test_steps": len(self_test["steps"]),
                 "committed_applies": 1,
                 "rolled_back_applies": 1,
                 "stale_blocks": 1,
+                "crash_recoveries": len(crash_results),
+                "recovery_required_cases": 1,
             },
             "metrics": metrics,
         }

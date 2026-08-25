@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import uuid
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -37,6 +38,15 @@ class DemoLabServiceError(RuntimeError):
 
 
 class DemoLabService:
+    FAULT_POINTS = frozenset(
+        {
+            "after_journal_before_first_write",
+            "after_first_file_operation",
+            "after_all_writes_before_post_verify",
+            "during_rollback_after_first_restore",
+        }
+    )
+
     def __init__(
         self,
         sessions: sessionmaker[Session],
@@ -313,6 +323,49 @@ class DemoLabService:
         return self._update(
             demo_id,
             "APPLIED_AND_VERIFIED",
+            transaction_id=result["id"],
+            transaction_state=result["state"],
+        )
+
+    def apply_with_fault(
+        self,
+        demo_id: str,
+        fault_point: str,
+        fault_injector: Callable[[str], None],
+    ) -> dict[str, Any]:
+        if fault_point not in self.FAULT_POINTS:
+            raise DemoLabServiceError("DEMO_FAULT_POINT_INVALID")
+        row = self._run(demo_id)
+        state = self._state(row)
+        if not row.project_id or not state.get("candidate_id"):
+            raise DemoLabServiceError("DEMO_VALID_CANDIDATE_MISSING")
+        # Re-resolve the marker immediately before enabling the test-only fault path.
+        self._project_root(row)
+        prepared = self.safe_apply.prepare(row.project_id, str(state["candidate_id"]))
+        self._update(
+            demo_id,
+            "FAULT_INJECTION_ARMED",
+            transaction_id=prepared["id"],
+            transaction_state=prepared["state"],
+            fault_point=fault_point,
+        )
+        if fault_point == "during_rollback_after_first_restore":
+            workspace_id = str(state["workspace_id"])
+            with self.sessions.begin() as session:
+                workspace = session.get(RepairWorkspace, workspace_id)
+                if workspace:
+                    policy = json.loads(workspace.validation_policy_json)
+                    policy["checks"][0]["expected"] = "DEMO_POST_APPLY_FAILURE"
+                    workspace.validation_policy_json = _json(policy)
+        result = self.safe_apply.confirm(
+            row.project_id,
+            str(prepared["id"]),
+            str(prepared["confirmation_nonce"]),
+            fault_injector=fault_injector,
+        )
+        return self._update(
+            demo_id,
+            "FAULT_INJECTION_NOT_TRIGGERED",
             transaction_id=result["id"],
             transaction_state=result["state"],
         )

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 from mellowyak_engine.api.app import create_app
@@ -103,3 +104,20 @@ def test_demo_lab_stale_source_blocks_apply_without_writing(tmp_path: Path) -> N
         blocked = client.post(f"/demo-lab/{demo_id}/apply-valid", headers=authorized(), json={})
         assert blocked.status_code == 409
         assert live_path.read_bytes() == external
+
+
+def test_demo_crash_route_is_disabled_without_explicit_test_mode(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("MELLOWYAK_DEMO_TEST_MODE", raising=False)
+    with TestClient(
+        create_app(EngineSettings(data_root=tmp_path / "data", session_token=TOKEN))
+    ) as client:
+        response = client.post(
+            "/demo-lab/not-a-demo/test-crash/after_first_file_operation",
+            headers=authorized(),
+            json={},
+        )
+        assert response.status_code == 404
+        assert response.json()["detail"] == "DEMO_TEST_MODE_DISABLED"

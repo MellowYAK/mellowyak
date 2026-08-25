@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import platform
 import subprocess
 import time
@@ -2158,6 +2159,17 @@ def create_app(settings: EngineSettings) -> FastAPI:
         except (DemoLabServiceError, ProjectError, SnapshotServiceError) as error:
             raise phase8_error(error) from error
 
+    @app.get(
+        "/demo-lab/{demo_id}",
+        response_model=DemoLabResponse,
+        dependencies=[Depends(guard)],
+    )
+    def get_demo_lab(demo_id: str) -> DemoLabResponse:
+        try:
+            return DemoLabResponse(**demo_lab.get(demo_id))
+        except DemoLabServiceError as error:
+            raise phase8_error(error) from error
+
     @app.post(
         "/demo-lab/{demo_id}/inject-regression",
         response_model=DemoLabResponse,
@@ -2218,6 +2230,25 @@ def create_app(settings: EngineSettings) -> FastAPI:
     def demo_post_apply_failure(demo_id: str) -> DemoLabResponse:
         try:
             return DemoLabResponse(**demo_lab.simulate_post_apply_failure(demo_id))
+        except (DemoLabServiceError, SafeApplyServiceError, SnapshotServiceError) as error:
+            raise phase8_error(error) from error
+
+    @app.post(
+        "/demo-lab/{demo_id}/test-crash/{fault_point}",
+        response_model=DemoLabResponse,
+        dependencies=[Depends(guard)],
+        include_in_schema=False,
+    )
+    def demo_test_crash(demo_id: str, fault_point: str) -> DemoLabResponse:
+        if os.environ.get("MELLOWYAK_DEMO_TEST_MODE") != "1":
+            raise HTTPException(status_code=404, detail="DEMO_TEST_MODE_DISABLED")
+
+        def terminate_at(selected: str) -> None:
+            if selected == fault_point:
+                os._exit(86)
+
+        try:
+            return DemoLabResponse(**demo_lab.apply_with_fault(demo_id, fault_point, terminate_at))
         except (DemoLabServiceError, SafeApplyServiceError, SnapshotServiceError) as error:
             raise phase8_error(error) from error
 

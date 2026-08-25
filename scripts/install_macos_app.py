@@ -27,9 +27,13 @@ def run(*command: str, cwd: Path = ROOT, check: bool = True) -> None:
 def main() -> None:
     if sys.platform != "darwin":
         raise SystemExit("install-macos is available only on macOS")
-    use_existing = sys.argv[1:] == ["--from-existing"]
-    if sys.argv[1:] and not use_existing:
-        raise SystemExit("usage: install_macos_app.py [--from-existing]")
+    arguments = set(sys.argv[1:])
+    if arguments - {"--from-existing", "--no-launch"}:
+        raise SystemExit(
+            "usage: install_macos_app.py [--from-existing] [--no-launch]"
+        )
+    use_existing = "--from-existing" in arguments
+    no_launch = "--no-launch" in arguments
     if not use_existing:
         run(
             str(ROOT / "engine" / ".venv" / "bin" / "python"),
@@ -68,7 +72,8 @@ def main() -> None:
         if previous_moved and not TARGET.exists() and backup.exists():
             os.replace(backup, TARGET)
         raise
-    run("open", str(TARGET))
+    if not no_launch:
+        run("open", str(TARGET))
     print(f"Installed: {TARGET}")
     if previous_moved:
         print(f"Recoverable previous version: {backup}")
