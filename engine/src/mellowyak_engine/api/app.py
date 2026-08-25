@@ -14,6 +14,9 @@ from mellowyak_engine.api.schemas import (
     ActionResponse,
     AlertListResponse,
     AlertResponse,
+    ApplyConfirmRequest,
+    ApplyTransactionListResponse,
+    ApplyTransactionResponse,
     BackgroundSettingsRequest,
     BaselineAcceptRequest,
     BaselineRevokeRequest,
@@ -24,12 +27,17 @@ from mellowyak_engine.api.schemas import (
     BrowserCaptureListResponse,
     BrowserCaptureResponse,
     BrowserCaptureStartRequest,
+    CandidateDiffResponse,
+    CandidateExcludeRequest,
+    CandidateRestoreRequest,
     CaptureReviewRequest,
     ChangeImpactResponse,
     ChangeIntentRequest,
     ChangeListResponse,
     ContextReceiptResponse,
     CurrentChangeResponse,
+    DemoLabCreateRequest,
+    DemoLabResponse,
     EvidenceArtifactResponse,
     EvidenceBundleResponse,
     EvidenceListResponse,
@@ -45,10 +53,13 @@ from mellowyak_engine.api.schemas import (
     ImpactUnknownListResponse,
     InstallationResponse,
     LocalEventListResponse,
+    LocalExportResponse,
     MilestoneCreateRequest,
     MonitoringResponse,
     NotificationSettingsRequest,
     OpenDataFolderResponse,
+    PortableRepairRequest,
+    PortableRepairResponse,
     PrivacySettingsResponse,
     ProbeCreateRequest,
     ProbeDefinitionResponse,
@@ -56,6 +67,7 @@ from mellowyak_engine.api.schemas import (
     ProbeRunRequest,
     ProbeRunResponse,
     ProbeSelectionResponse,
+    ProductSelfTestResponse,
     ProjectCreateRequest,
     ProjectDeleteRequest,
     ProjectDetectionResponse,
@@ -69,10 +81,13 @@ from mellowyak_engine.api.schemas import (
     ProtectionPlanResponse,
     QuietModeStartRequest,
     ReadinessResponse,
+    RecoveryBundleResponse,
     RegressionListResponse,
+    RepairCandidateResponse,
     RepairContextCopyResponse,
     RepairContextResponse,
     RepairContextSaveResponse,
+    RepairValidationResponse,
     RepairWorkspaceOpenRequest,
     RepairWorkspaceResponse,
     RuntimeConfigurationListResponse,
@@ -105,6 +120,8 @@ from mellowyak_engine.browser.service import BrowserCaptureError, BrowserCapture
 from mellowyak_engine.core.events import LocalEventBus
 from mellowyak_engine.core.logging import configure_logging
 from mellowyak_engine.db.database import LocalDatabase
+from mellowyak_engine.demo_lab.self_test import ProductSelfTestService
+from mellowyak_engine.demo_lab.service import DemoLabService, DemoLabServiceError
 from mellowyak_engine.episodes.service import EpisodeService
 from mellowyak_engine.evidence.service import EvidenceService, EvidenceServiceError
 from mellowyak_engine.evidence.store import EvidenceStore
@@ -118,6 +135,15 @@ from mellowyak_engine.projects.service import ProjectError, ProjectService
 from mellowyak_engine.protection.service import ProtectionPlanError, ProtectionPlanService
 from mellowyak_engine.regression.service import RegressionService
 from mellowyak_engine.repair.service import RepairContextError, RepairContextService
+from mellowyak_engine.repair_candidates.service import (
+    RepairCandidateService,
+    RepairCandidateServiceError,
+)
+from mellowyak_engine.repair_validation.service import (
+    RepairValidationService,
+    RepairValidationServiceError,
+)
+from mellowyak_engine.repair_workspace.export import PortableRepairError, PortableRepairService
 from mellowyak_engine.repair_workspace.service import (
     RepairWorkspaceService,
     RepairWorkspaceServiceError,
@@ -126,6 +152,7 @@ from mellowyak_engine.runtime_profiles.service import (
     RuntimeProfileService,
     RuntimeProfileServiceError,
 )
+from mellowyak_engine.safe_apply.service import SafeApplyService, SafeApplyServiceError
 from mellowyak_engine.scanning.service import ScanCoordinator, SourceScanner
 from mellowyak_engine.security.auth import SessionTokenGuard
 from mellowyak_engine.settings.config import EngineSettings
@@ -162,6 +189,12 @@ class EngineRuntime:
     episodes: EpisodeService
     probes: ProbeService
     repair_workspaces: RepairWorkspaceService
+    repair_candidates: RepairCandidateService
+    repair_validations: RepairValidationService
+    safe_apply: SafeApplyService
+    portable_repairs: PortableRepairService
+    demo_lab: DemoLabService
+    self_test: ProductSelfTestService
 
 
 def _open_folder(path: str) -> str:
@@ -212,6 +245,21 @@ def create_app(settings: EngineSettings) -> FastAPI:
     probes = ProbeService(database.sessions, events, snapshots, productization)
     episodes.bind_selection_callback(probes.select_impacted)
     repair_workspaces = RepairWorkspaceService(database.sessions, paths.root, events, _open_folder)
+    repair_candidates = RepairCandidateService(database.sessions, paths.root, events)
+    repair_validations = RepairValidationService(database.sessions, paths.root, events)
+    safe_apply = SafeApplyService(database.sessions, paths.root, events, snapshots)
+    portable_repairs = PortableRepairService(database.sessions, paths.root)
+    demo_lab = DemoLabService(
+        database.sessions,
+        paths.root,
+        events,
+        projects,
+        snapshots,
+        repair_candidates,
+        repair_validations,
+        safe_apply,
+    )
+    self_test = ProductSelfTestService(database.sessions, paths.root, events)
     verification = VerificationService(
         database.sessions,
         evidence,
@@ -247,6 +295,12 @@ def create_app(settings: EngineSettings) -> FastAPI:
         episodes=episodes,
         probes=probes,
         repair_workspaces=repair_workspaces,
+        repair_candidates=repair_candidates,
+        repair_validations=repair_validations,
+        safe_apply=safe_apply,
+        portable_repairs=portable_repairs,
+        demo_lab=demo_lab,
+        self_test=self_test,
     )
 
     app = FastAPI(
@@ -1514,6 +1568,18 @@ def create_app(settings: EngineSettings) -> FastAPI:
             status = 409
         return HTTPException(status_code=status, detail=code)
 
+    def phase8_error(error: Exception) -> HTTPException:
+        code = str(getattr(error, "code", str(error) or "PHASE8_OPERATION_FAILED"))
+        if code.endswith("_NOT_FOUND"):
+            status = 404
+        elif code.endswith("_INVALID") or code.endswith("_REJECTED") or code.endswith("_REQUIRED"):
+            status = 400
+        elif code.endswith("_UNAVAILABLE"):
+            status = 503
+        else:
+            status = 409
+        return HTTPException(status_code=status, detail=code)
+
     @app.post(
         "/projects/{project_id}/runtime/detect",
         response_model=RuntimeDetectionResponse,
@@ -1835,6 +1901,375 @@ def create_app(settings: EngineSettings) -> FastAPI:
         except RepairWorkspaceServiceError as error:
             raise phase7_error(error) from error
 
+    @app.post(
+        "/projects/{project_id}/repair-workspaces/{workspace_id}/candidates",
+        response_model=RepairCandidateResponse,
+        dependencies=[Depends(guard)],
+    )
+    def create_repair_candidate(project_id: str, workspace_id: str) -> RepairCandidateResponse:
+        try:
+            return RepairCandidateResponse(**repair_candidates.create(project_id, workspace_id))
+        except RepairCandidateServiceError as error:
+            raise phase8_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/repair-candidates/{candidate_id}",
+        response_model=RepairCandidateResponse,
+        dependencies=[Depends(guard)],
+    )
+    def get_repair_candidate(project_id: str, candidate_id: str) -> RepairCandidateResponse:
+        try:
+            return RepairCandidateResponse(**repair_candidates.get(project_id, candidate_id))
+        except RepairCandidateServiceError as error:
+            raise phase8_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/repair-candidates/{candidate_id}/refresh",
+        response_model=RepairCandidateResponse,
+        dependencies=[Depends(guard)],
+    )
+    def refresh_repair_candidate(project_id: str, candidate_id: str) -> RepairCandidateResponse:
+        try:
+            return RepairCandidateResponse(**repair_candidates.refresh(project_id, candidate_id))
+        except RepairCandidateServiceError as error:
+            raise phase8_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/repair-candidates/{candidate_id}/exclude",
+        response_model=RepairCandidateResponse,
+        dependencies=[Depends(guard)],
+    )
+    def exclude_repair_candidate_paths(
+        project_id: str, candidate_id: str, request: CandidateExcludeRequest
+    ) -> RepairCandidateResponse:
+        try:
+            return RepairCandidateResponse(
+                **repair_candidates.exclude(project_id, candidate_id, request.paths)
+            )
+        except RepairCandidateServiceError as error:
+            raise phase8_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/repair-candidates/{candidate_id}/restore-workspace-file",
+        response_model=RepairCandidateResponse,
+        dependencies=[Depends(guard)],
+    )
+    def restore_repair_workspace_file(
+        project_id: str, candidate_id: str, request: CandidateRestoreRequest
+    ) -> RepairCandidateResponse:
+        try:
+            return RepairCandidateResponse(
+                **repair_candidates.restore_workspace_file(
+                    project_id, candidate_id, request.relative_path
+                )
+            )
+        except RepairCandidateServiceError as error:
+            raise phase8_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/repair-candidates/{candidate_id}/diff",
+        response_model=CandidateDiffResponse,
+        dependencies=[Depends(guard)],
+    )
+    def repair_candidate_diff(
+        project_id: str,
+        candidate_id: str,
+        relative_path: str = Query(min_length=1, max_length=2000),
+    ) -> CandidateDiffResponse:
+        try:
+            return CandidateDiffResponse(
+                **repair_candidates.diff(project_id, candidate_id, relative_path)
+            )
+        except RepairCandidateServiceError as error:
+            raise phase8_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/repair-candidates/{candidate_id}/validate",
+        response_model=RepairValidationResponse,
+        dependencies=[Depends(guard)],
+    )
+    def validate_repair_candidate(project_id: str, candidate_id: str) -> RepairValidationResponse:
+        try:
+            return RepairValidationResponse(**repair_validations.validate(project_id, candidate_id))
+        except RepairValidationServiceError as error:
+            raise phase8_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/repair-candidates/{candidate_id}/cancel-validation",
+        response_model=ActionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def cancel_repair_candidate_validation(project_id: str, candidate_id: str) -> ActionResponse:
+        try:
+            return ActionResponse(**repair_validations.cancel(project_id, candidate_id))
+        except RepairValidationServiceError as error:
+            raise phase8_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/repair-candidates/{candidate_id}/apply/prepare",
+        response_model=ApplyTransactionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def prepare_repair_apply(project_id: str, candidate_id: str) -> ApplyTransactionResponse:
+        try:
+            return ApplyTransactionResponse(**safe_apply.prepare(project_id, candidate_id))
+        except (SafeApplyServiceError, SnapshotServiceError) as error:
+            raise phase8_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/repair-candidates/{candidate_id}/apply/confirm",
+        response_model=ApplyTransactionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def confirm_repair_apply(
+        project_id: str, candidate_id: str, request: ApplyConfirmRequest
+    ) -> ApplyTransactionResponse:
+        if not request.deliberate_confirmation:
+            raise HTTPException(status_code=400, detail="APPLY_DELIBERATE_CONFIRMATION_REQUIRED")
+        try:
+            pending = [
+                item
+                for item in safe_apply.pending()
+                if item["project_id"] == project_id
+                and item["candidate_id"] == candidate_id
+                and item["state"] == "READY_FOR_CONFIRMATION"
+            ]
+            if len(pending) != 1:
+                raise SafeApplyServiceError("APPLY_TRANSACTION_NOT_FOUND")
+            return ApplyTransactionResponse(
+                **safe_apply.confirm(project_id, str(pending[0]["id"]), request.confirmation_nonce)
+            )
+        except (SafeApplyServiceError, SnapshotServiceError) as error:
+            raise phase8_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/apply-transactions/{transaction_id}",
+        response_model=ApplyTransactionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def get_apply_transaction(project_id: str, transaction_id: str) -> ApplyTransactionResponse:
+        try:
+            return ApplyTransactionResponse(**safe_apply.get(project_id, transaction_id))
+        except SafeApplyServiceError as error:
+            raise phase8_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/apply-transactions/{transaction_id}/cancel",
+        response_model=ApplyTransactionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def cancel_apply_transaction(project_id: str, transaction_id: str) -> ApplyTransactionResponse:
+        try:
+            return ApplyTransactionResponse(**safe_apply.cancel(project_id, transaction_id))
+        except SafeApplyServiceError as error:
+            raise phase8_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/apply-transactions/{transaction_id}/rollback",
+        response_model=ApplyTransactionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def rollback_apply_transaction(
+        project_id: str, transaction_id: str
+    ) -> ApplyTransactionResponse:
+        try:
+            return ApplyTransactionResponse(**safe_apply.rollback(project_id, transaction_id))
+        except (SafeApplyServiceError, SnapshotServiceError) as error:
+            raise phase8_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/apply-transactions/{transaction_id}/resume-verification",
+        response_model=ApplyTransactionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def resume_apply_verification(project_id: str, transaction_id: str) -> ApplyTransactionResponse:
+        try:
+            return ApplyTransactionResponse(
+                **safe_apply.resume_verification(project_id, transaction_id)
+            )
+        except (SafeApplyServiceError, SnapshotServiceError) as error:
+            raise phase8_error(error) from error
+
+    @app.get(
+        "/recovery/pending",
+        response_model=ApplyTransactionListResponse,
+        dependencies=[Depends(guard)],
+    )
+    def pending_recovery() -> ApplyTransactionListResponse:
+        return ApplyTransactionListResponse(transactions=safe_apply.pending())
+
+    @app.post(
+        "/recovery/{transaction_id}/attempt",
+        response_model=ApplyTransactionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def attempt_recovery(transaction_id: str) -> ApplyTransactionResponse:
+        pending = [item for item in safe_apply.pending() if item["id"] == transaction_id]
+        if not pending:
+            raise HTTPException(status_code=404, detail="APPLY_TRANSACTION_NOT_FOUND")
+        try:
+            return ApplyTransactionResponse(
+                **safe_apply.rollback(
+                    str(pending[0]["project_id"]), transaction_id, reason="MANUAL_RECOVERY"
+                )
+            )
+        except (SafeApplyServiceError, SnapshotServiceError) as error:
+            raise phase8_error(error) from error
+
+    @app.post(
+        "/recovery/{transaction_id}/create-bundle",
+        response_model=RecoveryBundleResponse,
+        dependencies=[Depends(guard)],
+    )
+    def create_recovery_bundle(transaction_id: str) -> RecoveryBundleResponse:
+        pending = [item for item in safe_apply.pending() if item["id"] == transaction_id]
+        if not pending:
+            raise HTTPException(status_code=404, detail="APPLY_TRANSACTION_NOT_FOUND")
+        try:
+            return RecoveryBundleResponse(
+                **safe_apply.create_recovery_bundle(str(pending[0]["project_id"]), transaction_id)
+            )
+        except SafeApplyServiceError as error:
+            raise phase8_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/repair-workspaces/{workspace_id}/export-portable",
+        response_model=PortableRepairResponse,
+        dependencies=[Depends(guard)],
+    )
+    def export_portable_repair(
+        project_id: str, workspace_id: str, request: PortableRepairRequest
+    ) -> PortableRepairResponse:
+        try:
+            return PortableRepairResponse(
+                **portable_repairs.export(project_id, workspace_id, request.selected_paths)
+            )
+        except PortableRepairError as error:
+            raise phase8_error(error) from error
+
+    @app.post(
+        "/demo-lab/create",
+        response_model=DemoLabResponse,
+        dependencies=[Depends(guard)],
+    )
+    def create_demo_lab(request: DemoLabCreateRequest) -> DemoLabResponse:
+        try:
+            return DemoLabResponse(**demo_lab.create(request.selected_parent))
+        except (DemoLabServiceError, ProjectError, SnapshotServiceError) as error:
+            raise phase8_error(error) from error
+
+    @app.post(
+        "/demo-lab/{demo_id}/inject-regression",
+        response_model=DemoLabResponse,
+        dependencies=[Depends(guard)],
+    )
+    def demo_inject_regression(demo_id: str) -> DemoLabResponse:
+        try:
+            return DemoLabResponse(**demo_lab.inject_regression(demo_id))
+        except (DemoLabServiceError, SnapshotServiceError) as error:
+            raise phase8_error(error) from error
+
+    @app.post(
+        "/demo-lab/{demo_id}/create-bad-candidate",
+        response_model=DemoLabResponse,
+        dependencies=[Depends(guard)],
+    )
+    def demo_bad_candidate(demo_id: str) -> DemoLabResponse:
+        try:
+            return DemoLabResponse(**demo_lab.candidate(demo_id, valid=False))
+        except (
+            DemoLabServiceError,
+            RepairCandidateServiceError,
+            RepairValidationServiceError,
+        ) as error:
+            raise phase8_error(error) from error
+
+    @app.post(
+        "/demo-lab/{demo_id}/create-valid-candidate",
+        response_model=DemoLabResponse,
+        dependencies=[Depends(guard)],
+    )
+    def demo_valid_candidate(demo_id: str) -> DemoLabResponse:
+        try:
+            return DemoLabResponse(**demo_lab.candidate(demo_id, valid=True))
+        except (
+            DemoLabServiceError,
+            RepairCandidateServiceError,
+            RepairValidationServiceError,
+        ) as error:
+            raise phase8_error(error) from error
+
+    @app.post(
+        "/demo-lab/{demo_id}/apply-valid",
+        response_model=DemoLabResponse,
+        dependencies=[Depends(guard)],
+    )
+    def demo_apply_valid(demo_id: str) -> DemoLabResponse:
+        try:
+            return DemoLabResponse(**demo_lab.apply_valid(demo_id))
+        except (DemoLabServiceError, SafeApplyServiceError, SnapshotServiceError) as error:
+            raise phase8_error(error) from error
+
+    @app.post(
+        "/demo-lab/{demo_id}/simulate-post-apply-failure",
+        response_model=DemoLabResponse,
+        dependencies=[Depends(guard)],
+    )
+    def demo_post_apply_failure(demo_id: str) -> DemoLabResponse:
+        try:
+            return DemoLabResponse(**demo_lab.simulate_post_apply_failure(demo_id))
+        except (DemoLabServiceError, SafeApplyServiceError, SnapshotServiceError) as error:
+            raise phase8_error(error) from error
+
+    @app.post(
+        "/demo-lab/{demo_id}/reset",
+        response_model=DemoLabResponse,
+        dependencies=[Depends(guard)],
+    )
+    def reset_demo_lab(demo_id: str) -> DemoLabResponse:
+        try:
+            return DemoLabResponse(**demo_lab.reset(demo_id))
+        except (DemoLabServiceError, SnapshotServiceError) as error:
+            raise phase8_error(error) from error
+
+    @app.post(
+        "/self-test",
+        response_model=ProductSelfTestResponse,
+        dependencies=[Depends(guard)],
+    )
+    def run_product_self_test() -> ProductSelfTestResponse:
+        return ProductSelfTestResponse(**self_test.run())
+
+    @app.get(
+        "/self-test/{run_id}",
+        response_model=ProductSelfTestResponse,
+        dependencies=[Depends(guard)],
+    )
+    def get_product_self_test(run_id: str) -> ProductSelfTestResponse:
+        try:
+            return ProductSelfTestResponse(**self_test.get(run_id))
+        except RuntimeError as error:
+            raise phase8_error(error) from error
+
+    @app.post(
+        "/self-test/{run_id}/cancel",
+        response_model=ActionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def cancel_product_self_test(run_id: str) -> ActionResponse:
+        return ActionResponse(**self_test.cancel(run_id))
+
+    @app.post(
+        "/self-test/{run_id}/export",
+        response_model=LocalExportResponse,
+        dependencies=[Depends(guard)],
+    )
+    def export_product_self_test(run_id: str) -> LocalExportResponse:
+        try:
+            return LocalExportResponse(**self_test.export(run_id))
+        except RuntimeError as error:
+            raise phase8_error(error) from error
+
     @app.get("/events", response_model=LocalEventListResponse, dependencies=[Depends(guard)])
     def local_events(after: int = Query(default=0, ge=0)) -> LocalEventListResponse:
         return LocalEventListResponse(events=events.after(after))
@@ -1849,6 +2284,7 @@ def create_app(settings: EngineSettings) -> FastAPI:
     app.router.on_shutdown.append(stop_background_services)
     episodes.recover()
     runtime_profiles.recover()
+    safe_apply.recover_pending()
     monitoring.start_persisted()
 
     logger.info("engine_runtime_ready schema=%s", schema_version)

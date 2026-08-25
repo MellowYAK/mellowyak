@@ -733,11 +733,154 @@ class RepairWorkspaceResponse(BaseModel):
     snapshot_id: str
     relative_path: str
     manifest_digest: str
+    base_manifest_digest: str | None = None
+    workspace_manifest_digest: str | None = None
+    runtime_profile_versions: list[str] = Field(default_factory=list)
+    validation_policy: dict[str, object] = Field(default_factory=dict)
     status: str
     instructions: str | None = None
     items: list[dict[str, object]]
     created_at: str
     deleted_at: str | None
+
+
+class CandidateExcludeRequest(BaseModel):
+    paths: list[str] = Field(default_factory=list, max_length=250)
+
+
+class CandidateRestoreRequest(BaseModel):
+    relative_path: str = Field(min_length=1, max_length=2000)
+
+
+class RepairCandidateResponse(BaseModel):
+    id: str
+    project_id: str
+    workspace_id: str
+    revision: int
+    state: str
+    base_manifest_digest: str
+    workspace_manifest_digest: str
+    candidate_digest: str
+    source_snapshot_id: str
+    file_count: int
+    logical_bytes: int
+    binary_count: int
+    warnings: list[str]
+    limitations: list[str]
+    files: list[dict[str, object]]
+    created_at: str
+    updated_at: str
+
+
+class CandidateDiffResponse(BaseModel):
+    candidate_id: str
+    relative_path: str
+    available: bool
+    reason: str | None
+    lines: list[str]
+    truncated: bool = False
+
+
+class RepairValidationResponse(BaseModel):
+    id: str
+    project_id: str
+    candidate_id: str
+    candidate_digest: str
+    workspace_manifest_digest: str
+    runtime_profile_versions: list[str]
+    status: str
+    evidence_digest: str | None
+    limitations: list[str]
+    started_at: str
+    completed_at: str | None
+    items: list[dict[str, object]]
+
+
+class ApplyConfirmRequest(BaseModel):
+    confirmation_nonce: str = Field(min_length=20, max_length=240)
+    deliberate_confirmation: bool = False
+
+
+class ApplyTransactionResponse(BaseModel):
+    id: str
+    project_id: str
+    candidate_id: str
+    validation_id: str
+    state: str
+    expected_source_snapshot_id: str
+    expected_source_manifest_digest: str
+    safety_snapshot_id: str | None
+    post_apply_snapshot_id: str | None
+    confirmation_expires_at: str
+    confirmation_used: bool
+    confirmation_nonce: str | None = None
+    capabilities: list[str] = Field(default_factory=list)
+    journal_relative_path: str
+    error_code: str | None
+    files: list[dict[str, object]]
+    events: list[dict[str, object]]
+    rollbacks: list[dict[str, object]]
+    created_at: str
+    updated_at: str
+    completed_at: str | None
+
+
+class ApplyTransactionListResponse(BaseModel):
+    transactions: list[ApplyTransactionResponse]
+
+
+class RecoveryBundleResponse(BaseModel):
+    id: str
+    transaction_id: str
+    relative_path: str
+    manifest_digest: str
+    status: str
+    created_at: str
+
+
+class PortableRepairRequest(BaseModel):
+    selected_paths: list[str] = Field(default_factory=list, max_length=100)
+
+
+class PortableRepairResponse(BaseModel):
+    id: str
+    workspace_id: str
+    relative_path: str
+    file_count: int
+    logical_bytes: int
+    uploaded: bool
+
+
+class DemoLabCreateRequest(BaseModel):
+    selected_parent: str = Field(min_length=1, max_length=4000)
+
+
+class DemoLabResponse(BaseModel):
+    id: str
+    project_id: str | None
+    synthetic: bool
+    scenario: str
+    status: str
+    state: dict[str, object]
+    created_at: str
+    updated_at: str
+
+
+class ProductSelfTestResponse(BaseModel):
+    id: str
+    status: str
+    steps: list[dict[str, object]]
+    duration_ms: float
+    report_relative_path: str | None
+    created_at: str
+    completed_at: str | None
+
+
+class LocalExportResponse(BaseModel):
+    run_id: str
+    relative_path: str | None
+    private_paths_included: bool
+    exported: bool
 
 
 class BehaviorDraftRequest(BaseModel):

@@ -1,6 +1,6 @@
 # MellowYak project index
 
-Phase 7 source-of-truth pointers:
+Phase 8 source-of-truth pointers:
 
 ## Product and policy
 
@@ -12,6 +12,11 @@ Phase 7 source-of-truth pointers:
 - [`docs/RELEASES_AND_UPDATES.md`](docs/RELEASES_AND_UPDATES.md) — installer, updater signing and local macOS installation contract
 - [`docs/ui-review/phase-3-2026-08-24/PHASE_3_SUMMARY.md`](docs/ui-review/phase-3-2026-08-24/PHASE_3_SUMMARY.md) — Phase 3 summary, APC extraction record, UI screenshots and PDF review index
 - [`docs/phase-7-delivery/README.md`](docs/phase-7-delivery/README.md) — portable Phase 7 implementation, verification, screenshot, APC, and research handoff
+- [`docs/phase-8-delivery/README.md`](docs/phase-8-delivery/README.md) — Phase 8 validated-repair implementation, exact evidence, screenshots, and morning handoff
+- [`docs/product/VALIDATED_REPAIR_GUIDE.md`](docs/product/VALIDATED_REPAIR_GUIDE.md) — candidate validation and explicit Apply workflow
+- [`docs/product/APPLY_AND_ROLLBACK_SAFETY.md`](docs/product/APPLY_AND_ROLLBACK_SAFETY.md) — Safety Snapshot, journal, write, rollback, and recovery guarantees
+- [`docs/product/DEMO_LAB_GUIDE.md`](docs/product/DEMO_LAB_GUIDE.md) — synthetic full-loop walkthrough
+- [`docs/product/PRODUCT_SELF_TEST.md`](docs/product/PRODUCT_SELF_TEST.md) — disposable local self-test contract
 - [`docs/product/RUNTIME_PROFILE_GUIDE.md`](docs/product/RUNTIME_PROFILE_GUIDE.md) — Runtime Wizard and profile usage
 - [`docs/product/SAVE_POINTS_AND_KNOWN_GOOD.md`](docs/product/SAVE_POINTS_AND_KNOWN_GOOD.md) — Episodes, incremental Save Points, milestones, materialization, and retention
 - [`docs/product/PROBE_TYPES.md`](docs/product/PROBE_TYPES.md) — Browser/API/CLI/Process/Test/Manual Probe contract and signals
@@ -39,6 +44,12 @@ Phase 7 source-of-truth pointers:
 - [`docs/architecture/ADR-0025-universal-probe-contract.md`](docs/architecture/ADR-0025-universal-probe-contract.md)
 - [`docs/architecture/ADR-0026-source-identity-without-git.md`](docs/architecture/ADR-0026-source-identity-without-git.md)
 - [`docs/architecture/ADR-0027-repair-workspace-v1.md`](docs/architecture/ADR-0027-repair-workspace-v1.md)
+- [`docs/architecture/ADR-0028-repair-candidate-model.md`](docs/architecture/ADR-0028-repair-candidate-model.md)
+- [`docs/architecture/ADR-0029-repair-validation.md`](docs/architecture/ADR-0029-repair-validation.md)
+- [`docs/architecture/ADR-0030-safe-apply-capability.md`](docs/architecture/ADR-0030-safe-apply-capability.md)
+- [`docs/architecture/ADR-0031-apply-journal-and-crash-recovery.md`](docs/architecture/ADR-0031-apply-journal-and-crash-recovery.md)
+- [`docs/architecture/ADR-0032-transaction-rollback.md`](docs/architecture/ADR-0032-transaction-rollback.md)
+- [`docs/architecture/ADR-0033-demo-lab-and-product-self-test.md`](docs/architecture/ADR-0033-demo-lab-and-product-self-test.md)
 - [`docs/migration/APC_TO_MELLOWYAK_MATRIX.md`](docs/migration/APC_TO_MELLOWYAK_MATRIX.md)
 - [`docs/migration/APC_EXTRACTION_BOUNDARY.md`](docs/migration/APC_EXTRACTION_BOUNDARY.md)
 - [`docs/migration/PHASE_3_APC_IMPACT_CONTEXT_EXTRACTION.md`](docs/migration/PHASE_3_APC_IMPACT_CONTEXT_EXTRACTION.md)
@@ -57,6 +68,7 @@ Phase 7 source-of-truth pointers:
 - Verification/regression/gate migration: [`engine/alembic/versions/0005_verification_regression_gate.py`](engine/alembic/versions/0005_verification_regression_gate.py)
 - Desktop productization migration: [`engine/alembic/versions/0006_desktop_productization.py`](engine/alembic/versions/0006_desktop_productization.py)
 - Runtime/snapshot/probe migration: [`engine/alembic/versions/0007_runtime_snapshot_probe_foundation.py`](engine/alembic/versions/0007_runtime_snapshot_probe_foundation.py)
+- Validated repair/Apply migration: [`engine/alembic/versions/0008_validated_repair_apply.py`](engine/alembic/versions/0008_validated_repair_apply.py)
 - Protection Plan selection: [`engine/src/mellowyak_engine/protection/`](engine/src/mellowyak_engine/protection/)
 - Verification adapters and assertions: [`engine/src/mellowyak_engine/verification/`](engine/src/mellowyak_engine/verification/)
 - Regression decisions: [`engine/src/mellowyak_engine/regression/`](engine/src/mellowyak_engine/regression/)
@@ -78,6 +90,9 @@ Phase 7 source-of-truth pointers:
 - Snapshot CAS/service/materialization: [`engine/src/mellowyak_engine/snapshots/`](engine/src/mellowyak_engine/snapshots/)
 - Universal Probe service/adapters/signals: [`engine/src/mellowyak_engine/probes/`](engine/src/mellowyak_engine/probes/)
 - Repair Workspace v1: [`engine/src/mellowyak_engine/repair_workspace/`](engine/src/mellowyak_engine/repair_workspace/)
+- Repair candidates and workspace validation: [`engine/src/mellowyak_engine/repair_candidates/`](engine/src/mellowyak_engine/repair_candidates/) and [`engine/src/mellowyak_engine/repair_validation/`](engine/src/mellowyak_engine/repair_validation/)
+- Safe Apply, journal, rollback, and recovery: [`engine/src/mellowyak_engine/safe_apply/`](engine/src/mellowyak_engine/safe_apply/) and [`engine/src/mellowyak_engine/recovery/`](engine/src/mellowyak_engine/recovery/)
+- Demo Lab and Product Self-Test: [`engine/src/mellowyak_engine/demo_lab/`](engine/src/mellowyak_engine/demo_lab/)
 - React UI: [`apps/desktop/src/App.tsx`](apps/desktop/src/App.tsx)
 - Change Cockpit: [`apps/desktop/src/ChangeCockpit.tsx`](apps/desktop/src/ChangeCockpit.tsx)
 - Protected Behaviors UI: [`apps/desktop/src/BehaviorsScreen.tsx`](apps/desktop/src/BehaviorsScreen.tsx)
@@ -86,6 +101,7 @@ Phase 7 source-of-truth pointers:
 - Memory/Save Points screen: [`apps/desktop/src/MemoryScreen.tsx`](apps/desktop/src/MemoryScreen.tsx)
 - Universal Probe panel: [`apps/desktop/src/ProbePanel.tsx`](apps/desktop/src/ProbePanel.tsx)
 - Ready-with-limits, signal, and Repair Workspace UI: [`apps/desktop/src/Phase7Details.tsx`](apps/desktop/src/Phase7Details.tsx)
+- Phase 8 Demo Lab, Self-Test, and deterministic delivery states: [`apps/desktop/src/Phase8Experience.tsx`](apps/desktop/src/Phase8Experience.tsx)
 - English/Hebrew translation keys and RTL policy: [`apps/desktop/src/i18n.ts`](apps/desktop/src/i18n.ts)
 - Typed mascot asset mapping: [`apps/desktop/src/mascots.ts`](apps/desktop/src/mascots.ts)
 - Mascot asset and UI placement contract: [`assets/mascot/manifest/mascot-usage.md`](assets/mascot/manifest/mascot-usage.md)
@@ -104,6 +120,8 @@ Phase 7 source-of-truth pointers:
 - Packaged Phase 4 fixture validator: [`scripts/validate_packaged_phase4.py`](scripts/validate_packaged_phase4.py)
 - Packaged Phase 5 regression/repair validator: [`scripts/validate_packaged_phase5.py`](scripts/validate_packaged_phase5.py)
 - Packaged Phase 7 non-Git/probe/repair validator: [`scripts/validate_packaged_phase7.py`](scripts/validate_packaged_phase7.py)
+- Packaged Phase 8 Demo/Apply/rollback/self-test validator: [`scripts/validate_packaged_phase8.py`](scripts/validate_packaged_phase8.py)
+- Phase 8 deterministic screenshots/PDF generator: [`scripts/capture_phase8_delivery.mjs`](scripts/capture_phase8_delivery.mjs)
 - Browser staging: [`scripts/stage_browser.py`](scripts/stage_browser.py)
 - UI translation-key policy check: [`scripts/check_ui_translation_keys.py`](scripts/check_ui_translation_keys.py)
 - Deterministic mascot sheet extractor: [`scripts/extract_mascot_sheet.py`](scripts/extract_mascot_sheet.py)
@@ -130,8 +148,13 @@ Phase 7 source-of-truth pointers:
 - Phase 7 technical sources: [`docs/research/PHASE_7_TECHNICAL_SOURCES.md`](docs/research/PHASE_7_TECHNICAL_SOURCES.md)
 - Phase 7 validation: [`docs/validation/PHASE_7_RUNTIME_MEMORY_PROBE_VALIDATION_REPORT.md`](docs/validation/PHASE_7_RUNTIME_MEMORY_PROBE_VALIDATION_REPORT.md)
 - Phase 7 current UI map: [`docs/ui/PHASE_7_UI_SCREENS.md`](docs/ui/PHASE_7_UI_SCREENS.md)
+- Phase 8 execution plan: [`docs/implementation/PHASE_8_EXECUTION_PLAN.md`](docs/implementation/PHASE_8_EXECUTION_PLAN.md)
+- Phase 8 technical sources: [`docs/research/PHASE_8_TECHNICAL_SOURCES.md`](docs/research/PHASE_8_TECHNICAL_SOURCES.md)
+- Phase 8 validation: [`docs/validation/PHASE_8_VALIDATED_REPAIR_APPLY_VALIDATION_REPORT.md`](docs/validation/PHASE_8_VALIDATED_REPAIR_APPLY_VALIDATION_REPORT.md)
+- Phase 8 current UI map: [`docs/ui/PHASE_8_UI_SCREENS.md`](docs/ui/PHASE_8_UI_SCREENS.md)
 
-Phase 7 adds Git-optional Source Identity, versioned Runtime Profiles, incremental Save Points,
-Episodes, universal local Probes, known-good milestones, deterministic evidence signals, and isolated
-Repair Workspaces. It does not add coding-agent integration, prompt/provider-token access, cloud
-upload, automatic repair/apply, deployment/rollback, signing, notarization, or public release.
+Phase 8 adds deterministic candidate patches, workspace-bound validation, deliberate Safe Apply,
+fresh safety snapshots, hash preconditions, transaction-only rollback, recovery bundles, portable
+repair export, Demo Lab, and Product Self-Test. It does not add AI/model calls, coding-agent
+integration, prompt/provider-token access, cloud upload, automatic repair creation, automatic Apply,
+general historical restore, production deployment, signing, notarization, or public release.

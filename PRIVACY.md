@@ -1,5 +1,21 @@
 # Privacy
 
+## Phase 8 repair, Apply, recovery, and synthetic diagnostics
+
+Repair candidate records contain relative paths, operations, hashes, sizes, modes, classification,
+eligibility, warnings, and exact identities; source contents remain in the isolated Repair Workspace
+or local content-addressed store and never enter SQLite. Workspace validation uses a sanitized
+environment, bounded evidence, and no shell or external egress by default. Its PASS evidence remains
+separate from fresh live-project verification evidence.
+
+Apply journals, Safety Snapshots, rollback records, and Recovery Bundles stay beneath the local
+application-data root. Bundles redact project/data roots and exclude sensitive/provider-private paths.
+Portable Repair Packages contain only files explicitly selected by the user, use relative references,
+and are never uploaded. Demo Lab uses public synthetic source; Product Self-Test uses a disposable
+temporary fixture and removes it. Neither can select or mutate a real project through its test-only
+actions. Phase 8 adds no model call, prompt/history reader, provider credential access, connector,
+analytics, account, cloud sync, source/evidence/patch upload, or automatic Apply.
+
 ## Phase 7 Runtime Profiles, Save Points, and Probes
 
 Phase 7 adds local source snapshots, but source contents still do not enter SQLite. Eligible file

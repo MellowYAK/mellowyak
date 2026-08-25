@@ -96,6 +96,8 @@ class SnapshotService:
         project_id: str,
         episode_id: str | None = None,
         creation_reason: str = "MANUAL_SAVE_POINT",
+        *,
+        force_fresh: bool = False,
     ) -> dict[str, Any]:
         with self.sessions() as session:
             project = self._project(session, project_id)
@@ -130,7 +132,7 @@ class SnapshotService:
             runtime_profile_fingerprints=runtime_fingerprints,
         )
         manifest = result.manifest
-        if previous is not None:
+        if previous is not None and not force_fresh:
             try:
                 previous_manifest = store.load_manifest(previous.id)
                 prior_content = [entry.to_dict() for entry in previous_manifest.entries]

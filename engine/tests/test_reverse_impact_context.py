@@ -590,9 +590,10 @@ def test_medium_graph_analysis_is_bounded_and_fast() -> None:
         "0004_behavior_evidence_browser",
         "0005_verification_regression_gate",
         "0006_desktop_productization",
+        "0007_runtime_snapshot_probe_foundation",
     ],
 )
-def test_phase7_migration_preserves_existing_project_rows(
+def test_phase8_migration_preserves_existing_project_rows(
     tmp_path: Path, starting_revision: str
 ) -> None:
     paths = StoragePaths.create(tmp_path / starting_revision)
@@ -612,7 +613,7 @@ def test_phase7_migration_preserves_existing_project_rows(
             (project_id, "Preserved Phase Project", str(tmp_path / "source"), now),
         )
     upgraded = LocalDatabase(paths)
-    assert upgraded.migrate() == "0007_runtime_snapshot_probe_foundation"
+    assert upgraded.migrate() == "0008_validated_repair_apply"
     with upgraded.engine.connect() as connection:
         row = connection.execute(
             text("SELECT display_name, root_path FROM projects WHERE id = :id"), {"id": project_id}
@@ -632,4 +633,12 @@ def test_phase7_migration_preserves_existing_project_rows(
         "source_snapshots",
         "probe_definitions",
         "repair_workspaces",
+        "repair_candidates",
+        "repair_candidate_validations",
+        "apply_transactions",
+        "apply_journal_events",
+        "rollback_records",
+        "recovery_bundles",
+        "demo_lab_runs",
+        "product_self_test_runs",
     }.issubset(tables)

@@ -71,6 +71,25 @@ APC PHP/MariaDB, tenant/user roles, Docker deployment, Bridge transport, queues,
 tokens, broad context/model/ingest readers, provider credentials, and server control remain
 `ARCHIVE`, `DO_NOT_USE`, or `SECURITY_BLOCKER`.
 
+## Phase 8 update
+
+Phase 8 did not reopen, write to, or copy code from APC. It extends MellowYak's existing local
+Repair Workspace, snapshot, verification, regression, Completion Gate, evidence, and alert
+contracts as a clean implementation.
+
+| Phase 8 capability | APC relationship | MellowYak destination | Disposition | Boundary |
+|---|---|---|---|---|
+| Candidate Patch | Historical selective-restore concept only | `engine/src/mellowyak_engine/repair_candidates/` | `REWRITE` | Deterministic workspace comparison; no Git correctness dependency and no source content in SQLite |
+| Candidate Validation | Existing MellowYak Probe/Protection Plan architecture | `engine/src/mellowyak_engine/repair_validation/` | `EXTEND` | Runs only in the isolated workspace; workspace PASS never becomes live PASS |
+| Safe Apply | No reusable APC implementation | `engine/src/mellowyak_engine/safe_apply/` | `REWRITE` | Explicit, one-time candidate/project/source-bound confirmation and live path re-hashing |
+| Transaction Rollback | APC backup/restore remains unsafe for reuse | `engine/src/mellowyak_engine/safe_apply/rollback.py` | `REWRITE` | Reverts only MellowYak's own Apply transaction from its fresh safety snapshot; not general restore |
+| Recovery Bundle | General evidence/report lesson only | `engine/src/mellowyak_engine/recovery/` | `REWRITE` | Local redacted metadata for unresolved transaction recovery; no upload |
+| Demo Lab / Self-Test | No APC dependency | `engine/src/mellowyak_engine/demo_lab/` | `NEW` | Disposable synthetic projects only; cannot mutate a registered real project |
+
+Migration `0008_validated_repair_apply` and all Phase 8 tables are MellowYak-native. APC Bridge,
+queues, coding-agent connections, provider credentials, PHP/MariaDB persistence, Docker topology,
+broad source readers, arbitrary historical restore, accounts, and remote transport remain excluded.
+
 - `PORT` means only the independently reviewable concept, contract, algorithm or fixture may later cross the boundary with provenance and tests.
 - `REWRITE` means no code copy: implement against MellowYak's local contracts.
 - `SECURITY_BLOCKER` overrides all historical evidence and permanently blocks direct reuse.

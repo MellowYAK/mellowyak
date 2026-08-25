@@ -150,6 +150,203 @@
         "title": "AlertResponse",
         "type": "object"
       },
+      "ApplyConfirmRequest": {
+        "properties": {
+          "confirmation_nonce": {
+            "maxLength": 240,
+            "minLength": 20,
+            "title": "Confirmation Nonce",
+            "type": "string"
+          },
+          "deliberate_confirmation": {
+            "default": false,
+            "title": "Deliberate Confirmation",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "confirmation_nonce"
+        ],
+        "title": "ApplyConfirmRequest",
+        "type": "object"
+      },
+      "ApplyTransactionListResponse": {
+        "properties": {
+          "transactions": {
+            "items": {
+              "$ref": "#/components/schemas/ApplyTransactionResponse"
+            },
+            "title": "Transactions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "transactions"
+        ],
+        "title": "ApplyTransactionListResponse",
+        "type": "object"
+      },
+      "ApplyTransactionResponse": {
+        "properties": {
+          "candidate_id": {
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "capabilities": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Capabilities",
+            "type": "array"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "confirmation_expires_at": {
+            "title": "Confirmation Expires At",
+            "type": "string"
+          },
+          "confirmation_nonce": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmation Nonce"
+          },
+          "confirmation_used": {
+            "title": "Confirmation Used",
+            "type": "boolean"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "events": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "expected_source_manifest_digest": {
+            "title": "Expected Source Manifest Digest",
+            "type": "string"
+          },
+          "expected_source_snapshot_id": {
+            "title": "Expected Source Snapshot Id",
+            "type": "string"
+          },
+          "files": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Files",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "journal_relative_path": {
+            "title": "Journal Relative Path",
+            "type": "string"
+          },
+          "post_apply_snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Post Apply Snapshot Id"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "rollbacks": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Rollbacks",
+            "type": "array"
+          },
+          "safety_snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Safety Snapshot Id"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          },
+          "validation_id": {
+            "title": "Validation Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "candidate_id",
+          "validation_id",
+          "state",
+          "expected_source_snapshot_id",
+          "expected_source_manifest_digest",
+          "safety_snapshot_id",
+          "post_apply_snapshot_id",
+          "confirmation_expires_at",
+          "confirmation_used",
+          "journal_relative_path",
+          "error_code",
+          "files",
+          "events",
+          "rollbacks",
+          "created_at",
+          "updated_at",
+          "completed_at"
+        ],
+        "title": "ApplyTransactionResponse",
+        "type": "object"
+      },
       "BackgroundSettingsRequest": {
         "properties": {
           "keep_running_on_close": {
@@ -870,6 +1067,83 @@
         "title": "BrowserCaptureStepResponse",
         "type": "object"
       },
+      "CandidateDiffResponse": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "candidate_id": {
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Lines",
+            "type": "array"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "relative_path": {
+            "title": "Relative Path",
+            "type": "string"
+          },
+          "truncated": {
+            "default": false,
+            "title": "Truncated",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "relative_path",
+          "available",
+          "reason",
+          "lines"
+        ],
+        "title": "CandidateDiffResponse",
+        "type": "object"
+      },
+      "CandidateExcludeRequest": {
+        "properties": {
+          "paths": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 250,
+            "title": "Paths",
+            "type": "array"
+          }
+        },
+        "title": "CandidateExcludeRequest",
+        "type": "object"
+      },
+      "CandidateRestoreRequest": {
+        "properties": {
+          "relative_path": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Relative Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "relative_path"
+        ],
+        "title": "CandidateRestoreRequest",
+        "type": "object"
+      },
       "CaptureReviewRequest": {
         "properties": {
           "excluded_observation_ids": {
@@ -1226,6 +1500,77 @@
           "updated_at"
         ],
         "title": "CurrentChangeResponse",
+        "type": "object"
+      },
+      "DemoLabCreateRequest": {
+        "properties": {
+          "selected_parent": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Selected Parent",
+            "type": "string"
+          }
+        },
+        "required": [
+          "selected_parent"
+        ],
+        "title": "DemoLabCreateRequest",
+        "type": "object"
+      },
+      "DemoLabResponse": {
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Id"
+          },
+          "scenario": {
+            "title": "Scenario",
+            "type": "string"
+          },
+          "state": {
+            "additionalProperties": true,
+            "title": "State",
+            "type": "object"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "synthetic",
+          "scenario",
+          "status",
+          "state",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "DemoLabResponse",
         "type": "object"
       },
       "EvidenceArtifactResponse": {
@@ -2278,6 +2623,41 @@
         "title": "LocalEventResponse",
         "type": "object"
       },
+      "LocalExportResponse": {
+        "properties": {
+          "exported": {
+            "title": "Exported",
+            "type": "boolean"
+          },
+          "private_paths_included": {
+            "title": "Private Paths Included",
+            "type": "boolean"
+          },
+          "relative_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relative Path"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "relative_path",
+          "private_paths_included",
+          "exported"
+        ],
+        "title": "LocalExportResponse",
+        "type": "object"
+      },
       "MilestoneCreateRequest": {
         "properties": {
           "behavior_id": {
@@ -2497,6 +2877,58 @@
           "method"
         ],
         "title": "OpenDataFolderResponse",
+        "type": "object"
+      },
+      "PortableRepairRequest": {
+        "properties": {
+          "selected_paths": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Selected Paths",
+            "type": "array"
+          }
+        },
+        "title": "PortableRepairRequest",
+        "type": "object"
+      },
+      "PortableRepairResponse": {
+        "properties": {
+          "file_count": {
+            "title": "File Count",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "logical_bytes": {
+            "title": "Logical Bytes",
+            "type": "integer"
+          },
+          "relative_path": {
+            "title": "Relative Path",
+            "type": "string"
+          },
+          "uploaded": {
+            "title": "Uploaded",
+            "type": "boolean"
+          },
+          "workspace_id": {
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "workspace_id",
+          "relative_path",
+          "file_count",
+          "logical_bytes",
+          "uploaded"
+        ],
+        "title": "PortableRepairResponse",
         "type": "object"
       },
       "PrivacySettingsResponse": {
@@ -3123,6 +3555,67 @@
           "created_at"
         ],
         "title": "ProbeVersionResponse",
+        "type": "object"
+      },
+      "ProductSelfTestResponse": {
+        "properties": {
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "duration_ms": {
+            "title": "Duration Ms",
+            "type": "number"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "report_relative_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Relative Path"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Steps",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "steps",
+          "duration_ms",
+          "report_relative_path",
+          "created_at",
+          "completed_at"
+        ],
+        "title": "ProductSelfTestResponse",
         "type": "object"
       },
       "ProjectCreateRequest": {
@@ -3774,6 +4267,44 @@
         "title": "ReadinessResponse",
         "type": "object"
       },
+      "RecoveryBundleResponse": {
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "manifest_digest": {
+            "title": "Manifest Digest",
+            "type": "string"
+          },
+          "relative_path": {
+            "title": "Relative Path",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "transaction_id": {
+            "title": "Transaction Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "transaction_id",
+          "relative_path",
+          "manifest_digest",
+          "status",
+          "created_at"
+        ],
+        "title": "RecoveryBundleResponse",
+        "type": "object"
+      },
       "RegressionListResponse": {
         "properties": {
           "regressions": {
@@ -3849,6 +4380,109 @@
           "stale"
         ],
         "title": "RelationshipResponse",
+        "type": "object"
+      },
+      "RepairCandidateResponse": {
+        "properties": {
+          "base_manifest_digest": {
+            "title": "Base Manifest Digest",
+            "type": "string"
+          },
+          "binary_count": {
+            "title": "Binary Count",
+            "type": "integer"
+          },
+          "candidate_digest": {
+            "title": "Candidate Digest",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "file_count": {
+            "title": "File Count",
+            "type": "integer"
+          },
+          "files": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Files",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "logical_bytes": {
+            "title": "Logical Bytes",
+            "type": "integer"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "source_snapshot_id": {
+            "title": "Source Snapshot Id",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          },
+          "workspace_id": {
+            "title": "Workspace Id",
+            "type": "string"
+          },
+          "workspace_manifest_digest": {
+            "title": "Workspace Manifest Digest",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "workspace_id",
+          "revision",
+          "state",
+          "base_manifest_digest",
+          "workspace_manifest_digest",
+          "candidate_digest",
+          "source_snapshot_id",
+          "file_count",
+          "logical_bytes",
+          "binary_count",
+          "warnings",
+          "limitations",
+          "files",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "RepairCandidateResponse",
         "type": "object"
       },
       "RepairContextCopyResponse": {
@@ -3970,6 +4604,98 @@
         "title": "RepairContextSaveResponse",
         "type": "object"
       },
+      "RepairValidationResponse": {
+        "properties": {
+          "candidate_digest": {
+            "title": "Candidate Digest",
+            "type": "string"
+          },
+          "candidate_id": {
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "evidence_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Digest"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "runtime_profile_versions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Runtime Profile Versions",
+            "type": "array"
+          },
+          "started_at": {
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "workspace_manifest_digest": {
+            "title": "Workspace Manifest Digest",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "candidate_id",
+          "candidate_digest",
+          "workspace_manifest_digest",
+          "runtime_profile_versions",
+          "status",
+          "evidence_digest",
+          "limitations",
+          "started_at",
+          "completed_at",
+          "items"
+        ],
+        "title": "RepairValidationResponse",
+        "type": "object"
+      },
       "RepairWorkspaceOpenRequest": {
         "properties": {
           "target": {
@@ -3983,6 +4709,17 @@
       },
       "RepairWorkspaceResponse": {
         "properties": {
+          "base_manifest_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Manifest Digest"
+          },
           "created_at": {
             "title": "Created At",
             "type": "string"
@@ -4044,6 +4781,13 @@
             "title": "Relative Path",
             "type": "string"
           },
+          "runtime_profile_versions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Runtime Profile Versions",
+            "type": "array"
+          },
           "signal_id": {
             "anyOf": [
               {
@@ -4062,6 +4806,22 @@
           "status": {
             "title": "Status",
             "type": "string"
+          },
+          "validation_policy": {
+            "additionalProperties": true,
+            "title": "Validation Policy",
+            "type": "object"
+          },
+          "workspace_manifest_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workspace Manifest Digest"
           }
         },
         "required": [
@@ -6429,6 +7189,392 @@
         "summary": "Update Start At Login"
       }
     },
+    "/demo-lab/create": {
+      "post": {
+        "operationId": "create_demo_lab_demo_lab_create_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DemoLabCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoLabResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Demo Lab"
+      }
+    },
+    "/demo-lab/{demo_id}/apply-valid": {
+      "post": {
+        "operationId": "demo_apply_valid_demo_lab__demo_id__apply_valid_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "demo_id",
+            "required": true,
+            "schema": {
+              "title": "Demo Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoLabResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Demo Apply Valid"
+      }
+    },
+    "/demo-lab/{demo_id}/create-bad-candidate": {
+      "post": {
+        "operationId": "demo_bad_candidate_demo_lab__demo_id__create_bad_candidate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "demo_id",
+            "required": true,
+            "schema": {
+              "title": "Demo Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoLabResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Demo Bad Candidate"
+      }
+    },
+    "/demo-lab/{demo_id}/create-valid-candidate": {
+      "post": {
+        "operationId": "demo_valid_candidate_demo_lab__demo_id__create_valid_candidate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "demo_id",
+            "required": true,
+            "schema": {
+              "title": "Demo Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoLabResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Demo Valid Candidate"
+      }
+    },
+    "/demo-lab/{demo_id}/inject-regression": {
+      "post": {
+        "operationId": "demo_inject_regression_demo_lab__demo_id__inject_regression_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "demo_id",
+            "required": true,
+            "schema": {
+              "title": "Demo Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoLabResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Demo Inject Regression"
+      }
+    },
+    "/demo-lab/{demo_id}/reset": {
+      "post": {
+        "operationId": "reset_demo_lab_demo_lab__demo_id__reset_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "demo_id",
+            "required": true,
+            "schema": {
+              "title": "Demo Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoLabResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reset Demo Lab"
+      }
+    },
+    "/demo-lab/{demo_id}/simulate-post-apply-failure": {
+      "post": {
+        "operationId": "demo_post_apply_failure_demo_lab__demo_id__simulate_post_apply_failure_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "demo_id",
+            "required": true,
+            "schema": {
+              "title": "Demo Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoLabResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Demo Post Apply Failure"
+      }
+    },
     "/events": {
       "get": {
         "operationId": "local_events_events_get",
@@ -6805,6 +7951,262 @@
           }
         },
         "summary": "Get Project"
+      }
+    },
+    "/projects/{project_id}/apply-transactions/{transaction_id}": {
+      "get": {
+        "operationId": "get_apply_transaction_projects__project_id__apply_transactions__transaction_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "transaction_id",
+            "required": true,
+            "schema": {
+              "title": "Transaction Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplyTransactionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Apply Transaction"
+      }
+    },
+    "/projects/{project_id}/apply-transactions/{transaction_id}/cancel": {
+      "post": {
+        "operationId": "cancel_apply_transaction_projects__project_id__apply_transactions__transaction_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "transaction_id",
+            "required": true,
+            "schema": {
+              "title": "Transaction Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplyTransactionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Apply Transaction"
+      }
+    },
+    "/projects/{project_id}/apply-transactions/{transaction_id}/resume-verification": {
+      "post": {
+        "operationId": "resume_apply_verification_projects__project_id__apply_transactions__transaction_id__resume_verification_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "transaction_id",
+            "required": true,
+            "schema": {
+              "title": "Transaction Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplyTransactionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Resume Apply Verification"
+      }
+    },
+    "/projects/{project_id}/apply-transactions/{transaction_id}/rollback": {
+      "post": {
+        "operationId": "rollback_apply_transaction_projects__project_id__apply_transactions__transaction_id__rollback_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "transaction_id",
+            "required": true,
+            "schema": {
+              "title": "Transaction Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplyTransactionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Rollback Apply Transaction"
       }
     },
     "/projects/{project_id}/behavior-candidates": {
@@ -11325,6 +12727,623 @@
         "summary": "Relocate Project"
       }
     },
+    "/projects/{project_id}/repair-candidates/{candidate_id}": {
+      "get": {
+        "operationId": "get_repair_candidate_projects__project_id__repair_candidates__candidate_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepairCandidateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Repair Candidate"
+      }
+    },
+    "/projects/{project_id}/repair-candidates/{candidate_id}/apply/confirm": {
+      "post": {
+        "operationId": "confirm_repair_apply_projects__project_id__repair_candidates__candidate_id__apply_confirm_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyConfirmRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplyTransactionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Confirm Repair Apply"
+      }
+    },
+    "/projects/{project_id}/repair-candidates/{candidate_id}/apply/prepare": {
+      "post": {
+        "operationId": "prepare_repair_apply_projects__project_id__repair_candidates__candidate_id__apply_prepare_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplyTransactionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Prepare Repair Apply"
+      }
+    },
+    "/projects/{project_id}/repair-candidates/{candidate_id}/cancel-validation": {
+      "post": {
+        "operationId": "cancel_repair_candidate_validation_projects__project_id__repair_candidates__candidate_id__cancel_validation_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Repair Candidate Validation"
+      }
+    },
+    "/projects/{project_id}/repair-candidates/{candidate_id}/diff": {
+      "get": {
+        "operationId": "repair_candidate_diff_projects__project_id__repair_candidates__candidate_id__diff_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "relative_path",
+            "required": true,
+            "schema": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "title": "Relative Path",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateDiffResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Repair Candidate Diff"
+      }
+    },
+    "/projects/{project_id}/repair-candidates/{candidate_id}/exclude": {
+      "post": {
+        "operationId": "exclude_repair_candidate_paths_projects__project_id__repair_candidates__candidate_id__exclude_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateExcludeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepairCandidateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Exclude Repair Candidate Paths"
+      }
+    },
+    "/projects/{project_id}/repair-candidates/{candidate_id}/refresh": {
+      "post": {
+        "operationId": "refresh_repair_candidate_projects__project_id__repair_candidates__candidate_id__refresh_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepairCandidateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Refresh Repair Candidate"
+      }
+    },
+    "/projects/{project_id}/repair-candidates/{candidate_id}/restore-workspace-file": {
+      "post": {
+        "operationId": "restore_repair_workspace_file_projects__project_id__repair_candidates__candidate_id__restore_workspace_file_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateRestoreRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepairCandidateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Restore Repair Workspace File"
+      }
+    },
+    "/projects/{project_id}/repair-candidates/{candidate_id}/validate": {
+      "post": {
+        "operationId": "validate_repair_candidate_projects__project_id__repair_candidates__candidate_id__validate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepairValidationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Validate Repair Candidate"
+      }
+    },
     "/projects/{project_id}/repair-contexts/{context_id}": {
       "get": {
         "operationId": "get_repair_context_projects__project_id__repair_contexts__context_id__get",
@@ -11641,6 +13660,144 @@
           }
         },
         "summary": "Get Repair Workspace"
+      }
+    },
+    "/projects/{project_id}/repair-workspaces/{workspace_id}/candidates": {
+      "post": {
+        "operationId": "create_repair_candidate_projects__project_id__repair_workspaces__workspace_id__candidates_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepairCandidateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Repair Candidate"
+      }
+    },
+    "/projects/{project_id}/repair-workspaces/{workspace_id}/export-portable": {
+      "post": {
+        "operationId": "export_portable_repair_projects__project_id__repair_workspaces__workspace_id__export_portable_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PortableRepairRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortableRepairResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Portable Repair"
       }
     },
     "/projects/{project_id}/repair-workspaces/{workspace_id}/open": {
@@ -13356,6 +15513,373 @@
           }
         },
         "summary": "Readiness"
+      }
+    },
+    "/recovery/pending": {
+      "get": {
+        "operationId": "pending_recovery_recovery_pending_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplyTransactionListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Pending Recovery"
+      }
+    },
+    "/recovery/{transaction_id}/attempt": {
+      "post": {
+        "operationId": "attempt_recovery_recovery__transaction_id__attempt_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "transaction_id",
+            "required": true,
+            "schema": {
+              "title": "Transaction Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplyTransactionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Attempt Recovery"
+      }
+    },
+    "/recovery/{transaction_id}/create-bundle": {
+      "post": {
+        "operationId": "create_recovery_bundle_recovery__transaction_id__create_bundle_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "transaction_id",
+            "required": true,
+            "schema": {
+              "title": "Transaction Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryBundleResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Recovery Bundle"
+      }
+    },
+    "/self-test": {
+      "post": {
+        "operationId": "run_product_self_test_self_test_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductSelfTestResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Product Self Test"
+      }
+    },
+    "/self-test/{run_id}": {
+      "get": {
+        "operationId": "get_product_self_test_self_test__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductSelfTestResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Product Self Test"
+      }
+    },
+    "/self-test/{run_id}/cancel": {
+      "post": {
+        "operationId": "cancel_product_self_test_self_test__run_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Product Self Test"
+      }
+    },
+    "/self-test/{run_id}/export": {
+      "post": {
+        "operationId": "export_product_self_test_self_test__run_id__export_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocalExportResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Product Self Test"
       }
     },
     "/settings/notifications": {

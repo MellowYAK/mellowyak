@@ -19,6 +19,8 @@ from mellowyak_engine.db.models import (
     RegressionFinding,
     RepairWorkspace,
     RepairWorkspaceItem,
+    RuntimeProfile,
+    RuntimeProfileVersion,
     SignalClassification,
     SnapshotMilestone,
     SourceEpisode,
@@ -105,6 +107,17 @@ class RepairWorkspaceService:
             )
             project_root = Path(project.canonical_root_path or project.root_path)
             source_identity = json.loads(snapshot.source_identity_json)
+            runtime_profile_versions = [
+                row.id
+                for row in session.scalars(
+                    select(RuntimeProfileVersion)
+                    .join(
+                        RuntimeProfile,
+                        RuntimeProfile.current_version_id == RuntimeProfileVersion.id,
+                    )
+                    .where(RuntimeProfile.project_id == project_id)
+                ).all()
+            ]
             changed_paths = sorted(
                 set(
                     (json.loads(episode.modified_paths_json) if episode else [])
@@ -198,8 +211,19 @@ This workspace never applies changes back to the live project.
                 snapshot_id=snapshot.id,
                 workspace_relative_path=workspace.relative_to(self.data_root).as_posix(),
                 manifest_digest=digest,
+                base_manifest_digest=snapshot.manifest_digest,
+                workspace_manifest_digest=snapshot.manifest_digest,
+                runtime_profile_versions_json=json.dumps(sorted(runtime_profile_versions)),
+                validation_policy_json=json.dumps(
+                    {
+                        "required": ["ORIGINAL_FAILED_CHECK", "IMPACT_SELECTED_CHECKS"],
+                        "network": "NO_EXTERNAL_EGRESS",
+                    },
+                    sort_keys=True,
+                ),
                 status="READY",
                 created_at=now,
+                last_change_at=now,
             )
             session.add(row)
             workspace_items = [
@@ -254,6 +278,10 @@ This workspace never applies changes back to the live project.
                 "snapshot_id": row.snapshot_id,
                 "relative_path": row.workspace_relative_path,
                 "manifest_digest": row.manifest_digest,
+                "base_manifest_digest": row.base_manifest_digest,
+                "workspace_manifest_digest": row.workspace_manifest_digest,
+                "runtime_profile_versions": json.loads(row.runtime_profile_versions_json),
+                "validation_policy": json.loads(row.validation_policy_json),
                 "status": row.status,
                 "instructions": instructions,
                 "items": [

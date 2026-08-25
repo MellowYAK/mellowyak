@@ -41,6 +41,7 @@ const impact = { analysis, results: [
 const receipt = { schema: "mellowyak.context_receipt.v1", id: "receipt-1", project: { id: "project-1", name: "demo" }, change_id: "change-1", analysis_id: "analysis-1", request: "update parser", source_revision: {}, selected_files: [{ relative_path: "src/a.ts", type: "FILE", reason_selected: "Changed file.", relationship_provenance: "EXACT_PARSER", relevance_class: "changed", stale: false, size: 10, content_eligible: true, selection_reasons: ["changed"] }], selected_symbols: [], related_tests: [], relationship_paths: [], constraints: { source_content_included: false }, unknowns: [{ path: "missing-module", reason: "unresolved import" }], excluded_context: [], selection_reasons: ["changed"], size_metrics: { selected_files: 1, selected_source_bytes: 0 }, truncated: false, stale: false, source_uploaded: false, created_at: "2026-08-24T00:00:00Z" };
 
 beforeEach(() => {
+  window.history.replaceState({}, "", "/");
   document.documentElement.lang = "en";
   document.documentElement.dir = "ltr";
   Reflect.deleteProperty(window, "__TAURI_INTERNALS__");
@@ -262,6 +263,38 @@ test("renders the protected behavior workflow in full Hebrew RTL", async () => {
   fireEvent.click(await screen.findByRole("button", { name: "התנהגויות" }));
   expect(await screen.findByText("התנהגויות מוגנות")).toBeInTheDocument();
   expect(screen.getByText("הגנו על ההתנהגות הראשונה שאינכם רוצים ששינוי AI ישבור.")).toBeInTheDocument();
+  expect(document.documentElement).toHaveAttribute("dir", "rtl");
+  expect(document.querySelector("main")).toHaveAttribute("dir", "rtl");
+});
+
+test("renders a deterministic validated candidate from translation keys", async () => {
+  window.history.replaceState({}, "", "/?phase8State=candidate-validated");
+  render(<App />);
+  expect(screen.getByText("Candidate repair validated")).toBeInTheDocument();
+  expect(screen.getByText("Required workspace checks")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Prepare apply" })).toBeEnabled();
+});
+
+test("requires deliberate confirmation on the translated apply surface", async () => {
+  window.history.replaceState({}, "", "/?phase8State=apply-confirmation");
+  render(<App />);
+  expect(screen.getByText("MellowYak will apply only this validated candidate.")).toBeInTheDocument();
+  expect(screen.getByText("MellowYak will not restore unrelated historical files.")).toBeInTheDocument();
+  expect(screen.getByRole("checkbox")).toBeChecked();
+});
+
+test("shows recovery required without claiming success", async () => {
+  window.history.replaceState({}, "", "/?phase8State=recovery-required");
+  render(<App />);
+  expect(screen.getByText("Manual recovery is required")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+  expect(screen.queryByText("Applied and verified")).not.toBeInTheDocument();
+});
+
+test("renders Phase 8 Hebrew confirmation in full RTL", async () => {
+  window.history.replaceState({}, "", "/?phase8State=hebrew-apply-confirmation");
+  render(<App />);
+  expect(await screen.findByText("החלת תיקון מאומת")).toBeInTheDocument();
   expect(document.documentElement).toHaveAttribute("dir", "rtl");
   expect(document.querySelector("main")).toHaveAttribute("dir", "rtl");
 });

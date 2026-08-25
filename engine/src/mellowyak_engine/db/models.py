@@ -1311,8 +1311,13 @@ class RepairWorkspace(Base):
     snapshot_id: Mapped[str] = mapped_column(String(64), nullable=False)
     workspace_relative_path: Mapped[str] = mapped_column(Text, nullable=False)
     manifest_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    base_manifest_digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    workspace_manifest_digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    runtime_profile_versions_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    validation_policy_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
     status: Mapped[str] = mapped_column(String(40), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    last_change_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
@@ -1329,3 +1334,214 @@ class RepairWorkspaceItem(Base):
     reason: Mapped[str] = mapped_column(Text, nullable=False)
 
     __table_args__ = (UniqueConstraint("workspace_id", "ordinal"),)
+
+
+class RepairCandidate(Base):
+    __tablename__ = "repair_candidates"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    workspace_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("repair_workspaces.id"), nullable=False
+    )
+    revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    state: Mapped[str] = mapped_column(String(40), nullable=False)
+    base_manifest_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    workspace_manifest_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    candidate_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_snapshot_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    file_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    logical_bytes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    binary_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    warnings_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    limitations_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (UniqueConstraint("workspace_id", "revision"),)
+
+
+class RepairCandidateFile(Base):
+    __tablename__ = "repair_candidate_files"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    candidate_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("repair_candidates.id"), nullable=False
+    )
+    ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    relative_path: Mapped[str] = mapped_column(Text, nullable=False)
+    operation: Mapped[str] = mapped_column(String(24), nullable=False)
+    base_digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    candidate_digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    expected_live_digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    byte_size: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    classification: Mapped[str] = mapped_column(String(20), nullable=False)
+    file_mode: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    executable: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    rename_source: Mapped[str | None] = mapped_column(Text, nullable=True)
+    rename_destination: Mapped[str | None] = mapped_column(Text, nullable=True)
+    validation_eligible: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    apply_eligible: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    exclusion_reason: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    warning_state: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    excluded: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    __table_args__ = (
+        UniqueConstraint("candidate_id", "ordinal"),
+        UniqueConstraint("candidate_id", "relative_path"),
+    )
+
+
+class RepairCandidateValidation(Base):
+    __tablename__ = "repair_candidate_validations"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    candidate_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("repair_candidates.id"), nullable=False
+    )
+    candidate_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    workspace_manifest_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    runtime_profile_versions_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    evidence_digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    limitations_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+
+
+class RepairCandidateValidationItem(Base):
+    __tablename__ = "repair_candidate_validation_items"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    validation_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("repair_candidate_validations.id"), nullable=False
+    )
+    ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    check_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    requirement: Mapped[str] = mapped_column(String(20), nullable=False)
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    result: Mapped[str] = mapped_column(String(40), nullable=False)
+    duration_ms: Mapped[float] = mapped_column(Float, nullable=False, default=0)
+    evidence_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    error_code: Mapped[str | None] = mapped_column(String(120), nullable=True)
+
+    __table_args__ = (UniqueConstraint("validation_id", "ordinal"),)
+
+
+class ApplyTransaction(Base):
+    __tablename__ = "apply_transactions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    candidate_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("repair_candidates.id"), nullable=False
+    )
+    validation_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("repair_candidate_validations.id"), nullable=False
+    )
+    state: Mapped[str] = mapped_column(String(40), nullable=False)
+    expected_source_snapshot_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    expected_source_manifest_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    safety_snapshot_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    post_apply_snapshot_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    confirmation_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    confirmation_expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    confirmation_used_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    journal_relative_path: Mapped[str] = mapped_column(Text, nullable=False)
+    error_code: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class ApplyTransactionFile(Base):
+    __tablename__ = "apply_transaction_files"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    transaction_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("apply_transactions.id"), nullable=False
+    )
+    ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    relative_path: Mapped[str] = mapped_column(Text, nullable=False)
+    operation: Mapped[str] = mapped_column(String(24), nullable=False)
+    operation_state: Mapped[str] = mapped_column(String(40), nullable=False)
+    original_digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    candidate_digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    temporary_relative_path: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    __table_args__ = (UniqueConstraint("transaction_id", "ordinal"),)
+
+
+class ApplyJournalEvent(Base):
+    __tablename__ = "apply_journal_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    transaction_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("apply_transactions.id"), nullable=False
+    )
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    event_type: Mapped[str] = mapped_column(String(80), nullable=False)
+    details_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (UniqueConstraint("transaction_id", "sequence"),)
+
+
+class RollbackRecord(Base):
+    __tablename__ = "rollback_records"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    transaction_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("apply_transactions.id"), nullable=False
+    )
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    restored_paths_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    unresolved_paths_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    verification_digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class RecoveryBundle(Base):
+    __tablename__ = "recovery_bundles"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    transaction_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("apply_transactions.id"), nullable=False
+    )
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    relative_path: Mapped[str] = mapped_column(Text, nullable=False)
+    manifest_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class DemoLabRun(Base):
+    __tablename__ = "demo_lab_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    root_relative_path: Mapped[str] = mapped_column(Text, nullable=False)
+    scenario: Mapped[str] = mapped_column(String(80), nullable=False)
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    state_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class ProductSelfTestRun(Base):
+    __tablename__ = "product_self_test_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    steps_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    duration_ms: Mapped[float] = mapped_column(Float, nullable=False, default=0)
+    report_relative_path: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

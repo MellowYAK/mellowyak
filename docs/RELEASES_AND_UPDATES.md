@@ -1,5 +1,24 @@
 # Releases and in-app updates
 
+## Phase 8 package gate
+
+A Phase 8 package must be built fresh from the exact Phase 8 local commit. It must embed migration
+`0008_validated_repair_apply` and must not reuse a Phase 7 application, DMG, sidecar, engine, or
+browser tree as evidence. Generated `.app`, DMG, PyInstaller, Rust target, runtime database,
+Repair Workspace, journal, recovery, and Demo Lab output remains outside Git history.
+
+The packaged gate uses disposable synthetic source only and must prove: candidate generation;
+workspace-only validation; a candidate/project/source-bound deliberate Apply confirmation; a fresh
+pinned safety snapshot; hash-preconditioned journaled writes; separate fresh live verification;
+byte-identical rollback after a simulated post-Apply failure; incomplete-journal detection; and the
+local Product Self-Test. No package may claim AI repair, automatic Apply, general historical restore,
+cloud backup, or production deployment safety.
+
+Windows and Linux workflows compile the same Phase 8 schema and contracts, but configured CI is not
+runtime verification. Intel macOS is the only platform covered by this phase's local packaging gate;
+Windows, Linux, Apple Silicon, code signing, notarization, and public updater delivery remain
+unverified until platform-specific evidence exists.
+
 ## Phase 7 package gate
 
 A Phase 7 package must be built fresh from the exact final commit. Do not reuse a Phase 6 `.app`,

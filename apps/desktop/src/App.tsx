@@ -1,5 +1,6 @@
 import { listen } from "@tauri-apps/api/event";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import "./phase8.css";
 import {
   analyzeChange,
   cancelProjectScan,
@@ -50,9 +51,10 @@ import { MemoryScreen } from "./MemoryScreen";
 import { ReadyWithLimitsDetails } from "./Phase7Details";
 import { RuntimeScreen } from "./RuntimeScreen";
 import { RuntimeWizard } from "./RuntimeWizard";
+import { Phase8Experience, phase8CaptureStates, type Phase8CaptureState } from "./Phase8Experience";
 
 type ProjectScreen = "project" | "change" | "impact" | "behaviors" | "runtime" | "memory";
-type Screen = "home" | "projects" | "alerts" | "settings" | "add" | "runtimeSetup" | ProjectScreen;
+type Screen = "home" | "projects" | "alerts" | "settings" | "lab" | "add" | "runtimeSetup" | ProjectScreen;
 type Tone = "good" | "warn" | "neutral";
 
 function StatusRow({ label, value, tone = "neutral" }: { label: string; value: string; tone?: Tone }) {
@@ -177,6 +179,8 @@ export function App() {
   const [alerts, setAlerts] = useState<LocalAlert[]>([]);
   const notifiedAlerts = useRef(new Set<string>());
   const notificationsPrimed = useRef(false);
+  const captureStateValue = new URLSearchParams(window.location.search).get("phase8State");
+  const captureState = phase8CaptureStates.includes(captureStateValue as Phase8CaptureState) ? captureStateValue as Phase8CaptureState : null;
 
   const productT = useCallback((key: string, parameters: Record<string, string | number> = {}) => t(key as TranslationKey, parameters), [t]);
 
@@ -186,11 +190,15 @@ export function App() {
   useEffect(() => {
     const navigate = (event: Event) => {
       const destination = (event as CustomEvent<string>).detail as Screen;
-      if (["home", "projects", "alerts", "settings"].includes(destination)) setScreen(destination);
+      if (["home", "projects", "alerts", "settings", "lab"].includes(destination)) setScreen(destination);
     };
     window.addEventListener("mellowyak:navigate", navigate);
     return () => window.removeEventListener("mellowyak:navigate", navigate);
   }, []);
+
+  useEffect(() => {
+    if (captureState?.startsWith("hebrew-") && locale !== "he") setLocale("he");
+  }, [captureState, locale, setLocale]);
 
   useEffect(() => {
     let active = true;
@@ -392,13 +400,17 @@ export function App() {
     return Math.min(100, Math.round(selected.scan.processed_files * 100 / selected.scan.total_candidates));
   }, [selected]);
 
+  if (captureState) return <main className="app-shell" dir={direction}><Header home={() => undefined} locale={locale} setLocale={setLocale} t={t} updater={updater} /><Phase8Experience t={t} captureState={captureState} /></main>;
+
   if (startupVisible) return <StartupScreen status={startupStatus} failedStep={startupFailedStep} leaving={startupLeaving} error={startupError} slow={startupSlow} retry={() => setStartupAttempt((attempt) => attempt + 1)} locale={locale} setLocale={setLocale} t={t} errorText={errorText} updater={updater} />;
 
   if (screen === "projects") return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} /><ProjectsScreen projects={projects} t={productT} openProject={openProject} reload={reloadProjects} add={() => setScreen("add")} /></main>;
 
   if (screen === "alerts") return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} /><AlertsScreen t={productT} openRoute={(alert) => { const project = projects.find((item) => item.id === alert.project_id); if (project) openProject(project, alert.regression_id || alert.gate_id ? "change" : "project"); }} /></main>;
 
-  if (screen === "settings") return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} /><SettingsScreen t={productT} /></main>;
+  if (screen === "settings") return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} /><SettingsScreen t={productT} /><section className="panel"><div className="section-head"><div><h2>{t("phase8.selfTest.title")}</h2><p className="muted">{t("phase8.selfTest.disposable")}</p></div><button className="primary" onClick={() => setScreen("lab")}>{t("phase8.selfTest.run")}</button></div></section></main>;
+
+  if (screen === "lab") return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} />{error && <section className="panel error" role="alert">{errorText(error)}</section>}<Phase8Experience t={t} onError={setError} /></main>;
 
   if (screen === "add") return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} />
     {error && <section className="panel error" role="alert">{errorText(error)}</section>}
@@ -494,7 +506,7 @@ export function App() {
     {error ? <section className="panel error" role="alert"><h2>{t("home.engineUnavailable")}</h2><p>{errorText(error)}</p></section> : snapshot ? <>
       {projects.length ? <section className="project-list"><div className="section-head"><h2>{t("home.connectedProjects")}</h2><button className="primary" onClick={() => setScreen("add")}>{t("home.addProject")}</button></div>{projects.map((project) => { const ready = readiness(project, t); return <button className="project-card" key={project.id} onClick={() => { setSelected(project); setImpact(null); setScreen("project"); }}><span><strong>{project.display_name}</strong><small>{project.repository_path}</small></span><span className={`readiness ${ready.tone}`}>{ready.label}</span></button>; })}</section>
         : <div className="content-grid"><section className="panel"><div className="section-head"><h2>{t("home.verifiedStatus")}</h2><span className="live-dot">{t("common.live")}</span></div><StatusRow label={t("home.localEngine")} value={snapshot.health.status === "ready" ? t("home.running") : status(snapshot.health.status)} tone="good" /><StatusRow label={t("home.storage")} value={snapshot.storage.data_root} /><StatusRow label={t("home.database")} value={t("home.sqliteLocal")} tone="good" /><StatusRow label={t("home.networkMode")} value={t("common.localOnly")} tone="good" /><StatusRow label={t("home.cloud")} value={snapshot.privacy.cloud_connected ? t("home.connected") : t("home.notConnected")} /></section><section className="panel privacy-card"><h2>{t("home.privateTitle")}</h2><ul><li>{t("home.codeLocal")}</li><li>{t("home.projectLocal")}</li><li>{t("home.evidenceLocal")}</li></ul><p>{t("home.connectorNotice")}</p><div className="versions"><span>{t("common.app")} <strong>{snapshot.health.app_version}</strong></span><span>{t("common.engine")} <strong>{snapshot.health.engine_version}</strong></span><span>{t("common.schema")} <strong>{snapshot.health.database_schema_version}</strong></span></div></section></div>}
-      <footer className="actions">{!projects.length && <button className="primary" onClick={() => setScreen("add")}>{t("home.firstProject")}</button>}<button className="secondary" onClick={() => void openDataFolder()}>{t("home.openData")}</button><details><summary>{t("home.diagnostics")}</summary><pre dir="ltr">{JSON.stringify(snapshot.readiness, null, 2)}</pre></details></footer>
+      <footer className="actions">{!projects.length && <button className="primary" onClick={() => setScreen("add")}>{t("home.firstProject")}</button>}<button className="secondary" onClick={() => setScreen("lab")}>{t("phase8.state.demo-lab")}</button><button className="secondary" onClick={() => void openDataFolder()}>{t("home.openData")}</button><details><summary>{t("home.diagnostics")}</summary><pre dir="ltr">{JSON.stringify(snapshot.readiness, null, 2)}</pre></details></footer>
     </> : null}
   </main>;
 }

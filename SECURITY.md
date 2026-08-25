@@ -1,5 +1,20 @@
 # Security policy
 
+## Phase 8 validated repair and transaction boundary
+
+Candidate scanning rejects traversal, absolute/noncanonical paths, symlink escape, hard links,
+special files, case collisions, sensitive/provider-private paths, excessive files, and excessive
+bytes. Validation is workspace-confined, no-shell, sanitized, time/output bounded, and loopback-only
+by default. Completed validation and Apply records are immutable and exact-identity-bound.
+
+Live writes require a validated candidate, fresh source and per-path hash preflight, explicit
+deliberate confirmation, and a short-lived one-time nonce bound to transaction, project, candidate,
+and source manifest. A fresh pinned Safety Snapshot and durable mode-0600 fsynced journal precede the
+first write. Atomic same-filesystem replacement is used where supported; deletes run last. A write or
+fresh live-verification failure triggers transaction-scoped rollback. Unprovable byte identity stops
+writes and creates a redacted Recovery Bundle. No general historical restore, automatic merge,
+automatic Apply, model/provider access, or remote upload is present.
+
 ## Phase 7 runtime, snapshot, probe, and workspace boundary
 
 Runtime and Probe execution is explicit, project-scoped, and represented as an executable plus argv.
@@ -54,7 +69,7 @@ Do not publish a suspected vulnerability or private project evidence in a public
 - Behavior candidates are explicitly unverified and not protected.
 - Desktop setup starts the packaged engine asynchronously. Slow cold starts return `ENGINE_STARTING` to the UI instead of blocking AppKit setup or aborting the desktop process.
 - The desktop updater accepts metadata only from the HTTPS MellowYak GitHub Releases endpoint and refuses update bundles that do not match the embedded public signing key. The private updater key is prohibited from source history and build logs.
-- Phase 7 has no remote account, cloud synchronization, telemetry uploader, model call, connector, or
+- Phase 8 has no remote account, cloud synchronization, telemetry uploader, model call, connector, or
   external gate enforcement. Approved runtime/CLI/Test execution is bounded, argv-only, no-shell, and
   project-confined; it is not arbitrary shell execution. Browser/API probes remain restricted to
   approved loopback runtimes. The release update check remains the only configured non-loopback

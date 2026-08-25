@@ -1,5 +1,16 @@
 # Contributing
 
+Phase 8 changes must preserve the validated-repair law: no unvalidated candidate reaches Apply; no
+live write occurs without explicit one-time confirmation; a fresh Safety Snapshot and durable journal
+precede writes; fresh live verification follows; failure restores only transaction-affected paths;
+and uncertain recovery stops writes. Never implement a blind Last Known Good restore, automatic
+three-way merge, automatic Apply permission, model call, provider-state reader, or cloud upload.
+
+Candidate and Apply changes must retain bounded deterministic manifests, source/workspace/project
+confinement, sensitive-path rejection, per-path preflight hashes, no-shell runtime execution, sanitized
+environment, immutable completed records, crash recovery, and byte-verified rollback. Demo and
+Product Self-Test actions must stay marker-guarded and disposable and cannot mutate real projects.
+
 Phase 7 changes must preserve the central evidence law: a changed file, dependency, or Impact path is
 only a reason to recheck and cannot create a regression claim. `CONFIRMED` requires comparable
 accepted PASS evidence followed by reproducible current FAIL evidence, or the existing independently
@@ -16,7 +27,7 @@ verification, deduplication, reference-safe retention, and live-source immutabil
 snapshot objects/manifests, materialized copies, databases, evidence, Repair Workspaces, runtime
 events/logs, user paths, provider data, or generated installers.
 
-Before proposing Phase 7 changes, run the complete Python and React suites, translation checker,
+Before proposing Phase 8 changes, run the complete Python and React suites, translation checker,
 TypeScript/Vite, Ruff check/format, Cargo format/check, deterministic OpenAPI export and TypeScript
 generation, the full migration matrix, packaged-engine smoke, and relevant packaged Phase 7 flows.
 Use final artifact data only in validation documentation; do not reuse old package hashes or replace a

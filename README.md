@@ -675,7 +675,8 @@ The intended principle is:
 
 ## Project status
 
-MellowYak Phase 7 adds multiple versioned Runtime Profiles, Git-optional Source Identity v2, settled
+MellowYak Phase 8 adds validated repair candidates, capability-separated Safe Apply, transaction rollback,
+a deterministic Demo Lab, and Product Self-Test on top of multiple versioned Runtime Profiles, Git-optional Source Identity v2, settled
 Episodes, incremental content-addressed Save Points, explicit known-good milestones, Browser/API/CLI/
 Process/Test/Manual Probes, deterministic evidence states, and isolated Repair Workspaces to the
 Phase 1–6 foundation. It is not a released product. A changed file or dependency is only a reason to
@@ -794,6 +795,30 @@ Phase 7 user and technical documentation is indexed in
 [`docs/product/RUNTIME_PROFILE_GUIDE.md`](docs/product/RUNTIME_PROFILE_GUIDE.md),
 [`docs/product/SAVE_POINTS_AND_KNOWN_GOOD.md`](docs/product/SAVE_POINTS_AND_KNOWN_GOOD.md), and
 [`docs/product/PROBE_TYPES.md`](docs/product/PROBE_TYPES.md).
+
+### Phase 8 — Validated Repair, Safe Apply, Rollback, and Demo Lab
+
+- isolated Repair Workspaces now detect bounded candidate ADD/MODIFY/DELETE/RENAME/MODE_CHANGE metadata without storing source bytes in SQLite;
+- deterministic candidate validation runs the original failed Probe first and requires every required workspace check to pass for the exact candidate identity;
+- analysis, validation, Apply preparation, live commit, and rollback remain separate capabilities;
+- every live Apply requires explicit deliberate confirmation and a short-lived one-time transaction/project/candidate/source-bound nonce;
+- a fresh pinned pre-Apply Safety Snapshot and durable fsynced journal precede live writes;
+- every affected path uses safe path resolution and hash preconditions; stale live source blocks Apply before any write;
+- fresh live verification follows Apply and never reuses workspace PASS evidence;
+- failed post-Apply verification restores only transaction-affected paths from the Safety Snapshot and verifies byte identity;
+- unresolved recovery stops writes and produces a redacted local Recovery Bundle;
+- the optional Portable Repair Package contains explicitly selected local context, no absolute paths, and no upload;
+- the offline synthetic Demo Lab and disposable Product Self-Test exercise the complete loop without a private project;
+- migration `0008_validated_repair_apply` preserves migrations `0001`–`0007`;
+- every new visible surface is translation-key-only in English and Hebrew RTL.
+
+Phase 8 does **not** generate repairs, call models, read prompt/provider state, automatically Apply,
+merge stale source, restore arbitrary history, replace an accepted Known-Good milestone, commit or push
+Git changes, deploy, upload source/evidence, provide cloud backup, or claim universal cross-platform
+filesystem atomicity. Local packages remain unsigned and unnotarized.
+
+Phase 8 documentation and synthetic screenshots are indexed in
+[`docs/phase-8-delivery/README.md`](docs/phase-8-delivery/README.md).
 
 ---
 
@@ -983,8 +1008,9 @@ No. It blocks known required failures, exposes unknown coverage, and keeps decis
 ### Does source leave my machine?
 
 The local-core architecture is designed so that MellowYak itself does not upload source or evidence.
-Phase 7 has no connector or cloud synchronization path. Explicit local copy/open/export actions remain
-visible and user-controlled. This claim must be continuously verified by tests and package inspection.
+Phase 8 has no connector or cloud synchronization path. Explicit local copy/open/export actions remain
+visible and user-controlled. Portable Repair Packages are local, selected, bounded, and redacted.
+This claim must be continuously verified by tests and package inspection.
 
 ### Does MellowYak require a cloud account?
 
@@ -1001,7 +1027,7 @@ Source change
 → required evidence
 ```
 
-Phase 7 includes bounded Browser, loopback API, CLI, Process, Test, and Manual Probes plus versioned
+Phase 8 retains bounded Browser, loopback API, CLI, Process, Test, and Manual Probes plus versioned
 Python, Node, PHP, generic-process, and metadata-only runtime adapters. Availability remains explicit
 and platform-specific.
 

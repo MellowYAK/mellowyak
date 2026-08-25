@@ -365,11 +365,111 @@ export interface RepairWorkspace {
   snapshot_id: string;
   relative_path: string;
   manifest_digest: string;
+  base_manifest_digest?: string | null;
+  workspace_manifest_digest?: string | null;
+  runtime_profile_versions?: string[];
+  validation_policy?: Record<string, unknown>;
   status: string;
   instructions: string | null;
   items: Array<Record<string, unknown>>;
   created_at: string;
   deleted_at: string | null;
+}
+
+export interface RepairCandidateFile {
+  ordinal: number;
+  relative_path: string;
+  operation: "ADD" | "MODIFY" | "DELETE" | "RENAME" | "MODE_CHANGE" | string;
+  base_digest: string | null;
+  candidate_digest: string | null;
+  byte_size: number;
+  classification: string;
+  rename_source?: string | null;
+  validation_eligible: boolean;
+  apply_eligible: boolean;
+  excluded: boolean;
+  exclusion_reason?: string | null;
+  warning_state?: string | null;
+}
+
+export interface RepairCandidate {
+  id: string;
+  project_id: string;
+  workspace_id: string;
+  revision: number;
+  state: string;
+  base_manifest_digest: string;
+  workspace_manifest_digest: string;
+  candidate_digest: string;
+  source_snapshot_id: string;
+  file_count: number;
+  logical_bytes: number;
+  binary_count: number;
+  warnings: string[];
+  limitations: string[];
+  files: RepairCandidateFile[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CandidateValidation {
+  id: string;
+  project_id: string;
+  candidate_id: string;
+  candidate_digest: string;
+  workspace_manifest_digest: string;
+  runtime_profile_versions: string[];
+  status: string;
+  evidence_digest: string | null;
+  limitations: string[];
+  started_at: string;
+  completed_at: string | null;
+  items: Array<Record<string, unknown>>;
+}
+
+export interface ApplyTransaction {
+  id: string;
+  project_id: string;
+  candidate_id: string;
+  validation_id: string;
+  state: string;
+  expected_source_snapshot_id: string;
+  expected_source_manifest_digest: string;
+  safety_snapshot_id: string | null;
+  post_apply_snapshot_id: string | null;
+  confirmation_expires_at: string;
+  confirmation_used: boolean;
+  confirmation_nonce?: string | null;
+  capabilities: string[];
+  journal_relative_path: string;
+  error_code: string | null;
+  files: Array<Record<string, unknown>>;
+  events: Array<Record<string, unknown>>;
+  rollbacks: Array<Record<string, unknown>>;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+}
+
+export interface DemoLabRun {
+  id: string;
+  project_id: string | null;
+  synthetic: boolean;
+  scenario: string;
+  status: string;
+  state: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductSelfTestRun {
+  id: string;
+  status: "PASS" | "PARTIAL" | "FAILED" | string;
+  steps: Array<Record<string, unknown>>;
+  duration_ms: number;
+  report_relative_path: string | null;
+  created_at: string;
+  completed_at: string | null;
 }
 
 export interface LocalAlert {
@@ -1262,6 +1362,62 @@ export async function openRepairWorkspace(projectId: string, workspaceId: string
 
 export async function deleteRepairWorkspace(projectId: string, workspaceId: string): Promise<void> {
   await engineFetch(`/projects/${encodeURIComponent(projectId)}/repair-workspaces/${encodeURIComponent(workspaceId)}`, { method: "DELETE" });
+}
+
+export async function createRepairCandidate(projectId: string, workspaceId: string): Promise<RepairCandidate> {
+  return engineFetch<RepairCandidate>(`/projects/${encodeURIComponent(projectId)}/repair-workspaces/${encodeURIComponent(workspaceId)}/candidates`, { method: "POST", body: "{}" });
+}
+
+export async function refreshRepairCandidate(projectId: string, candidateId: string): Promise<RepairCandidate> {
+  return engineFetch<RepairCandidate>(`/projects/${encodeURIComponent(projectId)}/repair-candidates/${encodeURIComponent(candidateId)}/refresh`, { method: "POST", body: "{}" });
+}
+
+export async function excludeRepairCandidateFiles(projectId: string, candidateId: string, paths: string[]): Promise<RepairCandidate> {
+  return engineFetch<RepairCandidate>(`/projects/${encodeURIComponent(projectId)}/repair-candidates/${encodeURIComponent(candidateId)}/exclude`, { method: "POST", body: JSON.stringify({ paths }) });
+}
+
+export async function restoreRepairWorkspaceFile(projectId: string, candidateId: string, relativePath: string): Promise<RepairCandidate> {
+  return engineFetch<RepairCandidate>(`/projects/${encodeURIComponent(projectId)}/repair-candidates/${encodeURIComponent(candidateId)}/restore-workspace-file`, { method: "POST", body: JSON.stringify({ relative_path: relativePath }) });
+}
+
+export async function getRepairCandidateDiff(projectId: string, candidateId: string, relativePath: string): Promise<{ candidate_id: string; relative_path: string; available: boolean; reason: string | null; lines: string[]; truncated: boolean }> {
+  return engineFetch(`/projects/${encodeURIComponent(projectId)}/repair-candidates/${encodeURIComponent(candidateId)}/diff?relative_path=${encodeURIComponent(relativePath)}`);
+}
+
+export async function validateRepairCandidate(projectId: string, candidateId: string): Promise<CandidateValidation> {
+  return engineFetch<CandidateValidation>(`/projects/${encodeURIComponent(projectId)}/repair-candidates/${encodeURIComponent(candidateId)}/validate`, { method: "POST", body: "{}" });
+}
+
+export async function prepareRepairApply(projectId: string, candidateId: string): Promise<ApplyTransaction> {
+  return engineFetch<ApplyTransaction>(`/projects/${encodeURIComponent(projectId)}/repair-candidates/${encodeURIComponent(candidateId)}/apply/prepare`, { method: "POST", body: "{}" });
+}
+
+export async function confirmRepairApply(projectId: string, candidateId: string, confirmationNonce: string): Promise<ApplyTransaction> {
+  return engineFetch<ApplyTransaction>(`/projects/${encodeURIComponent(projectId)}/repair-candidates/${encodeURIComponent(candidateId)}/apply/confirm`, { method: "POST", body: JSON.stringify({ confirmation_nonce: confirmationNonce, deliberate_confirmation: true }) });
+}
+
+export async function rollbackRepairApply(projectId: string, transactionId: string): Promise<ApplyTransaction> {
+  return engineFetch<ApplyTransaction>(`/projects/${encodeURIComponent(projectId)}/apply-transactions/${encodeURIComponent(transactionId)}/rollback`, { method: "POST", body: "{}" });
+}
+
+export async function exportPortableRepair(projectId: string, workspaceId: string, selectedPaths: string[]): Promise<{ id: string; workspace_id: string; relative_path: string; file_count: number; logical_bytes: number; uploaded: boolean }> {
+  return engineFetch(`/projects/${encodeURIComponent(projectId)}/repair-workspaces/${encodeURIComponent(workspaceId)}/export-portable`, { method: "POST", body: JSON.stringify({ selected_paths: selectedPaths }) });
+}
+
+export async function createDemoLab(selectedParent: string): Promise<DemoLabRun> {
+  return engineFetch<DemoLabRun>("/demo-lab/create", { method: "POST", body: JSON.stringify({ selected_parent: selectedParent }) });
+}
+
+export async function runDemoAction(demoId: string, action: "inject-regression" | "create-bad-candidate" | "create-valid-candidate" | "apply-valid" | "simulate-post-apply-failure" | "reset"): Promise<DemoLabRun> {
+  return engineFetch<DemoLabRun>(`/demo-lab/${encodeURIComponent(demoId)}/${action}`, { method: "POST", body: "{}" });
+}
+
+export async function runProductSelfTest(): Promise<ProductSelfTestRun> {
+  return engineFetch<ProductSelfTestRun>("/self-test", { method: "POST", body: "{}" });
+}
+
+export async function exportProductSelfTest(runId: string): Promise<{ run_id: string; relative_path: string | null; private_paths_included: boolean; exported: boolean }> {
+  return engineFetch(`/self-test/${encodeURIComponent(runId)}/export`, { method: "POST", body: "{}" });
 }
 
 export function resetBootstrapForTests(): void {

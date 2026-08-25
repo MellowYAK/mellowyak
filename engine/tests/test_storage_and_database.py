@@ -37,7 +37,7 @@ def test_frozen_bundle_resolves_embedded_alembic_config(monkeypatch, tmp_path: P
 def test_first_database_creation_migration_and_pragmas(tmp_path: Path) -> None:
     paths = StoragePaths.create(tmp_path / "data")
     database = LocalDatabase(paths)
-    assert database.migrate() == "0007_runtime_snapshot_probe_foundation"
+    assert database.migrate() == "0008_validated_repair_apply"
     assert paths.sqlite_file.is_file()
     pragmas = database.sqlite_pragmas()
     assert str(pragmas["journal_mode"]).lower() == "wal"

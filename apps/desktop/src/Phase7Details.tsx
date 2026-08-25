@@ -1,8 +1,18 @@
 import { useState } from "react";
 import {
   createRepairWorkspace,
+  createRepairCandidate,
   deleteRepairWorkspace,
+  exportPortableRepair,
+  getRepairCandidateDiff,
   openRepairWorkspace,
+  prepareRepairApply,
+  refreshRepairCandidate,
+  validateRepairCandidate,
+  confirmRepairApply,
+  type ApplyTransaction,
+  type CandidateValidation,
+  type RepairCandidate,
   type RepairWorkspace,
 } from "./api";
 import type { TranslationKey } from "./i18n";
@@ -79,6 +89,11 @@ export function RepairWorkspacePanel({ projectId, regressionId, initial, t, onEr
   onError: (code: string) => void;
 }) {
   const [workspace, setWorkspace] = useState<RepairWorkspace | null>(initial ?? null);
+  const [candidate, setCandidate] = useState<RepairCandidate | null>(null);
+  const [validation, setValidation] = useState<CandidateValidation | null>(null);
+  const [transaction, setTransaction] = useState<ApplyTransaction | null>(null);
+  const [diff, setDiff] = useState<string[]>([]);
+  const [confirmed, setConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
   const run = async (operation: () => Promise<void>) => {
     setBusy(true);
@@ -97,6 +112,17 @@ export function RepairWorkspacePanel({ projectId, regressionId, initial, t, onEr
           <button className="secondary" disabled={busy} onClick={() => void run(async () => { await openRepairWorkspace(projectId, workspace.id); })}>{t("repairWorkspace.open")}</button>
           <button className="secondary danger" disabled={busy} onClick={() => void run(async () => { await deleteRepairWorkspace(projectId, workspace.id); setWorkspace(null); })}>{t("repairWorkspace.delete")}</button>
         </div>
+        <section className="repair-candidate-flow">
+          <div className="section-head"><div><h3>{t("phase8.candidateFiles")}</h3><p className="muted">{t("phase8.state.workspace-changes.body")}</p></div>{candidate && <span className={`readiness ${candidate.state === "VALIDATED" ? "good" : candidate.state === "VALIDATION_FAILED" ? "warn" : "neutral"}`}>{candidate.state}</span>}</div>
+          {!candidate ? <button className="primary" disabled={busy} onClick={() => void run(async () => setCandidate(await createRepairCandidate(projectId, workspace.id)))}>{t("phase8.createCandidate")}</button> : <>
+            <div className="phase8-identity-grid"><div><span>{t("phase8.candidateVersion")}</span><strong>R{candidate.revision}</strong></div><div><span>{t("phase8.workspaceIdentity")}</span><code dir="ltr">{candidate.workspace_manifest_digest.slice(0, 16)}</code></div><div><span>{t("phase8.totalBytes")}</span><strong>{candidate.logical_bytes}</strong></div><div><span>{t("phase8.binaryFiles")}</span><strong>{candidate.binary_count}</strong></div></div>
+            <div className="phase8-files">{candidate.files.map((file) => <article key={`${file.ordinal}-${file.relative_path}`}><code dir="ltr">{file.relative_path}</code><span className={`operation ${file.operation.toLowerCase()}`}>{t(`phase8.operation.${file.operation}` as TranslationKey)}</span><small>{t("phase8.bytes", { count: file.byte_size })}</small><button className="secondary" disabled={file.classification.toLowerCase() !== "text"} onClick={() => void run(async () => setDiff((await getRepairCandidateDiff(projectId, candidate.id, file.relative_path)).lines))}>{t("phase8.viewDiff")}</button></article>)}</div>
+            {diff.length > 0 && <pre className="phase8-diff" dir="ltr"><code>{diff.join("\n")}</code></pre>}
+            {validation && <div className="analysis-banner"><strong>{t("phase8.validationResult")}</strong><span>{validation.status}</span><span>{t("phase8.validationChecks", { count: validation.items.length })}</span></div>}
+            {transaction && <div className="phase8-confirmation"><h3>{t("phase8.confirm.title")}</h3><p>{t("phase8.confirm.onlyCandidate")}</p><p>{t("phase8.confirm.safetySnapshot")}</p><p>{t("phase8.confirm.rollback")}</p><p>{t("phase8.confirm.unrelated")}</p><label><input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} /> <span>{t("phase8.confirm.deliberate")}</span></label></div>}
+            <div className="button-row"><button className="secondary" disabled={busy} onClick={() => void run(async () => { setValidation(null); setTransaction(null); setCandidate(await refreshRepairCandidate(projectId, candidate.id)); })}>{t("phase8.refreshCandidate")}</button><button className="secondary" disabled={busy} onClick={() => void run(async () => { await exportPortableRepair(projectId, workspace.id, candidate.files.filter((file) => !file.excluded).map((file) => file.relative_path)); })}>{t("phase8.portableExport")}</button>{candidate.state !== "VALIDATED" && <button className="primary" disabled={busy} onClick={() => void run(async () => { const result = await validateRepairCandidate(projectId, candidate.id); setValidation(result); setCandidate({ ...candidate, state: result.status === "PASSED" ? "VALIDATED" : "VALIDATION_FAILED" }); })}>{t("phase8.validateCandidate")}</button>}{candidate.state === "VALIDATED" && !transaction && <button className="primary" disabled={busy} onClick={() => void run(async () => setTransaction(await prepareRepairApply(projectId, candidate.id)))}>{t("phase8.prepareApply")}</button>}{transaction?.confirmation_nonce && <button className="primary" disabled={busy || !confirmed} onClick={() => void run(async () => setTransaction(await confirmRepairApply(projectId, candidate.id, transaction.confirmation_nonce ?? "")))}>{t("phase8.applyRepair")}</button>}</div>
+          </>}
+        </section>
         <details><summary>{t("common.technicalDetails")}</summary><pre dir="ltr">{JSON.stringify({ manifest_digest: workspace.manifest_digest, items: workspace.items }, null, 2)}</pre></details>
       </>}
   </section>;

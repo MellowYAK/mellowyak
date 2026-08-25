@@ -1,0 +1,26 @@
+{
+  "schema": "mellowyak.product-self-test.v1",
+  "fixture": "disposable_synthetic_demo",
+  "status": "PASS",
+  "external_network": "BLOCKED",
+  "real_projects_touched": false,
+  "steps": [
+    {"step": "local_engine", "status": "PASS", "duration_ms": 4},
+    {"step": "database_migration_0008", "status": "PASS", "duration_ms": 18},
+    {"step": "snapshot_and_deduplication", "status": "PASS", "duration_ms": 21},
+    {"step": "confirmed_regression", "status": "PASS", "duration_ms": 7},
+    {"step": "invalid_candidate_rejected", "status": "PASS", "duration_ms": 5},
+    {"step": "valid_candidate_validated", "status": "PASS", "duration_ms": 9},
+    {"step": "safe_apply_and_live_verification", "status": "PASS", "duration_ms": 26},
+    {"step": "rollback_byte_identity", "status": "PASS", "duration_ms": 15},
+    {"step": "crash_recovery_journal", "status": "PASS", "duration_ms": 6},
+    {"step": "cleanup_and_no_orphans", "status": "PASS", "duration_ms": 3}
+  ],
+  "failure_details": [],
+  "redaction": {
+    "absolute_paths": false,
+    "credentials": false,
+    "source_contents": false,
+    "provider_data": false
+  }
+}
