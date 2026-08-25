@@ -1,0 +1,29 @@
+{
+  "checks": {
+    "browser_manifest_present": true,
+    "bundle_identifier": true,
+    "codesign_structure_valid": true,
+    "dmg_application_present": true,
+    "dmg_applications_link": true,
+    "dmg_clean_detach": true,
+    "dmg_codesign_structure_valid": true,
+    "dmg_hash_identity": true,
+    "dmg_readonly_mount": true,
+    "engine_resource_present": true,
+    "fresh_app_present": true,
+    "fresh_dmg_present": true,
+    "intel_desktop": true,
+    "intel_engine": true,
+    "no_database_payload": true,
+    "no_forbidden_runtime_data_names": true,
+    "no_user_home_build_path": true,
+    "version_preserved": true
+  },
+  "identities": {
+    "desktop_sha256": "92cc3b80a931d4f0cb28737ddb9109a7dea264beb594643aa7a0265d118ea7cc",
+    "dmg_sha256": "3f06b78fb901f71ef5b2418d4254768c780e4ebfda8789889b8310c167c9e030",
+    "engine_sha256": "ca3f4744e7e397ec6513a854afa5352ff1c3cd9e1e74ed0d26a9ccaf8493e77f"
+  },
+  "schema": "mellowyak.phase11m.packaged-validation.v1",
+  "status": "VERIFIED_WORKING"
+}

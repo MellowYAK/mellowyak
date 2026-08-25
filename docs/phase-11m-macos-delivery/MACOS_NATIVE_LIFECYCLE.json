@@ -1,0 +1,24 @@
+{
+  "checks": {
+    "child_cleanup": true,
+    "clean_launch": true,
+    "duplicate_engine_after_restart": true,
+    "engine_crash_supervised_restart": true,
+    "exactly_one_engine_child": true,
+    "existing_instance_focus_request": true,
+    "explicit_process_exit": true,
+    "second_instance_exited": true
+  },
+  "disposable_app_copy": true,
+  "disposable_data_root": true,
+  "manual_boundaries": {
+    "close_button_to_tray_visual": "IMPLEMENTED_NOT_RUNTIME_VERIFIED",
+    "physical_notification_center_click": "IMPLEMENTED_NOT_RUNTIME_VERIFIED",
+    "physical_tray_menu_click": "IMPLEMENTED_NOT_RUNTIME_VERIFIED",
+    "real_login_session_relaunch": "IMPLEMENTED_NOT_RUNTIME_VERIFIED",
+    "screen_lock_unlock": "IMPLEMENTED_NOT_RUNTIME_VERIFIED",
+    "sleep_wake": "IMPLEMENTED_NOT_RUNTIME_VERIFIED"
+  },
+  "schema": "mellowyak.phase11m.macos-native-lifecycle.v1",
+  "status": "VERIFIED_WORKING"
+}

@@ -1,14 +1,23 @@
 use rand::{rngs::OsRng, RngCore};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+#[cfg(target_os = "macos")]
+use std::io::{BufRead, BufReader};
+#[cfg(target_os = "macos")]
+use std::path::{Path, PathBuf};
+#[cfg(target_os = "macos")]
+use std::process::{Child, ChildStdout, Command, Stdio};
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Mutex,
 };
+#[cfg(target_os = "macos")]
+use std::time::Duration;
 use tauri::menu::{Menu, MenuBuilder, MenuItemBuilder};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{Emitter, Manager, RunEvent, State, WebviewWindow, WindowEvent};
 use tauri_plugin_autostart::{MacosLauncher, ManagerExt as AutostartManagerExt};
+#[cfg(not(target_os = "macos"))]
 use tauri_plugin_notification::NotificationExt;
 use tauri_plugin_shell::process::{CommandChild, CommandEvent};
 use tauri_plugin_shell::ShellExt;
@@ -30,11 +39,17 @@ struct EngineBootstrap {
 
 struct EngineState {
     bootstrap: Mutex<Option<EngineBootstrap>>,
-    child: Mutex<Option<CommandChild>>,
+    child: Mutex<Option<ManagedChild>>,
     startup_error: Mutex<Option<String>>,
     keep_running_on_close: Mutex<bool>,
     explicit_quit: AtomicBool,
     pending_route: Mutex<Option<String>>,
+}
+
+enum ManagedChild {
+    Sidecar(CommandChild),
+    #[cfg(target_os = "macos")]
+    Macos(Child),
 }
 
 #[derive(Clone, Deserialize)]
@@ -299,11 +314,25 @@ fn show_native_notification(
     body: String,
     route: String,
 ) -> Result<(), String> {
-    if let Some(state) = app.try_state::<EngineState>() {
-        if let Ok(mut pending) = state.pending_route.lock() {
-            *pending = Some(route);
-        }
+    #[cfg(target_os = "macos")]
+    {
+        let identifier = app.config().identifier.clone();
+        let _ = notify_rust::set_application(&identifier);
+        let handle = notify_rust::Notification::new()
+            .summary(&title)
+            .body(&body)
+            .show()
+            .map_err(|error| error.to_string())?;
+        tauri::async_runtime::spawn_blocking(move || {
+            handle.wait_for_action(|action| {
+                if action == "default" {
+                    navigate(&app, &route);
+                }
+            });
+        });
+        return Ok(());
     }
+    #[cfg(not(target_os = "macos"))]
     app.notification()
         .builder()
         .title(title)
@@ -329,7 +358,16 @@ fn stop_engine(app: &tauri::AppHandle) {
     if let Some(state) = app.try_state::<EngineState>() {
         if let Ok(mut child_slot) = state.child.lock() {
             if let Some(child) = child_slot.take() {
-                let _ = child.kill();
+                match child {
+                    ManagedChild::Sidecar(child) => {
+                        let _ = child.kill();
+                    }
+                    #[cfg(target_os = "macos")]
+                    ManagedChild::Macos(mut child) => {
+                        let _ = child.kill();
+                        let _ = child.wait();
+                    }
+                }
             }
         }
     }
@@ -341,7 +379,164 @@ fn fail_engine_start(state: &EngineState, message: String) {
     }
     if let Ok(mut child_slot) = state.child.lock() {
         if let Some(child) = child_slot.take() {
-            let _ = child.kill();
+            match child {
+                ManagedChild::Sidecar(child) => {
+                    let _ = child.kill();
+                }
+                #[cfg(target_os = "macos")]
+                ManagedChild::Macos(mut child) => {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                }
+            }
+        }
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn macos_engine_resource(app: &tauri::AppHandle) -> Option<PathBuf> {
+    let candidate = app
+        .path()
+        .resource_dir()
+        .ok()?
+        .join("engine/mellowyak-engine/mellowyak-engine");
+    candidate.is_file().then_some(candidate)
+}
+
+#[cfg(target_os = "macos")]
+fn spawn_macos_engine(
+    path: &Path,
+    token: &str,
+    parent_pid: &str,
+) -> Result<(Child, ChildStdout), String> {
+    let mut child = Command::new(path)
+        .env("MELLOWYAK_SESSION_TOKEN", token)
+        .env("MELLOWYAK_PARENT_PID", parent_pid)
+        .env("MELLOWYAK_BIND_HOST", "127.0.0.1")
+        .env(
+            "MELLOWYAK_ALLOWED_ORIGINS",
+            "tauri://localhost,http://tauri.localhost,http://localhost:1420,http://127.0.0.1:1420",
+        )
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+        .map_err(|error| format!("SIDECAR_START_ERROR:{error}"))?;
+    let stdout = child
+        .stdout
+        .take()
+        .ok_or_else(|| "SIDECAR_STDOUT_UNAVAILABLE".to_string())?;
+    Ok((child, stdout))
+}
+
+#[cfg(target_os = "macos")]
+fn accept_macos_handshake(
+    app: &tauri::AppHandle,
+    stdout: ChildStdout,
+    token: &str,
+) -> Result<(), String> {
+    let mut line = String::new();
+    if BufReader::new(stdout)
+        .read_line(&mut line)
+        .map_err(|error| format!("SIDECAR_HANDSHAKE_IO:{error}"))?
+        == 0
+    {
+        return Err("SIDECAR_EXITED_BEFORE_HANDSHAKE".into());
+    }
+    let handshake = serde_json::from_str::<SidecarHandshake>(line.trim())
+        .map_err(|_| "SIDECAR_HANDSHAKE_INVALID".to_string())?;
+    if handshake.schema != "mellowyak.sidecar.handshake.v1"
+        || handshake.mode != "local"
+        || handshake.host != "127.0.0.1"
+        || handshake.port == 0
+    {
+        return Err("SIDECAR_HANDSHAKE_REJECTED".into());
+    }
+    let state = app
+        .try_state::<EngineState>()
+        .ok_or_else(|| "DESKTOP_STATE_UNAVAILABLE".to_string())?;
+    if let Ok(mut bootstrap) = state.bootstrap.lock() {
+        *bootstrap = Some(EngineBootstrap {
+            host: handshake.host,
+            port: handshake.port,
+            token: token.to_string(),
+        });
+    }
+    if let Ok(mut startup_error) = state.startup_error.lock() {
+        *startup_error = None;
+    }
+    eprintln!("{}", r#"{"event":"macos_engine_handshake_ready"}"#);
+    Ok(())
+}
+
+#[cfg(target_os = "macos")]
+fn supervise_macos_engine(
+    app: tauri::AppHandle,
+    engine_path: PathBuf,
+    token: String,
+    parent_pid: String,
+    initial_stdout: ChildStdout,
+) {
+    if let Err(message) = accept_macos_handshake(&app, initial_stdout, &token) {
+        if let Some(state) = app.try_state::<EngineState>() {
+            fail_engine_start(&state, message);
+        }
+        return;
+    }
+    let mut restarts = 0_u8;
+    loop {
+        std::thread::sleep(Duration::from_secs(1));
+        let Some(state) = app.try_state::<EngineState>() else {
+            return;
+        };
+        if state.explicit_quit.load(Ordering::SeqCst) {
+            return;
+        }
+        let exited = state
+            .child
+            .lock()
+            .ok()
+            .map(|mut slot| match slot.as_mut() {
+                Some(ManagedChild::Macos(child)) => match child.try_wait() {
+                    Ok(Some(_)) => true,
+                    Ok(None) => false,
+                    Err(error) => {
+                        eprintln!(
+                            r#"{{"event":"macos_engine_status_error","message":{:?}}}"#,
+                            error.to_string()
+                        );
+                        true
+                    }
+                },
+                _ => false,
+            })
+            .unwrap_or(false);
+        if !exited {
+            continue;
+        }
+        if restarts >= 3 {
+            eprintln!("{}", r#"{"event":"macos_engine_restart_limit"}"#);
+            fail_engine_start(&state, "SIDECAR_RESTART_LIMIT_REACHED".into());
+            return;
+        }
+        restarts += 1;
+        eprintln!(r#"{{"event":"macos_engine_restart","attempt":{restarts}}}"#);
+        if let Ok(mut bootstrap) = state.bootstrap.lock() {
+            *bootstrap = None;
+        }
+        match spawn_macos_engine(&engine_path, &token, &parent_pid) {
+            Ok((child, stdout)) => {
+                if let Ok(mut slot) = state.child.lock() {
+                    *slot = Some(ManagedChild::Macos(child));
+                }
+                if let Err(message) = accept_macos_handshake(&app, stdout, &token) {
+                    fail_engine_start(&state, message);
+                    return;
+                }
+            }
+            Err(message) => {
+                fail_engine_start(&state, message);
+                return;
+            }
         }
     }
 }
@@ -369,8 +564,8 @@ pub fn run() {
             take_pending_route,
             get_start_at_login,
             set_start_at_login,
-            show_native_notification
-            ,update_tray_state
+            show_native_notification,
+            update_tray_state
         ])
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
@@ -450,6 +645,40 @@ pub fn run() {
 
             let token = random_session_token();
             let parent_pid = std::process::id().to_string();
+            #[cfg(target_os = "macos")]
+            if let Some(engine_path) = macos_engine_resource(app.handle()) {
+                eprintln!("{}", r#"{"event":"macos_engine_resource_selected"}"#);
+                let (child, stdout) = match spawn_macos_engine(&engine_path, &token, &parent_pid) {
+                    Ok(value) => value,
+                    Err(error) => {
+                        eprintln!("{}", r#"{"event":"macos_engine_spawn_failed"}"#);
+                        app.manage(EngineState {
+                            bootstrap: Mutex::new(None),
+                            child: Mutex::new(None),
+                            startup_error: Mutex::new(Some(error)),
+                            keep_running_on_close: Mutex::new(true),
+                            explicit_quit: AtomicBool::new(false),
+                            pending_route: Mutex::new(None),
+                        });
+                        return Ok(());
+                    }
+                };
+                app.manage(EngineState {
+                    bootstrap: Mutex::new(None),
+                    child: Mutex::new(Some(ManagedChild::Macos(child))),
+                    startup_error: Mutex::new(None),
+                    keep_running_on_close: Mutex::new(true),
+                    explicit_quit: AtomicBool::new(false),
+                    pending_route: Mutex::new(None),
+                });
+                let app_handle = app.handle().clone();
+                tauri::async_runtime::spawn_blocking(move || {
+                    supervise_macos_engine(app_handle, engine_path, token, parent_pid, stdout);
+                });
+                return Ok(());
+            }
+            #[cfg(target_os = "macos")]
+            eprintln!("{}", r#"{"event":"macos_engine_resource_missing"}"#);
             let command = app
                 .shell()
                 .sidecar("mellowyak-engine")?
@@ -476,7 +705,7 @@ pub fn run() {
             };
             app.manage(EngineState {
                 bootstrap: Mutex::new(None),
-                child: Mutex::new(Some(child)),
+                child: Mutex::new(Some(ManagedChild::Sidecar(child))),
                 startup_error: Mutex::new(None),
                 keep_running_on_close: Mutex::new(true),
                 explicit_quit: AtomicBool::new(false),
@@ -530,6 +759,9 @@ pub fn run() {
 
     app.run(|app_handle, event| {
         if matches!(event, RunEvent::Exit | RunEvent::ExitRequested { .. }) {
+            if let Some(state) = app_handle.try_state::<EngineState>() {
+                state.explicit_quit.store(true, Ordering::SeqCst);
+            }
             stop_engine(app_handle);
         }
     });

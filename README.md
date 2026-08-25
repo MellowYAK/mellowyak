@@ -875,6 +875,32 @@ Phase 10 implementation, exact results, screenshots/PDF, package inventory, UX/s
 operator walkthrough, limitations, and readiness checklist are indexed in
 [`docs/phase-10-delivery/README.md`](docs/phase-10-delivery/README.md).
 
+### Phase 11M — Intel macOS native hardening
+
+- replaced the Intel macOS PyInstaller one-file engine with a private one-directory app resource;
+  Windows and Linux retain their existing sidecar packaging;
+- reduced measured packaged-engine median handshake time on the acceptance Mac from 19.07 seconds to
+  2.02 seconds while retaining the 19.87-second first cold-cache observation as an explicit maximum;
+- added structured startup events and supervised recovery for up to three unexpected engine exits;
+  explicit Quit terminates the child and prevents restart;
+- made macOS notification activation focus the existing window and open the exact engine-validated
+  local route only after a default notification action;
+- removed the First Run controlled/uncontrolled React warning and added a regression assertion;
+- split the 591.08 kB production JavaScript chunk into measured vendor, translation, operational and
+  acceptance chunks; the largest output is now 199.18 kB (49.50 kB gzip);
+- added disposable case-sensitive APFS, native lifecycle, two-version updater, signing-readiness and
+  Intel macOS CI acceptance tooling;
+- retained schema `0009_technical_preview_readiness`, version `0.2.0-preview.1`, local-only data,
+  translation-key-only English/Hebrew RTL, explicit Apply and no automatic repair.
+
+Phase 11M does **not** claim Apple Silicon, Windows or Linux runtime acceptance; no public release,
+push, production updater, Developer ID signing, notarization, private project, cloud/source upload,
+model/provider integration, automatic repair or automatic Apply is performed. Physical Notification
+Center clicks, a real login-session restart, sleep/wake and lock/unlock remain manual native gates.
+
+The complete implementation, exact local evidence, screenshots and limitations are indexed in
+[`docs/phase-11m-macos-delivery/README.md`](docs/phase-11m-macos-delivery/README.md).
+
 ---
 
 ## Built from APC—without carrying the monolith

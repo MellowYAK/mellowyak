@@ -1,0 +1,33 @@
+{
+  "results": {
+    "phase10": {
+      "executable_bytes": 75282096,
+      "maximum_seconds": 29.103479,
+      "median_seconds": 18.721473,
+      "minimum_seconds": 18.329233,
+      "path_recorded": false,
+      "runs_seconds": [
+        29.103479,
+        18.329233,
+        18.721473
+      ],
+      "status": "MEASURED"
+    },
+    "phase11m": {
+      "executable_bytes": 15680192,
+      "maximum_seconds": 1.900586,
+      "median_seconds": 1.898541,
+      "minimum_seconds": 1.895205,
+      "path_recorded": false,
+      "runs_seconds": [
+        1.895205,
+        1.900586,
+        1.898541
+      ],
+      "status": "MEASURED"
+    }
+  },
+  "schema": "mellowyak.phase11m.macos-startup.v1",
+  "scope": "disposable_data_roots_only",
+  "status": "VERIFIED_WORKING"
+}

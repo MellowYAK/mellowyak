@@ -1,0 +1,5 @@
+{
+  "schema": "mellowyak.synthetic-acceptance-lab.v1",
+  "synthetic": true,
+  "real_project_actions_allowed": false
+}

@@ -1,5 +1,11 @@
 {
+  "$schema": "https://schema.tauri.app/config/2",
   "bundle": {
-    "targets": ["app", "dmg"]
+    "targets": ["app", "dmg"],
+    "externalBin": [],
+    "resources": {
+      ".browser-resources/browser/": "browser/",
+      ".engine-resources/": "engine/"
+    }
   }
 }

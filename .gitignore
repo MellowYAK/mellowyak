@@ -30,6 +30,7 @@ build/
 engine/.build/
 apps/desktop/src/generated/api.ts
 apps/desktop/src-tauri/binaries/mellowyak-engine-*
+apps/desktop/src-tauri/.engine-resources/mellowyak-engine/
 apps/desktop/src-tauri/.browser-resources/
 apps/desktop/src-tauri/gen/
 apps/desktop/src-tauri/icons/android/

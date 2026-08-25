@@ -1,0 +1,5 @@
+{
+  "schema": "mellowyak.macos-engine-resource.v1",
+  "generated_directory": "mellowyak-engine",
+  "packaging_mode": "pyinstaller-onedir"
+}

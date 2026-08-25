@@ -1,0 +1,13 @@
+{
+  "ad_hoc_signature": true,
+  "codesign_structure_valid": true,
+  "credential_values_exposed": false,
+  "developer_id_identity_count": 0,
+  "dmg_present": true,
+  "gatekeeper_accepted": false,
+  "notarization_ticket_stapled": false,
+  "public_distribution_ready": false,
+  "required_environment_present": false,
+  "schema": "mellowyak.phase11m.macos-signing.v1",
+  "status": "IMPLEMENTED_NOT_RUNTIME_VERIFIED"
+}

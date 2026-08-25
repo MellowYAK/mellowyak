@@ -28,5 +28,8 @@ sys-locale = "0.3"
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-updater = "2"
 
+[target.'cfg(target_os = "macos")'.dependencies]
+notify-rust = "4.18"
+
 [dev-dependencies]
 minisign-verify = "0.2.5"

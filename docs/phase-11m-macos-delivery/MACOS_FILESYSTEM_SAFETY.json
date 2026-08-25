@@ -1,0 +1,20 @@
+{
+  "checks": {
+    "atomic_replacement": "PASS",
+    "case_sensitive_distinction": "PASS",
+    "directory_rename_delete": "PASS",
+    "executable_bit_preserved": "PASS",
+    "extended_attribute_preserved": "PASS",
+    "finder_alias": "IMPLEMENTED_NOT_RUNTIME_VERIFIED",
+    "hardlink_detected": "PASS",
+    "large_file_bounded": "PASS",
+    "read_only_detected": "PASS",
+    "symlink_detected_without_follow": "PASS",
+    "unicode_normalization_safe": "PASS",
+    "unrelated_sentinel_preserved": "PASS"
+  },
+  "host_disk_configuration_changed": false,
+  "schema": "mellowyak.phase11m.macos-filesystem-safety.v1",
+  "status": "VERIFIED_WORKING",
+  "temporary_case_sensitive_apfs_image": true
+}

@@ -1,0 +1,118 @@
+{
+  "schema": "mellowyak.phase11m.screenshot-delivery.v1",
+  "generated_at": "2026-08-25",
+  "data": "deterministic_synthetic",
+  "native_physical_actions_captured": false,
+  "screenshots": [
+    {
+      "file": "screenshots/00-macos-diagnostics.png",
+      "title": "macOS diagnostics",
+      "description": "Inspect local engine, schema, package, self-test, and bounded operational facts."
+    },
+    {
+      "file": "screenshots/01-macos-acceptance-lab-ready.png",
+      "title": "Acceptance Lab ready",
+      "description": "A synthetic disposable local lab is ready; it is not a private project."
+    },
+    {
+      "file": "screenshots/02-macos-acceptance-lab-known-good.png",
+      "title": "Known-good evidence",
+      "description": "Review passing evidence before accepting a known-good milestone."
+    },
+    {
+      "file": "screenshots/03-macos-acceptance-lab-watch.png",
+      "title": "WATCH",
+      "description": "A harmless change remains WATCH and is not labeled as a regression."
+    },
+    {
+      "file": "screenshots/04-macos-acceptance-lab-confirmed-regression.png",
+      "title": "Confirmed regression",
+      "description": "Comparable prior pass and reproducible current failure establish the bounded regression."
+    },
+    {
+      "file": "screenshots/05-macos-repair-workspace.png",
+      "title": "Repair Workspace",
+      "description": "Work remains isolated from live source until a candidate is validated."
+    },
+    {
+      "file": "screenshots/06-macos-candidate-validated.png",
+      "title": "Candidate validated",
+      "description": "The candidate passed only in its isolated workspace."
+    },
+    {
+      "file": "screenshots/07-macos-apply-confirmation.png",
+      "title": "Apply confirmation",
+      "description": "Review the source-bound transaction and explicitly confirm before any write."
+    },
+    {
+      "file": "screenshots/08-macos-applied-and-verified.png",
+      "title": "Applied and verified",
+      "description": "Fresh live verification completed after the transaction."
+    },
+    {
+      "file": "screenshots/09-macos-rolled-back-safely.png",
+      "title": "Rolled back safely",
+      "description": "A failed post-check restored affected bytes and preserved unrelated files."
+    },
+    {
+      "file": "screenshots/10-macos-native-tray.png",
+      "title": "Native tray — TEST-ONLY PREVIEW",
+      "description": "Production-component preview only; it is not evidence of a physical native click."
+    },
+    {
+      "file": "screenshots/11-macos-notification-destination.png",
+      "title": "Notification destination",
+      "description": "The validated in-app entity destination opened after activation."
+    },
+    {
+      "file": "screenshots/12-macos-start-at-login.png",
+      "title": "Start at Login",
+      "description": "Configure persisted background behavior and the native login item."
+    },
+    {
+      "file": "screenshots/13-macos-update-available.png",
+      "title": "Update available",
+      "description": "Visual reference for the production Update Status surface."
+    },
+    {
+      "file": "screenshots/14-macos-update-downloading.png",
+      "title": "Update downloading",
+      "description": "Visual reference; exact complete-download evidence is in MACOS_UPDATER_E2E.json."
+    },
+    {
+      "file": "screenshots/15-macos-update-signature-rejected.png",
+      "title": "Update signature rejected",
+      "description": "Visual reference; tampered and wrong-key rejection is machine-recorded."
+    },
+    {
+      "file": "screenshots/16-macos-update-completed.png",
+      "title": "Update completed",
+      "description": "Visual reference; the disposable higher-version install is machine-recorded."
+    },
+    {
+      "file": "screenshots/17-macos-package-status.png",
+      "title": "Package status",
+      "description": "Diagnostics reference; exact app, engine, browser and DMG identities are in PACKAGE_INVENTORY.md."
+    },
+    {
+      "file": "screenshots/18-macos-signing-status.png",
+      "title": "Signing status",
+      "description": "Diagnostics reference; only ad-hoc structural signing is verified."
+    },
+    {
+      "file": "screenshots/19-macos-performance.png",
+      "title": "Performance",
+      "description": "Diagnostics reference; exact local measurements are in MACOS_PERFORMANCE.json."
+    },
+    {
+      "file": "screenshots/20-hebrew-macos-diagnostics.png",
+      "title": "Hebrew RTL diagnostics",
+      "description": "The equivalent diagnostics surface uses Hebrew RTL and translation keys."
+    },
+    {
+      "file": "screenshots/21-hebrew-update-status.png",
+      "title": "Hebrew RTL destination",
+      "description": "Hebrew RTL product destination; updater transition evidence remains machine-readable."
+    }
+  ]
+}

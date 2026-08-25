@@ -1,0 +1,7 @@
+{
+  "app.title": "MellowYak macOS Acceptance Lab",
+  "home.checkout": "Run local checkout",
+  "home.description": "A synthetic local flow for packaged acceptance.",
+  "home.ready": "Ready",
+  "home.title": "Local acceptance flow"
+}

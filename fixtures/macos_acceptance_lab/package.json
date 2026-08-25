@@ -1,0 +1,8 @@
+{
+  "name": "mellowyak-macos-acceptance-lab-static-ui",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "test": "python3 run_checks.py"
+  }
+}

@@ -107,7 +107,7 @@ export function FirstRunExperience({
       getDesktopStartAtLogin().catch(() => false),
     ]).then(([background, notificationSettings, login]) => {
       setKeepRunning(Boolean(background.keep_running_on_close));
-      setNotifications(notificationSettings.native_enabled);
+      setNotifications(Boolean(notificationSettings.native_enabled));
       setStartAtLogin(login);
     }).catch(() => undefined);
   }, [step]);

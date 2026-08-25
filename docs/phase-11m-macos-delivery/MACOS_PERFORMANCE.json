@@ -1,0 +1,98 @@
+{
+  "idle": {
+    "desktop_cpu_percent_mean": 0.0,
+    "desktop_rss_bytes_mean": 107470848,
+    "engine_cpu_percent_mean": 0.1,
+    "engine_rss_bytes_mean": 119672832,
+    "owned_children_after_quit": 0,
+    "sample_count": 3
+  },
+  "javascript_chunks": [
+    {
+      "bytes": 39089,
+      "gzip_bytes": 8805,
+      "name": "acceptance-surfaces-D9f9MCue.js"
+    },
+    {
+      "bytes": 111398,
+      "gzip_bytes": 25739,
+      "name": "index-BVGfLyeA.js"
+    },
+    {
+      "bytes": 45073,
+      "gzip_bytes": 10652,
+      "name": "product-truth-B1jGvRux.js"
+    },
+    {
+      "bytes": 193830,
+      "gzip_bytes": 60340,
+      "name": "react-vendor-CmQgMwmH.js"
+    },
+    {
+      "bytes": 3711,
+      "gzip_bytes": 1513,
+      "name": "tauri-vendor-Bm3kdmir.js"
+    },
+    {
+      "bytes": 199175,
+      "gzip_bytes": 49175,
+      "name": "translations-DT0R1kWs.js"
+    }
+  ],
+  "not_separately_instrumented": [
+    "first_home_data",
+    "first_project_overview_data",
+    "diagnostics_route_load",
+    "frontend_ready",
+    "database_migration_component",
+    "python_import_component"
+  ],
+  "schema": "mellowyak.phase11m.macos-performance.v1",
+  "scope": "local Intel macOS observation; not a universal benchmark",
+  "sizes": {
+    "application_bytes": 887631373,
+    "browser_directory_bytes": 637205282,
+    "dmg_bytes": 435933674,
+    "engine_directory_bytes": 224377307,
+    "largest_javascript_chunk": {
+      "bytes": 199175,
+      "gzip_bytes": 49175,
+      "name": "translations-DT0R1kWs.js"
+    },
+    "total_javascript_bytes": 592276
+  },
+  "startup": {
+    "results": {
+      "phase10": {
+        "executable_bytes": 75282096,
+        "maximum_seconds": 29.103479,
+        "median_seconds": 18.721473,
+        "minimum_seconds": 18.329233,
+        "path_recorded": false,
+        "runs_seconds": [
+          29.103479,
+          18.329233,
+          18.721473
+        ],
+        "status": "MEASURED"
+      },
+      "phase11m": {
+        "executable_bytes": 15680192,
+        "maximum_seconds": 1.900586,
+        "median_seconds": 1.898541,
+        "minimum_seconds": 1.895205,
+        "path_recorded": false,
+        "runs_seconds": [
+          1.895205,
+          1.900586,
+          1.898541
+        ],
+        "status": "MEASURED"
+      }
+    },
+    "schema": "mellowyak.phase11m.macos-startup.v1",
+    "scope": "disposable_data_roots_only",
+    "status": "VERIFIED_WORKING"
+  },
+  "status": "VERIFIED_WORKING"
+}

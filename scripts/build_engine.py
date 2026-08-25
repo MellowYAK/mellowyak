@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import platform
 import shutil
 import subprocess
 from pathlib import Path
@@ -8,6 +9,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 ENGINE = ROOT / "engine"
 DESKTOP_BINARIES = ROOT / "apps" / "desktop" / "src-tauri" / "binaries"
+MACOS_RESOURCES = (
+    ROOT / "apps" / "desktop" / "src-tauri" / ".engine-resources" / "mellowyak-engine"
+)
 BUILD_ROOT = ENGINE / ".build" / "pyinstaller"
 
 
@@ -28,6 +32,13 @@ def main() -> None:
     extension = ".exe" if os.name == "nt" else ""
     shutil.rmtree(BUILD_ROOT, ignore_errors=True)
     BUILD_ROOT.mkdir(parents=True, exist_ok=True)
+    staged_alembic = BUILD_ROOT / "staging" / "alembic"
+    shutil.copytree(
+        ENGINE / "alembic",
+        staged_alembic,
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo"),
+    )
+    mode = "--onedir" if platform.system() == "Darwin" else "--onefile"
     subprocess.run(
         [
             str(python),
@@ -35,7 +46,7 @@ def main() -> None:
             "PyInstaller",
             "--noconfirm",
             "--clean",
-            "--onefile",
+            mode,
             "--name",
             "mellowyak-engine",
             "--distpath",
@@ -47,7 +58,7 @@ def main() -> None:
             "--paths",
             str(ENGINE / "src"),
             "--add-data",
-            f"{ENGINE / 'alembic'}{os.pathsep}alembic",
+            f"{staged_alembic}{os.pathsep}alembic",
             "--add-data",
             f"{ENGINE / 'alembic.ini'}{os.pathsep}.",
             "--collect-all",
@@ -59,12 +70,24 @@ def main() -> None:
         cwd=ENGINE,
         check=True,
     )
-    source = BUILD_ROOT / "dist" / f"mellowyak-engine{extension}"
+    source_root = BUILD_ROOT / "dist" / "mellowyak-engine"
+    source = (
+        source_root / f"mellowyak-engine{extension}"
+        if mode == "--onedir"
+        else BUILD_ROOT / "dist" / f"mellowyak-engine{extension}"
+    )
     destination = DESKTOP_BINARIES / f"mellowyak-engine-{triple}{extension}"
     DESKTOP_BINARIES.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, destination)
     destination.chmod(0o755)
-    print(destination)
+    if mode == "--onedir":
+        shutil.rmtree(MACOS_RESOURCES, ignore_errors=True)
+        shutil.copytree(source_root, MACOS_RESOURCES, symlinks=True)
+        packaged = MACOS_RESOURCES / "mellowyak-engine"
+        packaged.chmod(0o755)
+        print(packaged)
+    else:
+        print(destination)
 
 
 if __name__ == "__main__":

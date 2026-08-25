@@ -1,0 +1,31 @@
+{
+  "artifact_bytes": 395175807,
+  "artifact_sha256": "a877344a4ff69ae4036e0b4936d201ef4b2fdc27ec029686cdb5978472aac0e6",
+  "checks": {
+    "data_source_settings_preserved": true,
+    "downgrade_rejected": true,
+    "durable_database_history_preserved": true,
+    "engine_data_existed_before_update": true,
+    "ephemeral_key": true,
+    "higher_application_engine_launched": true,
+    "higher_product_self_test": true,
+    "higher_real_app_bundle": true,
+    "higher_schema_0009": true,
+    "higher_version_installed": true,
+    "incomplete_download_rejected": true,
+    "loopback_metadata": true,
+    "lower_application_engine_launched": true,
+    "lower_product_self_test": true,
+    "lower_real_app_bundle": true,
+    "lower_schema_0009": true,
+    "private_key_not_persisted": true,
+    "production_configuration_unchanged": true,
+    "project_identity_preserved": true,
+    "tampered_artifact_rejected": true,
+    "valid_signature": true,
+    "wrong_key_rejected": true,
+    "zero_engine_orphans": true
+  },
+  "schema": "mellowyak.phase11m.macos-updater-e2e.v1",
+  "status": "VERIFIED_WORKING"
+}

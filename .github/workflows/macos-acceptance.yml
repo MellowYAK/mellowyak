@@ -1,0 +1,137 @@
+name: macOS Intel acceptance
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "apps/desktop/**"
+      - "engine/**"
+      - "scripts/**"
+      - ".github/workflows/macos-acceptance.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  intel:
+    runs-on: macos-15-intel
+    env:
+      APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify immutable Phase 10 ancestry
+        run: |
+          test "$(git rev-parse phase-10-product-truth-verified-2026-08-25^{})" = "8620786c3e4598cd9564ba19a38e84b8e1aaa96d"
+          git merge-base --is-ancestor phase-10-product-truth-verified-2026-08-25 HEAD
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Install dependencies
+        run: |
+          python -m venv engine/.venv
+          engine/.venv/bin/python -m pip install -e './engine[dev]'
+          npm ci --prefix apps/desktop
+      - name: Source gates
+        run: |
+          engine/.venv/bin/python -m pytest engine
+          npm --prefix apps/desktop test -- --run
+          npm --prefix apps/desktop run build
+          engine/.venv/bin/python -m ruff check engine scripts
+          engine/.venv/bin/python -m ruff format --check engine scripts
+          python scripts/check_ui_translation_keys.py
+          cargo fmt --check --manifest-path apps/desktop/src-tauri/Cargo.toml
+          cargo check --manifest-path apps/desktop/src-tauri/Cargo.toml
+          engine/.venv/bin/python scripts/validate_migration_matrix.py
+      - name: Build macOS resources and package
+        run: |
+          engine/.venv/bin/python scripts/stage_browser.py
+          engine/.venv/bin/python scripts/build_engine.py
+          export RUSTFLAGS="--remap-path-prefix=$GITHUB_WORKSPACE=. --remap-path-prefix=$HOME=/local-home"
+          npm --prefix apps/desktop run tauri build -- --bundles app,dmg --config src-tauri/tauri.macos.conf.json
+      - name: Disposable packaged acceptance
+        run: |
+          engine_path="apps/desktop/src-tauri/target/release/bundle/macos/MellowYak.app/Contents/Resources/engine/mellowyak-engine/mellowyak-engine"
+          engine/.venv/bin/python scripts/validate_packaged_phase8.py "$engine_path" --output phase8.json
+          engine/.venv/bin/python scripts/validate_packaged_phase9.py "$engine_path" --output phase9.json
+          engine/.venv/bin/python scripts/validate_packaged_phase10.py "$engine_path" --output phase10.json
+          engine/.venv/bin/python scripts/validate_macos_filesystem_safety.py --output filesystem.json
+          engine/.venv/bin/python scripts/validate_macos_acceptance_lab.py --engine "$engine_path" --fixture fixtures/macos_acceptance_lab --output acceptance-lab.json
+          engine/.venv/bin/python scripts/validate_macos_native_lifecycle.py --app apps/desktop/src-tauri/target/release/bundle/macos/MellowYak.app --output lifecycle.json
+          engine/.venv/bin/python scripts/validate_macos_updater_e2e.py --app apps/desktop/src-tauri/target/release/bundle/macos/MellowYak.app --output updater.json
+          engine/.venv/bin/python scripts/validate_packaged_phase11m.py --app apps/desktop/src-tauri/target/release/bundle/macos/MellowYak.app --dmg apps/desktop/src-tauri/target/release/bundle/dmg/MellowYak_0.2.0-preview.1_x64.dmg --output phase11m.json
+      - name: Produce immutable package identities
+        run: |
+          shasum -a 256 apps/desktop/src-tauri/target/release/bundle/macos/MellowYak.app/Contents/MacOS/mellowyak-desktop > macos-intel-checksums.txt
+          shasum -a 256 apps/desktop/src-tauri/target/release/bundle/macos/MellowYak.app/Contents/Resources/engine/mellowyak-engine/mellowyak-engine >> macos-intel-checksums.txt
+          shasum -a 256 apps/desktop/src-tauri/target/release/bundle/dmg/*.dmg >> macos-intel-checksums.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-intel-acceptance-${{ github.sha }}
+          path: |
+            phase8.json
+            phase9.json
+            phase10.json
+            phase11m.json
+            filesystem.json
+            acceptance-lab.json
+            lifecycle.json
+            updater.json
+            macos-intel-checksums.txt
+            apps/desktop/src-tauri/target/release/bundle/macos/*.dmg
+
+  arm64-build-path:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify immutable Phase 10 ancestry
+        run: |
+          test "$(git rev-parse phase-10-product-truth-verified-2026-08-25^{})" = "8620786c3e4598cd9564ba19a38e84b8e1aaa96d"
+          git merge-base --is-ancestor phase-10-product-truth-verified-2026-08-25 HEAD
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.98.0"
+      - name: Install dependencies
+        run: |
+          python -m venv engine/.venv
+          engine/.venv/bin/python -m pip install -e './engine[dev]'
+          npm ci --prefix apps/desktop
+      - name: Build same-source native arm64 package
+        run: |
+          test "$(uname -m)" = "arm64"
+          engine/.venv/bin/python scripts/stage_browser.py
+          engine/.venv/bin/python scripts/build_engine.py
+          export RUSTFLAGS="--remap-path-prefix=$GITHUB_WORKSPACE=. --remap-path-prefix=$HOME=/local-home"
+          npm --prefix apps/desktop run tauri build -- --bundles app,dmg --config src-tauri/tauri.macos.conf.json
+          file apps/desktop/src-tauri/target/release/bundle/macos/MellowYak.app/Contents/MacOS/mellowyak-desktop | grep arm64
+          file apps/desktop/src-tauri/target/release/bundle/macos/MellowYak.app/Contents/Resources/engine/mellowyak-engine/mellowyak-engine | grep arm64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm64-build-path-${{ github.sha }}
+          path: apps/desktop/src-tauri/target/release/bundle/dmg/*.dmg

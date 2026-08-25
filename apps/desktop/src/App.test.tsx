@@ -168,6 +168,7 @@ test("renders the Phase 10 Hebrew Home as an RTL operational surface", async () 
 });
 
 test("shows persisted first run and completes the synthetic Demo Lab choice", async () => {
+  const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
   const onboarding = {
     completed: false,
     current_step: "welcome",
@@ -202,6 +203,8 @@ test("shows persisted first run and completes the synthetic Demo Lab choice", as
   fireEvent.click(screen.getByRole("button", { name: "Continue" }));
   fireEvent.click(await screen.findByRole("button", { name: "Open Demo Lab" }));
   expect(await screen.findByRole("heading", { name: "Try MellowYak with a Demo Project" })).toBeInTheDocument();
+  expect(consoleError).not.toHaveBeenCalledWith(expect.stringContaining("controlled input"));
+  consoleError.mockRestore();
 });
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });

@@ -2171,6 +2171,7 @@ name = "mellowyak-desktop"
 version = "0.2.0-preview.1"
 dependencies = [
  "minisign-verify",
+ "notify-rust",
  "rand 0.8.7",
  "serde",
  "serde_json",

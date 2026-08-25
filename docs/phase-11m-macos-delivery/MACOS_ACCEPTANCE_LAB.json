@@ -1,0 +1,21 @@
+{
+  "checks": {
+    "cli_operation": true,
+    "english_catalog": true,
+    "fixture_copied_to_temporary_root": true,
+    "hebrew_rtl_catalog": true,
+    "known_good_functional_flow": true,
+    "known_good_test": true,
+    "loopback_web_api": true,
+    "multiple_runtime_profiles": true,
+    "no_external_network_dependency": true,
+    "packaged_production_engine": true,
+    "permanent_synthetic_marker": true,
+    "product_self_test": true,
+    "unmarked_project_rejected": true
+  },
+  "duration_seconds": 8.080412,
+  "fixture": "synthetic_disposable_polyglot",
+  "schema": "mellowyak.phase11m.macos-acceptance-lab.v1",
+  "status": "VERIFIED_WORKING"
+}
