@@ -5,7 +5,7 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
     Mutex,
 };
-use tauri::menu::{MenuBuilder, MenuItemBuilder};
+use tauri::menu::{Menu, MenuBuilder, MenuItemBuilder};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{Emitter, Manager, RunEvent, State, WebviewWindow, WindowEvent};
 use tauri_plugin_autostart::{MacosLauncher, ManagerExt as AutostartManagerExt};
@@ -37,6 +37,32 @@ struct EngineState {
     pending_route: Mutex<Option<String>>,
 }
 
+#[derive(Clone, Deserialize)]
+struct TrayProjectState {
+    project_id: String,
+    name: String,
+    monitoring_state: String,
+    muted: bool,
+}
+
+#[derive(Clone, Deserialize)]
+struct TrayAlertState {
+    alert_id: String,
+    severity: String,
+}
+
+#[derive(Clone, Deserialize)]
+struct TrayStatePayload {
+    state: String,
+    unread_alert_count: u64,
+    critical_alert_count: u64,
+    active_project_count: u64,
+    paused_project_count: u64,
+    projects: Vec<TrayProjectState>,
+    #[serde(default)]
+    recent_alerts: Vec<TrayAlertState>,
+}
+
 fn random_session_token() -> String {
     let mut bytes = [0_u8; 32];
     OsRng.fill_bytes(&mut bytes);
@@ -51,6 +77,149 @@ fn translations() -> HashMap<String, String> {
         include_str!("../i18n/en.json")
     };
     serde_json::from_str(source).expect("valid embedded tray translations")
+}
+
+fn translated_tray_state(strings: &HashMap<String, String>, state: &str) -> String {
+    let key = match state {
+        "QUIET" => "tray.state.quiet",
+        "PAUSED" => "tray.state.paused",
+        "ANALYZING" => "tray.state.analyzing",
+        "VERIFYING" => "tray.state.verifying",
+        "NEEDS_REVIEW" => "tray.state.needsReview",
+        "REGRESSION_DETECTED" => "tray.state.regression",
+        "APPLY_IN_PROGRESS" => "tray.state.applying",
+        "RECOVERY_REQUIRED" => "tray.state.recovery",
+        "ENGINE_ERROR" => "tray.state.error",
+        _ => "tray.state.monitoring",
+    };
+    strings[key].clone()
+}
+
+fn tray_count(strings: &HashMap<String, String>, key: &str, count: u64) -> String {
+    strings[key].replace("{count}", &count.to_string())
+}
+
+fn build_tray_menu(
+    app: &tauri::AppHandle,
+    strings: &HashMap<String, String>,
+    state: Option<&TrayStatePayload>,
+) -> tauri::Result<Menu<tauri::Wry>> {
+    let status = state
+        .map(|value| translated_tray_state(strings, &value.state))
+        .unwrap_or_else(|| strings["tray.state.monitoring"].clone());
+    let mut menu = MenuBuilder::new(app)
+        .item(&MenuItemBuilder::with_id("open", &strings["tray.open"]).build(app)?)
+        .item(
+            &MenuItemBuilder::with_id("status", status)
+                .enabled(false)
+                .build(app)?,
+        );
+    if let Some(value) = state {
+        menu = menu
+            .item(
+                &MenuItemBuilder::with_id(
+                    "unread-count",
+                    tray_count(strings, "tray.unreadCount", value.unread_alert_count),
+                )
+                .enabled(false)
+                .build(app)?,
+            )
+            .item(
+                &MenuItemBuilder::with_id(
+                    "critical-count",
+                    tray_count(strings, "tray.criticalCount", value.critical_alert_count),
+                )
+                .enabled(false)
+                .build(app)?,
+            )
+            .item(
+                &MenuItemBuilder::with_id(
+                    "active-count",
+                    tray_count(strings, "tray.activeCount", value.active_project_count),
+                )
+                .enabled(false)
+                .build(app)?,
+            )
+            .item(
+                &MenuItemBuilder::with_id(
+                    "paused-count",
+                    tray_count(strings, "tray.pausedCount", value.paused_project_count),
+                )
+                .enabled(false)
+                .build(app)?,
+            );
+        for project in value.projects.iter().take(8) {
+            let project_label = strings["tray.projectState"]
+                .replace("{name}", &project.name)
+                .replace("{state}", &project.monitoring_state);
+            menu = menu
+                .item(
+                    &MenuItemBuilder::with_id(
+                        format!("project-state:{}", project.project_id),
+                        project_label,
+                    )
+                    .enabled(false)
+                    .build(app)?,
+                )
+                .item(
+                    &MenuItemBuilder::with_id(
+                        format!("open-project:{}", project.project_id),
+                        &strings["tray.openProject"],
+                    )
+                    .build(app)?,
+                )
+                .item(
+                    &MenuItemBuilder::with_id(
+                        format!("pause-project:{}", project.project_id),
+                        if project.monitoring_state == "active" {
+                            &strings["tray.pauseProject"]
+                        } else {
+                            &strings["tray.resumeProject"]
+                        },
+                    )
+                    .build(app)?,
+                )
+                .item(
+                    &MenuItemBuilder::with_id(
+                        format!("mute-project:{}", project.project_id),
+                        if project.muted {
+                            &strings["tray.unmuteProject"]
+                        } else {
+                            &strings["tray.muteProject"]
+                        },
+                    )
+                    .build(app)?,
+                );
+        }
+        for alert in value.recent_alerts.iter().take(5) {
+            let severity = match alert.severity.as_str() {
+                "CRITICAL" => &strings["tray.alertSeverity.critical"],
+                "WARNING" => &strings["tray.alertSeverity.warning"],
+                _ => &strings["tray.alertSeverity.info"],
+            };
+            menu = menu.item(
+                &MenuItemBuilder::with_id(
+                    format!("recent-alert:{}", alert.alert_id),
+                    strings["tray.recentAlert"].replace("{severity}", severity),
+                )
+                .build(app)?,
+            );
+        }
+    }
+    menu.separator()
+        .item(&MenuItemBuilder::with_id("alerts", &strings["tray.alerts"]).build(app)?)
+        .item(&MenuItemBuilder::with_id("quiet-hour", &strings["tray.quietHour"]).build(app)?)
+        .item(
+            &MenuItemBuilder::with_id("quiet-tomorrow", &strings["tray.quietTomorrow"])
+                .build(app)?,
+        )
+        .item(&MenuItemBuilder::with_id("quiet-end", &strings["tray.endQuiet"]).build(app)?)
+        .item(&MenuItemBuilder::with_id("pause-all", &strings["tray.pauseAll"]).build(app)?)
+        .item(&MenuItemBuilder::with_id("resume-all", &strings["tray.resumeAll"]).build(app)?)
+        .separator()
+        .item(&MenuItemBuilder::with_id("settings", &strings["tray.settings"]).build(app)?)
+        .item(&MenuItemBuilder::with_id("quit", &strings["tray.quit"]).build(app)?)
+        .build()
 }
 
 fn show_main(window: &WebviewWindow) {
@@ -143,6 +312,19 @@ fn show_native_notification(
         .map_err(|error| error.to_string())
 }
 
+#[tauri::command]
+fn update_tray_state(app: tauri::AppHandle, state: TrayStatePayload) -> Result<(), String> {
+    let strings = translations();
+    let menu = build_tray_menu(&app, &strings, Some(&state)).map_err(|error| error.to_string())?;
+    let tray = app
+        .tray_by_id("main-tray")
+        .ok_or_else(|| "TRAY_UNAVAILABLE".to_string())?;
+    tray.set_menu(Some(menu))
+        .map_err(|error| error.to_string())?;
+    tray.set_tooltip(Some(translated_tray_state(&strings, &state.state)))
+        .map_err(|error| error.to_string())
+}
+
 fn stop_engine(app: &tauri::AppHandle) {
     if let Some(state) = app.try_state::<EngineState>() {
         if let Ok(mut child_slot) = state.child.lock() {
@@ -188,6 +370,7 @@ pub fn run() {
             get_start_at_login,
             set_start_at_login,
             show_native_notification
+            ,update_tray_state
         ])
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
@@ -206,40 +389,20 @@ pub fn run() {
         })
         .setup(|app| {
             let strings = translations();
-            let menu = MenuBuilder::new(app)
-                .item(&MenuItemBuilder::with_id("open", &strings["tray.open"]).build(app)?)
-                .item(
-                    &MenuItemBuilder::with_id("status", &strings["tray.status"])
-                        .enabled(false)
-                        .build(app)?,
-                )
-                .separator()
-                .item(&MenuItemBuilder::with_id("alerts", &strings["tray.alerts"]).build(app)?)
-                .item(
-                    &MenuItemBuilder::with_id("quiet-hour", &strings["tray.quietHour"])
-                        .build(app)?,
-                )
-                .item(
-                    &MenuItemBuilder::with_id("quiet-tomorrow", &strings["tray.quietTomorrow"])
-                        .build(app)?,
-                )
-                .item(
-                    &MenuItemBuilder::with_id("quiet-end", &strings["tray.endQuiet"])
-                        .build(app)?,
-                )
-                .separator()
-                .item(
-                    &MenuItemBuilder::with_id("settings", &strings["tray.settings"]).build(app)?,
-                )
-                .item(&MenuItemBuilder::with_id("quit", &strings["tray.quit"]).build(app)?)
-                .build()?;
-            let mut tray = TrayIconBuilder::new()
+            let menu = build_tray_menu(app.handle(), &strings, None)?;
+            let mut tray = TrayIconBuilder::with_id("main-tray")
                 .menu(&menu)
                 .tooltip(&strings["tray.tooltip"])
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "open" => navigate(app, "home"),
                     "alerts" => navigate(app, "alerts"),
                     "settings" => navigate(app, "settings"),
+                    "pause-all" => {
+                        let _ = app.emit("mellowyak:monitoring", "pause-all");
+                    }
+                    "resume-all" => {
+                        let _ = app.emit("mellowyak:monitoring", "resume-all");
+                    }
                     "quiet-hour" => {
                         let _ = app.emit("mellowyak:quiet", "one_hour");
                     }
@@ -255,6 +418,18 @@ pub fn run() {
                         }
                         stop_engine(app);
                         app.exit(0);
+                    }
+                    id if id.starts_with("open-project:") => {
+                        navigate(app, &format!("project:{}", &id[13..]));
+                    }
+                    id if id.starts_with("recent-alert:") => {
+                        navigate(app, &format!("alert:{}", &id[13..]));
+                    }
+                    id if id.starts_with("pause-project:") => {
+                        let _ = app.emit("mellowyak:project-action", id);
+                    }
+                    id if id.starts_with("mute-project:") => {
+                        let _ = app.emit("mellowyak:project-action", id);
                     }
                     _ => {}
                 })

@@ -14,6 +14,21 @@
         "title": "ActionResponse",
         "type": "object"
       },
+      "ActivityModeRequest": {
+        "properties": {
+          "activity_mode": {
+            "maxLength": 30,
+            "minLength": 1,
+            "title": "Activity Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "activity_mode"
+        ],
+        "title": "ActivityModeRequest",
+        "type": "object"
+      },
       "AlertListResponse": {
         "properties": {
           "alerts": {
@@ -1573,6 +1588,170 @@
         "title": "DemoLabResponse",
         "type": "object"
       },
+      "DiagnosticsResponse": {
+        "properties": {
+          "architecture": {
+            "title": "Architecture",
+            "type": "string"
+          },
+          "bearer_token_exposed": {
+            "title": "Bearer Token Exposed",
+            "type": "boolean"
+          },
+          "browser_runtime_available": {
+            "title": "Browser Runtime Available",
+            "type": "boolean"
+          },
+          "cloud_connected": {
+            "title": "Cloud Connected",
+            "type": "boolean"
+          },
+          "data_root": {
+            "title": "Data Root",
+            "type": "string"
+          },
+          "data_root_size_bytes": {
+            "title": "Data Root Size Bytes",
+            "type": "integer"
+          },
+          "desktop_version": {
+            "title": "Desktop Version",
+            "type": "string"
+          },
+          "engine_version": {
+            "title": "Engine Version",
+            "type": "string"
+          },
+          "evidence_size_bytes": {
+            "title": "Evidence Size Bytes",
+            "type": "integer"
+          },
+          "incomplete_transactions": {
+            "title": "Incomplete Transactions",
+            "type": "integer"
+          },
+          "installation_identity": {
+            "title": "Installation Identity",
+            "type": "string"
+          },
+          "local_api_state": {
+            "title": "Local Api State",
+            "type": "string"
+          },
+          "loopback_address": {
+            "title": "Loopback Address",
+            "type": "string"
+          },
+          "notification_permission": {
+            "title": "Notification Permission",
+            "type": "string"
+          },
+          "outbound_product_network": {
+            "title": "Outbound Product Network",
+            "type": "boolean"
+          },
+          "platform": {
+            "title": "Platform",
+            "type": "string"
+          },
+          "projects": {
+            "title": "Projects",
+            "type": "integer"
+          },
+          "recent_engine_starts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Recent Engine Starts",
+            "type": "array"
+          },
+          "recovery_required": {
+            "title": "Recovery Required",
+            "type": "integer"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "runtime_adapter_available": {
+            "title": "Runtime Adapter Available",
+            "type": "boolean"
+          },
+          "schema_migration": {
+            "title": "Schema Migration",
+            "type": "string"
+          },
+          "self_test_last_result": {
+            "title": "Self Test Last Result",
+            "type": "string"
+          },
+          "signing_state": {
+            "title": "Signing State",
+            "type": "string"
+          },
+          "snapshot_objects": {
+            "title": "Snapshot Objects",
+            "type": "integer"
+          },
+          "tray": {
+            "additionalProperties": true,
+            "title": "Tray",
+            "type": "object"
+          },
+          "updater_state": {
+            "title": "Updater State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "desktop_version",
+          "engine_version",
+          "schema_migration",
+          "installation_identity",
+          "local_api_state",
+          "loopback_address",
+          "bearer_token_exposed",
+          "data_root",
+          "data_root_size_bytes",
+          "evidence_size_bytes",
+          "projects",
+          "snapshot_objects",
+          "incomplete_transactions",
+          "recovery_required",
+          "browser_runtime_available",
+          "runtime_adapter_available",
+          "tray",
+          "notification_permission",
+          "updater_state",
+          "signing_state",
+          "platform",
+          "architecture",
+          "recent_engine_starts",
+          "self_test_last_result",
+          "outbound_product_network",
+          "cloud_connected"
+        ],
+        "title": "DiagnosticsResponse",
+        "type": "object"
+      },
+      "DisconnectedProjectListResponse": {
+        "properties": {
+          "projects": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Projects",
+            "type": "array"
+          }
+        },
+        "required": [
+          "projects"
+        ],
+        "title": "DisconnectedProjectListResponse",
+        "type": "object"
+      },
       "EvidenceArtifactResponse": {
         "properties": {
           "behavior_id": {
@@ -2734,6 +2913,20 @@
         "title": "MonitoringResponse",
         "type": "object"
       },
+      "NotificationActivationRequest": {
+        "properties": {
+          "route": {
+            "additionalProperties": true,
+            "title": "Route",
+            "type": "object"
+          }
+        },
+        "required": [
+          "route"
+        ],
+        "title": "NotificationActivationRequest",
+        "type": "object"
+      },
       "NotificationSettingsRequest": {
         "properties": {
           "blocked_gate_enabled": {
@@ -2859,6 +3052,95 @@
           }
         },
         "title": "NotificationSettingsRequest",
+        "type": "object"
+      },
+      "OnboardingResponse": {
+        "properties": {
+          "completed": {
+            "title": "Completed",
+            "type": "boolean"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "current_step": {
+            "title": "Current Step",
+            "type": "string"
+          },
+          "replay_active": {
+            "title": "Replay Active",
+            "type": "boolean"
+          },
+          "requires_first_run": {
+            "title": "Requires First Run",
+            "type": "boolean"
+          },
+          "selected_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Path"
+          },
+          "source_modified": {
+            "title": "Source Modified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "completed",
+          "current_step",
+          "replay_active",
+          "selected_path",
+          "completed_at",
+          "requires_first_run",
+          "source_modified"
+        ],
+        "title": "OnboardingResponse",
+        "type": "object"
+      },
+      "OnboardingUpdateRequest": {
+        "properties": {
+          "completed": {
+            "default": false,
+            "title": "Completed",
+            "type": "boolean"
+          },
+          "current_step": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Current Step",
+            "type": "string"
+          },
+          "selected_path": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Path"
+          }
+        },
+        "required": [
+          "current_step"
+        ],
+        "title": "OnboardingUpdateRequest",
         "type": "object"
       },
       "OpenDataFolderResponse": {
@@ -3797,6 +4079,25 @@
           "projects"
         ],
         "title": "ProjectListResponse",
+        "type": "object"
+      },
+      "ProjectLocationRequest": {
+        "properties": {
+          "path": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path"
+          }
+        },
+        "title": "ProjectLocationRequest",
         "type": "object"
       },
       "ProjectNotificationRequest": {
@@ -6439,6 +6740,18 @@
         "title": "UnreadCountResponse",
         "type": "object"
       },
+      "UpdateCheckRecordRequest": {
+        "properties": {
+          "result": {
+            "default": "NO_UPDATE",
+            "maxLength": 40,
+            "title": "Result",
+            "type": "string"
+          }
+        },
+        "title": "UpdateCheckRecordRequest",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -6612,7 +6925,7 @@
   "info": {
     "description": "Loopback-only API used by the MellowYak desktop shell.",
     "title": "MellowYak Local Engine",
-    "version": "0.1.0"
+    "version": "0.2.0-preview.1"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -6981,6 +7294,110 @@
         "summary": "Unread Alert"
       }
     },
+    "/app/activity-mode": {
+      "get": {
+        "operationId": "activity_mode_app_activity_mode_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Activity Mode App Activity Mode Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Activity Mode"
+      },
+      "put": {
+        "operationId": "update_activity_mode_app_activity_mode_put",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityModeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Update Activity Mode App Activity Mode Put",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Activity Mode"
+      }
+    },
     "/app/background-status": {
       "get": {
         "operationId": "background_status_app_background_status_get",
@@ -7083,6 +7500,152 @@
           }
         },
         "summary": "Update Background Status"
+      }
+    },
+    "/app/onboarding": {
+      "get": {
+        "operationId": "onboarding_state_app_onboarding_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Onboarding State"
+      },
+      "put": {
+        "operationId": "update_onboarding_app_onboarding_put",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Onboarding"
+      }
+    },
+    "/app/onboarding/replay": {
+      "post": {
+        "operationId": "replay_onboarding_app_onboarding_replay_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Replay Onboarding"
       }
     },
     "/app/start-at-login": {
@@ -7630,6 +8193,251 @@
         "summary": "Demo Post Apply Failure"
       }
     },
+    "/diagnostics": {
+      "get": {
+        "operationId": "diagnostics_diagnostics_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiagnosticsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Diagnostics"
+      }
+    },
+    "/diagnostics/self-test": {
+      "post": {
+        "operationId": "run_diagnostic_product_self_test_diagnostics_self_test_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductSelfTestResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Diagnostic Product Self Test"
+      }
+    },
+    "/diagnostics/storage-integrity": {
+      "post": {
+        "operationId": "storage_integrity_diagnostics_storage_integrity_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Storage Integrity Diagnostics Storage Integrity Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Storage Integrity"
+      }
+    },
+    "/diagnostics/support-bundle": {
+      "post": {
+        "operationId": "export_support_bundle_diagnostics_support_bundle_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Export Support Bundle Diagnostics Support Bundle Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Support Bundle"
+      }
+    },
+    "/diagnostics/support-bundles/{bundle_id}": {
+      "get": {
+        "operationId": "support_bundle_diagnostics_support_bundles__bundle_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bundle_id",
+            "required": true,
+            "schema": {
+              "title": "Bundle Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Support Bundle Diagnostics Support Bundles  Bundle Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Support Bundle"
+      }
+    },
     "/events": {
       "get": {
         "operationId": "local_events_events_get",
@@ -7797,6 +8605,112 @@
         "summary": "Installation Info"
       }
     },
+    "/notifications/activate": {
+      "post": {
+        "operationId": "activate_notification_notifications_activate_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationActivationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Activate Notification Notifications Activate Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Activate Notification"
+      }
+    },
+    "/package-acceptance": {
+      "get": {
+        "operationId": "package_acceptance_package_acceptance_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Package Acceptance Package Acceptance Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Package Acceptance"
+      }
+    },
     "/projects": {
       "get": {
         "operationId": "list_projects_projects_get",
@@ -7951,6 +8865,52 @@
           }
         },
         "summary": "Detect Project"
+      }
+    },
+    "/projects/disconnected": {
+      "get": {
+        "operationId": "list_disconnected_projects_projects_disconnected_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisconnectedProjectListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Disconnected Projects"
       }
     },
     "/projects/{project_id}": {
@@ -11561,6 +12521,72 @@
         "summary": "Git Status"
       }
     },
+    "/projects/{project_id}/identity-preview": {
+      "get": {
+        "operationId": "project_identity_preview_projects__project_id__identity_preview_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "path",
+            "required": true,
+            "schema": {
+              "title": "Path",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Project Identity Preview Projects  Project Id  Identity Preview Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Project Identity Preview"
+      }
+    },
     "/projects/{project_id}/impact/search": {
       "get": {
         "operationId": "impact_search_projects__project_id__impact_search_get",
@@ -12439,6 +13465,16 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectLocationRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "content": {
@@ -16331,6 +17367,160 @@
           }
         },
         "summary": "Open Data Folder"
+      }
+    },
+    "/tray/state": {
+      "get": {
+        "operationId": "tray_state_tray_state_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Tray State Tray State Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Tray State"
+      }
+    },
+    "/updates/check": {
+      "post": {
+        "operationId": "record_update_check_updates_check_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCheckRecordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Record Update Check Updates Check Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Record Update Check"
+      }
+    },
+    "/updates/status": {
+      "get": {
+        "operationId": "updater_status_updates_status_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Updater Status Updates Status Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Updater Status"
       }
     }
   }

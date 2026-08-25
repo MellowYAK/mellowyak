@@ -2168,8 +2168,9 @@ dependencies = [
 
 [[package]]
 name = "mellowyak-desktop"
-version = "0.1.0"
+version = "0.2.0-preview.1"
 dependencies = [
+ "minisign-verify",
  "rand 0.8.7",
  "serde",
  "serde_json",

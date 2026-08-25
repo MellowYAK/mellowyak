@@ -15,14 +15,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - os: macos-15-intel
+            target: macos-intel
+            bundles: app,dmg
           - os: macos-15
-            target: macos
+            target: macos-apple-silicon
             bundles: app,dmg
           - os: windows-2025
-            target: windows
+            target: windows-x64
             bundles: nsis
           - os: ubuntu-24.04
-            target: linux
+            target: linux-x64
             bundles: appimage,deb
     runs-on: ${{ matrix.os }}
     steps:
@@ -87,10 +90,18 @@ jobs:
             "$GITHUB_REPOSITORY" "$GITHUB_SHA" "$GITHUB_REF" "${{ matrix.target }}" \
             > "build-manifest/${{ matrix.target }}.json"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+      - name: Generate package checksums and immutable manifest
+        shell: bash
+        run: >-
+          python scripts/write_artifact_manifest.py
+          --root apps/desktop/src-tauri/target/release/bundle
+          --output "build-manifest/${{ matrix.target }}-artifacts.json"
+          --platform "${{ matrix.target }}"
       - uses: actions/upload-artifact@v4
         with:
           name: mellowyak-${{ matrix.target }}-${{ github.sha }}
           if-no-files-found: error
           path: |
             build-manifest/${{ matrix.target }}.json
+            build-manifest/${{ matrix.target }}-artifacts.json
             apps/desktop/src-tauri/target/release/bundle/**

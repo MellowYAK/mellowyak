@@ -1,0 +1,45 @@
+{
+  "counts": {
+    "committed_applies": 1,
+    "crash_recoveries": 4,
+    "demo_labs": 9,
+    "product_self_test_steps": 22,
+    "recovery_required_cases": 1,
+    "rolled_back_applies": 1,
+    "stale_blocks": 1
+  },
+  "database_schema": "0009_technical_preview_readiness",
+  "flow": {
+    "authentication_required": true,
+    "crash_fault_points": {
+      "after_all_writes_before_post_verify": "ROLLED_BACK_BYTE_IDENTICAL",
+      "after_first_file_operation": "ROLLED_BACK_BYTE_IDENTICAL",
+      "after_journal_before_first_write": "ROLLED_BACK_BYTE_IDENTICAL",
+      "during_rollback_after_first_restore": "ROLLED_BACK_BYTE_IDENTICAL"
+    },
+    "crash_journal_restart_loaded": true,
+    "demo_bad_candidate_rejected": true,
+    "loopback_only": true,
+    "no_external_network": true,
+    "no_orphan_processes": true,
+    "no_pending_recovery": true,
+    "post_apply_failure_rolled_back_byte_identically": true,
+    "real_projects_touched": false,
+    "recovery_bundle_redacted": true,
+    "recovery_required_stopped_writes": true,
+    "restart_history_reloaded": true,
+    "source_uploaded": false,
+    "stale_source_blocked_without_write": true,
+    "valid_candidate_applied_and_live_verified": true
+  },
+  "metrics": {
+    "apply_and_post_verification_seconds": 0.093085,
+    "candidate_generation_validation_seconds": 0.018914,
+    "cold_startup_seconds": 29.050024,
+    "failed_post_verify_and_rollback_seconds": 0.109035,
+    "product_self_test_seconds": 0.02343,
+    "restart_startup_seconds": 18.602042
+  },
+  "schema": "mellowyak.phase8_packaged_validation.v1",
+  "status": "VERIFIED_WORKING"
+}

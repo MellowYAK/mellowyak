@@ -51,6 +51,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - platform: macos-15-intel
+            bundles: app,dmg
           - platform: macos-15
             bundles: app,dmg
           - platform: windows-2025

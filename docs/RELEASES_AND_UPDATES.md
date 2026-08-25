@@ -1,5 +1,27 @@
 # Releases and in-app updates
 
+## Phase 9 Technical Preview package gate
+
+A Phase 9 package must be fresh from the exact candidate commit, report version
+`0.2.0-preview.1`, embed migration `0009_technical_preview_readiness`, preserve Phase 8 records and
+installation identity, and pass both packaged Phase 8 safety and Phase 9 readiness against the final
+sidecar. The gate uses isolated synthetic data and proves first-run persistence/replay, disconnected
+history, identity-safe reconnect/relocate, private tray/routes/diagnostics, support redaction, storage
+integrity, activity-mode safety, clean install, Phase 8 upgrade, single-instance, close-to-tray,
+explicit Quit, and zero orphans.
+
+The disposable local updater fixture must accept the correct signature and reject tamper, wrong key,
+lower/no-update replacement, and interrupted content without persisting its private key or changing
+production updater configuration. This fixture is not a public update service. A production updater
+claim still requires a higher, platform-signed, updater-signed immutable release and installed
+cross-version evidence.
+
+The current Intel macOS app/DMG may be used only as unsigned local operator evidence. Apple Silicon,
+Windows, and Linux matrices are workflow configuration until their native artifacts are built,
+installed, exercised, and inventoried. Public distribution remains blocked on platform signing,
+notarization where applicable, updater delivery, provenance, and real-project disposable-copy
+operator acceptance.
+
 ## Phase 8 package gate
 
 A Phase 8 package must be built fresh from the exact Phase 8 local commit. It must embed migration

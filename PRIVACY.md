@@ -1,5 +1,25 @@
 # Privacy
 
+## Phase 9 Technical Preview lifecycle and support data
+
+Phase 9 stores onboarding completion, local project-location history, diagnostic run summaries,
+support-bundle records, notification activation results, update/package validation summaries, and
+activity preferences beneath the platform application-data root. Reconnect and relocate retain only
+local identity/location metadata and never move, copy, delete, or edit source. Native tray and
+notification payloads use local stable identifiers and translated status aliases, not full paths,
+source, evidence, credentials, or tokens.
+
+Diagnostics and support exports are bounded and redacted. They exclude source/evidence bytes,
+cookies, authorization values, provider credentials, private signing keys, full home paths, complete
+environment dumps, user databases, and repair/snapshot content. The user creates the bundle locally
+and must inspect it before an explicit share; MellowYak has no support upload service.
+
+The production updater's ordinary HTTPS metadata check remains the only configured non-loopback
+product request. Phase 9's signer validation uses disposable loopback metadata and an ephemeral
+private key, makes no external request, persists no key, and does not alter production configuration.
+Packaged acceptance used isolated synthetic data and no real project. Phase 9 adds no account, cloud
+sync, analytics/usage uploader, model/provider access, APC dependency, or automatic source action.
+
 ## Phase 8 repair, Apply, recovery, and synthetic diagnostics
 
 Repair candidate records contain relative paths, operations, hashes, sizes, modes, classification,

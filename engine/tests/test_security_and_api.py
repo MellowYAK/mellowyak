@@ -66,7 +66,7 @@ def test_valid_token_and_first_setup_values(tmp_path: Path) -> None:
     assert body["status"] == "ready"
     assert body["mode"] == "local"
     assert body["database_status"] == "ready"
-    assert body["database_schema_version"] == "0008_validated_repair_apply"
+    assert body["database_schema_version"] == "0009_technical_preview_readiness"
     assert body["cloud_connected"] is False
     assert body["outbound_network_enabled"] is False
 
@@ -84,7 +84,7 @@ def test_valid_token_and_first_setup_values(tmp_path: Path) -> None:
     assert Path(paths["evidence"]).is_dir()
     installation = client.get("/installation", headers=authorized()).json()
     assert installation["installation_id"]
-    assert installation["database_schema_version"] == "0008_validated_repair_apply"
+    assert installation["database_schema_version"] == "0009_technical_preview_readiness"
 
 
 def test_unapproved_origin_is_rejected(tmp_path: Path) -> None:
@@ -116,7 +116,7 @@ def test_startup_performs_no_outbound_network(monkeypatch, tmp_path: Path) -> No
     monkeypatch.setattr(socket.socket, "connect", deny_connect)
     try:
         app = create_app(EngineSettings(data_root=tmp_path, session_token=TOKEN))
-        assert app.state.runtime.schema_version == "0008_validated_repair_apply"
+        assert app.state.runtime.schema_version == "0009_technical_preview_readiness"
         assert attempted == []
     finally:
         monkeypatch.setattr(socket.socket, "connect", original_connect)

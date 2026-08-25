@@ -22,7 +22,10 @@ from validate_packaged_phase7 import (
     write_report,
 )
 
-EXPECTED_DATABASE_SCHEMA = "0008_validated_repair_apply"
+SUPPORTED_DATABASE_SCHEMAS = {
+    "0008_validated_repair_apply",
+    "0009_technical_preview_readiness",
+}
 REPORT_SCHEMA = "mellowyak.phase8_packaged_validation.v1"
 AUTH_TOKEN = "packaged-phase-eight-validation-token-2026"
 FAULT_POINTS = (
@@ -155,8 +158,10 @@ def validate(engine: Path, work_root: Path) -> dict[str, Any]:
         metrics["cold_startup_seconds"] = round(time.monotonic() - started, 6)
         assert_authentication_required(base_url)
         health = request(base_url, "/health")
-        if health["database_schema_version"] != EXPECTED_DATABASE_SCHEMA:
-            raise AssertionError("packaged engine did not reach the Phase 8 migration")
+        if health["database_schema_version"] not in SUPPORTED_DATABASE_SCHEMAS:
+            raise AssertionError(
+                "packaged engine did not reach a Phase 8-compatible migration"
+            )
 
         self_test, metrics["product_self_test_seconds"] = timed(
             lambda: request(base_url, "/self-test", "POST", {})

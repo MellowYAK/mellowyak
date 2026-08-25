@@ -1,5 +1,18 @@
 # Contributing
 
+Phase 9 changes must preserve the Technical Preview boundary: onboarding and preferences remain
+local; reconnect/relocate never move source and require matching project identity; tray/notification
+payloads expose no source or full paths; activation routes are allowlisted; diagnostics/support
+exports remain bounded/redacted; and activity modes cannot weaken identity, recovery, verification,
+or Apply safeguards. Production updater signature verification may never be disabled, and test-only
+loopback/insecure updater configuration must remain isolated from product configuration.
+
+Before proposing Phase 9 changes, run source suites, translation-key/catalog/RTL checks, TypeScript,
+Vite, Ruff, Cargo, deterministic OpenAPI and migration matrix gates, relevant Phase 8 packaged safety,
+Phase 9 clean-install/upgrade/package acceptance, and platform-native lifecycle/orphan checks. Do not
+claim a configured workflow, unsigned package, deterministic notification handler, or local updater
+fixture as remote-platform, signing, OS-click, notarization, or production-update evidence.
+
 Phase 8 changes must preserve the validated-repair law: no unvalidated candidate reaches Apply; no
 live write occurs without explicit one-time confirmation; a fresh Safety Snapshot and durable journal
 precede writes; fresh live verification follows; failure restores only transaction-affected paths;

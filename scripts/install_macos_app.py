@@ -29,9 +29,7 @@ def main() -> None:
         raise SystemExit("install-macos is available only on macOS")
     arguments = set(sys.argv[1:])
     if arguments - {"--from-existing", "--no-launch"}:
-        raise SystemExit(
-            "usage: install_macos_app.py [--from-existing] [--no-launch]"
-        )
+        raise SystemExit("usage: install_macos_app.py [--from-existing] [--no-launch]")
     use_existing = "--from-existing" in arguments
     no_launch = "--no-launch" in arguments
     if not use_existing:

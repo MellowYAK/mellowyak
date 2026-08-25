@@ -1,6 +1,6 @@
 [package]
 name = "mellowyak-desktop"
-version = "0.1.0"
+version = "0.2.0-preview.1"
 description = "MellowYak local-first desktop shell"
 authors = ["MellowYak contributors"]
 edition = "2021"
@@ -27,3 +27,6 @@ sys-locale = "0.3"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-updater = "2"
+
+[dev-dependencies]
+minisign-verify = "0.2.5"

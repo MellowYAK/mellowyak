@@ -1,0 +1,52 @@
+{
+  "cases": [
+    {
+      "existing_data_preserved": true,
+      "from": "empty",
+      "to": "0009_technical_preview_readiness"
+    },
+    {
+      "existing_data_preserved": true,
+      "from": "0001_local_core",
+      "to": "0009_technical_preview_readiness"
+    },
+    {
+      "existing_data_preserved": true,
+      "from": "0002_project_git_impact",
+      "to": "0009_technical_preview_readiness"
+    },
+    {
+      "existing_data_preserved": true,
+      "from": "0003_reverse_impact_context",
+      "to": "0009_technical_preview_readiness"
+    },
+    {
+      "existing_data_preserved": true,
+      "from": "0004_behavior_evidence_browser",
+      "to": "0009_technical_preview_readiness"
+    },
+    {
+      "existing_data_preserved": true,
+      "from": "0005_verification_regression_gate",
+      "to": "0009_technical_preview_readiness"
+    },
+    {
+      "existing_data_preserved": true,
+      "from": "0006_desktop_productization",
+      "to": "0009_technical_preview_readiness"
+    },
+    {
+      "existing_data_preserved": true,
+      "from": "0007_runtime_snapshot_probe_foundation",
+      "to": "0009_technical_preview_readiness"
+    },
+    {
+      "existing_data_preserved": true,
+      "from": "0008_validated_repair_apply",
+      "to": "0009_technical_preview_readiness"
+    }
+  ],
+  "head": "0009_technical_preview_readiness",
+  "schema": "mellowyak.phase9.migration-matrix.v1",
+  "status": "VERIFIED_WORKING"
+}

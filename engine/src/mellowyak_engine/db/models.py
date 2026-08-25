@@ -999,6 +999,98 @@ class ApplicationPreference(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
+class OnboardingState(Base):
+    __tablename__ = "onboarding_state"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
+    completed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    current_step: Mapped[str] = mapped_column(String(40), nullable=False, default="welcome")
+    replay_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    selected_path: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class TechnicalPreviewPreference(Base):
+    __tablename__ = "technical_preview_preferences"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
+    activity_mode: Mapped[str] = mapped_column(String(30), nullable=False, default="normal")
+    notification_permission: Mapped[str] = mapped_column(
+        String(30), nullable=False, default="unknown"
+    )
+    updater_state: Mapped[str] = mapped_column(String(40), nullable=False, default="not_checked")
+    last_update_check_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class ProjectLocationHistory(Base):
+    __tablename__ = "project_location_history"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    action: Mapped[str] = mapped_column(String(30), nullable=False)
+    old_location_alias: Mapped[str] = mapped_column(String(80), nullable=False)
+    new_location_alias: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    expected_identity_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    observed_identity_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    decision: Mapped[str] = mapped_column(String(40), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class DiagnosticRun(Base):
+    __tablename__ = "diagnostic_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    summary_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class SupportBundleRecord(Base):
+    __tablename__ = "support_bundle_records"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    relative_path: Mapped[str] = mapped_column(Text, nullable=False)
+    manifest_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class NotificationActivationEvent(Base):
+    __tablename__ = "notification_activation_events"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("projects.id"), nullable=True
+    )
+    route_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    reason: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class UpdateValidationRun(Base):
+    __tablename__ = "update_validation_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    fixture: Mapped[str] = mapped_column(String(40), nullable=False)
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    details_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class PackageAcceptanceRun(Base):
+    __tablename__ = "package_acceptance_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    summary_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
 class ProjectLifecycleEvent(Base):
     __tablename__ = "project_lifecycle_events"
 

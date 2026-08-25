@@ -1,5 +1,24 @@
 # Security policy
 
+## Phase 9 Technical Preview boundary
+
+Reconnect and relocate require matching stable project identity and change only local metadata; they
+never move or write source. Tray content contains privacy-safe aliases/status, and notification
+activation accepts only allowlisted route kinds plus existing local identifiers. Forged, stale,
+malformed, unavailable, and cross-project routes fail closed. A second application launch reuses the
+existing process; close-to-tray retains supervision; explicit Quit terminates owned children.
+
+Diagnostics and support bundles are bounded/redacted and must exclude source/evidence bytes, full
+home paths, tokens, cookies, credentials, private keys, and arbitrary environment data. Updater
+signature verification remains mandatory. The Phase 9 loopback signer is disposable, uses an
+ephemeral unpersisted key, and cannot change production configuration. Activity modes may reduce
+refresh or animation but cannot bypass storage integrity, project/source identity, recovery,
+verification, or Apply safeguards.
+
+The local Intel macOS package is unsigned and unnotarized and has no public publisher trust. Other
+platform workflows are not runtime evidence. Public release remains blocked on native build/install,
+signing/notarization, updater, and operator acceptance evidence.
+
 ## Phase 8 validated repair and transaction boundary
 
 Candidate scanning rejects traversal, absolute/noncanonical paths, symlink escape, hard links,

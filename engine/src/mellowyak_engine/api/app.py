@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse, Response
 from mellowyak_engine import APP_VERSION, ENGINE_VERSION
 from mellowyak_engine.api.schemas import (
     ActionResponse,
+    ActivityModeRequest,
     AlertListResponse,
     AlertResponse,
     ApplyConfirmRequest,
@@ -39,6 +40,8 @@ from mellowyak_engine.api.schemas import (
     CurrentChangeResponse,
     DemoLabCreateRequest,
     DemoLabResponse,
+    DiagnosticsResponse,
+    DisconnectedProjectListResponse,
     EvidenceArtifactResponse,
     EvidenceBundleResponse,
     EvidenceListResponse,
@@ -57,8 +60,12 @@ from mellowyak_engine.api.schemas import (
     LocalExportResponse,
     MilestoneCreateRequest,
     MonitoringResponse,
+    NotificationActivationRequest,
     NotificationSettingsRequest,
+    OnboardingResponse,
+    OnboardingUpdateRequest,
     OpenDataFolderResponse,
+    PackageAcceptanceRecordRequest,
     PortableRepairRequest,
     PortableRepairResponse,
     PrivacySettingsResponse,
@@ -74,6 +81,7 @@ from mellowyak_engine.api.schemas import (
     ProjectDetectionResponse,
     ProjectDetectRequest,
     ProjectListResponse,
+    ProjectLocationRequest,
     ProjectNotificationRequest,
     ProjectRelocateRequest,
     ProjectResponse,
@@ -113,6 +121,8 @@ from mellowyak_engine.api.schemas import (
     SourceEpisodeResponse,
     StoragePathsResponse,
     UnreadCountResponse,
+    UpdateCheckRecordRequest,
+    UpdateFixtureRequest,
     VerificationRunResponse,
     VerificationStartRequest,
 )
@@ -159,6 +169,10 @@ from mellowyak_engine.security.auth import SessionTokenGuard
 from mellowyak_engine.settings.config import EngineSettings
 from mellowyak_engine.snapshots.service import SnapshotService, SnapshotServiceError
 from mellowyak_engine.storage.paths import StoragePaths
+from mellowyak_engine.technical_preview.service import (
+    TechnicalPreviewError,
+    TechnicalPreviewService,
+)
 from mellowyak_engine.verification.service import VerificationError, VerificationService
 
 
@@ -196,6 +210,7 @@ class EngineRuntime:
     portable_repairs: PortableRepairService
     demo_lab: DemoLabService
     self_test: ProductSelfTestService
+    technical_preview: TechnicalPreviewService
 
 
 def _open_folder(path: str) -> str:
@@ -243,6 +258,13 @@ def create_app(settings: EngineSettings) -> FastAPI:
     regressions = RegressionService(database.sessions, events)
     repair = RepairContextService(database.sessions, paths.root, events)
     productization = ProductizationService(database.sessions, paths.root, events)
+    technical_preview = TechnicalPreviewService(
+        database.sessions,
+        paths.root,
+        schema_version,
+        installation.id,
+        events,
+    )
     probes = ProbeService(database.sessions, events, snapshots, productization)
     episodes.bind_selection_callback(probes.select_impacted)
     repair_workspaces = RepairWorkspaceService(database.sessions, paths.root, events, _open_folder)
@@ -302,6 +324,7 @@ def create_app(settings: EngineSettings) -> FastAPI:
         portable_repairs=portable_repairs,
         demo_lab=demo_lab,
         self_test=self_test,
+        technical_preview=technical_preview,
     )
 
     app = FastAPI(
@@ -444,6 +467,14 @@ def create_app(settings: EngineSettings) -> FastAPI:
     @app.get("/projects", response_model=ProjectListResponse, dependencies=[Depends(guard)])
     def list_projects() -> ProjectListResponse:
         return ProjectListResponse(projects=projects.list())
+
+    @app.get(
+        "/projects/disconnected",
+        response_model=DisconnectedProjectListResponse,
+        dependencies=[Depends(guard)],
+    )
+    def list_disconnected_projects() -> DisconnectedProjectListResponse:
+        return DisconnectedProjectListResponse(projects=technical_preview.disconnected_projects())
 
     @app.post(
         "/projects/detect",
@@ -1514,22 +1545,25 @@ def create_app(settings: EngineSettings) -> FastAPI:
             raise product_error(error) from error
 
     @app.post("/projects/{project_id}/reconnect", dependencies=[Depends(guard)])
-    def reconnect_project(project_id: str) -> dict[str, object]:
+    def reconnect_project(project_id: str, request: ProjectLocationRequest) -> dict[str, object]:
         try:
-            result = productization.reconnect(project_id)
+            if request.path:
+                result = technical_preview.reconnect_or_relocate(
+                    project_id, request.path, "reconnect"
+                )
+            else:
+                result = productization.reconnect(project_id)
             monitoring.start(project_id)
             return result
-        except ProductizationError as error:
-            raise product_error(error) from error
+        except (ProductizationError, TechnicalPreviewError) as error:
+            raise product_error(ProductizationError(str(error))) from error
 
     @app.post("/projects/{project_id}/relocate", dependencies=[Depends(guard)])
     def relocate_project(project_id: str, request: ProjectRelocateRequest) -> dict[str, object]:
         try:
-            return productization.relocate(
-                project_id, request.path, request.confirm_identity_change
-            )
-        except ProductizationError as error:
-            raise product_error(error) from error
+            return technical_preview.reconnect_or_relocate(project_id, request.path, "relocate")
+        except (ProductizationError, TechnicalPreviewError) as error:
+            raise product_error(ProductizationError(str(error))) from error
 
     @app.post("/projects/{project_id}/delete-local-data", dependencies=[Depends(guard)])
     def delete_project_local_data(
@@ -2271,6 +2305,14 @@ def create_app(settings: EngineSettings) -> FastAPI:
     def run_product_self_test() -> ProductSelfTestResponse:
         return ProductSelfTestResponse(**self_test.run())
 
+    @app.post(
+        "/diagnostics/self-test",
+        response_model=ProductSelfTestResponse,
+        dependencies=[Depends(guard)],
+    )
+    def run_diagnostic_product_self_test() -> ProductSelfTestResponse:
+        return ProductSelfTestResponse(**self_test.run())
+
     @app.get(
         "/self-test/{run_id}",
         response_model=ProductSelfTestResponse,
@@ -2300,6 +2342,145 @@ def create_app(settings: EngineSettings) -> FastAPI:
             return LocalExportResponse(**self_test.export(run_id))
         except RuntimeError as error:
             raise phase8_error(error) from error
+
+    def technical_preview_error(error: TechnicalPreviewError) -> HTTPException:
+        code = str(error)
+        if code.endswith(("NOT_FOUND", "MISSING")):
+            status = 404
+        elif code.endswith(("INVALID", "REQUIRED")):
+            status = 400
+        else:
+            status = 409
+        return HTTPException(status_code=status, detail=code)
+
+    @app.get(
+        "/app/onboarding",
+        response_model=OnboardingResponse,
+        dependencies=[Depends(guard)],
+    )
+    def onboarding_state() -> OnboardingResponse:
+        return OnboardingResponse(**technical_preview.onboarding())
+
+    @app.put(
+        "/app/onboarding",
+        response_model=OnboardingResponse,
+        dependencies=[Depends(guard)],
+    )
+    def update_onboarding(request: OnboardingUpdateRequest) -> OnboardingResponse:
+        try:
+            result = technical_preview.update_onboarding(
+                current_step=request.current_step,
+                selected_path=request.selected_path,
+                completed=request.completed,
+            )
+            return OnboardingResponse(**result)
+        except TechnicalPreviewError as error:
+            raise technical_preview_error(error) from error
+
+    @app.post(
+        "/app/onboarding/replay",
+        response_model=OnboardingResponse,
+        dependencies=[Depends(guard)],
+    )
+    def replay_onboarding() -> OnboardingResponse:
+        return OnboardingResponse(**technical_preview.replay_onboarding())
+
+    @app.get("/app/activity-mode", dependencies=[Depends(guard)])
+    def activity_mode() -> dict[str, object]:
+        return technical_preview.preferences()
+
+    @app.put("/app/activity-mode", dependencies=[Depends(guard)])
+    def update_activity_mode(request: ActivityModeRequest) -> dict[str, object]:
+        try:
+            return technical_preview.preferences(request.activity_mode)
+        except TechnicalPreviewError as error:
+            raise technical_preview_error(error) from error
+
+    @app.get("/projects/{project_id}/identity-preview", dependencies=[Depends(guard)])
+    def project_identity_preview(project_id: str, path: str) -> dict[str, object]:
+        try:
+            return technical_preview.identity_preview(project_id, path)
+        except (OSError, TechnicalPreviewError) as error:
+            wrapped = (
+                error
+                if isinstance(error, TechnicalPreviewError)
+                else TechnicalPreviewError("PROJECT_PATH_MISSING")
+            )
+            raise technical_preview_error(wrapped) from error
+
+    @app.get("/tray/state", dependencies=[Depends(guard)])
+    def tray_state() -> dict[str, object]:
+        return technical_preview.tray_state()
+
+    @app.post("/notifications/activate", dependencies=[Depends(guard)])
+    def activate_notification(request: NotificationActivationRequest) -> dict[str, object]:
+        return technical_preview.validate_notification_route(request.route)
+
+    @app.get(
+        "/diagnostics",
+        response_model=DiagnosticsResponse,
+        dependencies=[Depends(guard)],
+    )
+    def diagnostics() -> DiagnosticsResponse:
+        return DiagnosticsResponse(**technical_preview.diagnostics())
+
+    @app.post("/diagnostics/storage-integrity", dependencies=[Depends(guard)])
+    def storage_integrity() -> dict[str, object]:
+        return technical_preview.storage_integrity()
+
+    @app.post("/diagnostics/support-bundle", dependencies=[Depends(guard)])
+    def export_support_bundle() -> dict[str, object]:
+        return technical_preview.export_support_bundle()
+
+    @app.get("/diagnostics/support-bundles/{bundle_id}", dependencies=[Depends(guard)])
+    def support_bundle(bundle_id: str) -> dict[str, object]:
+        try:
+            return technical_preview.support_bundle(bundle_id)
+        except TechnicalPreviewError as error:
+            raise technical_preview_error(error) from error
+
+    @app.get("/updates/status", dependencies=[Depends(guard)])
+    def updater_status() -> dict[str, object]:
+        return technical_preview.updater_status()
+
+    @app.post("/updates/check", dependencies=[Depends(guard)])
+    def record_update_check(request: UpdateCheckRecordRequest) -> dict[str, object]:
+        try:
+            return technical_preview.record_update_check(request.result)
+        except TechnicalPreviewError as error:
+            raise technical_preview_error(error) from error
+
+    @app.post(
+        "/updates/test/validate",
+        dependencies=[Depends(guard)],
+        include_in_schema=False,
+    )
+    def validate_update_fixture(request: UpdateFixtureRequest) -> dict[str, object]:
+        if os.environ.get("MELLOWYAK_DEMO_TEST_MODE") != "1":
+            raise HTTPException(status_code=404, detail="DEMO_TEST_MODE_DISABLED")
+        try:
+            return technical_preview.validate_update_fixture(request.fixture)
+        except TechnicalPreviewError as error:
+            raise technical_preview_error(error) from error
+
+    @app.get("/package-acceptance", dependencies=[Depends(guard)])
+    def package_acceptance() -> dict[str, object]:
+        return technical_preview.package_acceptance()
+
+    @app.post(
+        "/package-acceptance/run",
+        dependencies=[Depends(guard)],
+        include_in_schema=False,
+    )
+    def record_package_acceptance(
+        request: PackageAcceptanceRecordRequest,
+    ) -> dict[str, object]:
+        if os.environ.get("MELLOWYAK_DEMO_TEST_MODE") != "1":
+            raise HTTPException(status_code=404, detail="DEMO_TEST_MODE_DISABLED")
+        try:
+            return technical_preview.record_package_acceptance(request.status, request.summary)
+        except TechnicalPreviewError as error:
+            raise technical_preview_error(error) from error
 
     @app.get("/events", response_model=LocalEventListResponse, dependencies=[Depends(guard)])
     def local_events(after: int = Query(default=0, ge=0)) -> LocalEventListResponse:

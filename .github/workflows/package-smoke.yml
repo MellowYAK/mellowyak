@@ -20,6 +20,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - os: macos-15-intel
+            bundles: app,dmg
           - os: macos-15
             bundles: app,dmg
           - os: windows-2025

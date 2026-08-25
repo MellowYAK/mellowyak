@@ -675,14 +675,17 @@ The intended principle is:
 
 ## Project status
 
-MellowYak Phase 8 adds validated repair candidates, capability-separated Safe Apply, transaction rollback,
-a deterministic Demo Lab, and Product Self-Test on top of multiple versioned Runtime Profiles, Git-optional Source Identity v2, settled
+MellowYak Phase 9 adds a coherent Technical Preview lifecycle—upgrade-safe first run, disconnected
+project recovery, identity-safe reconnect/relocate, dynamic tray, route-safe notifications,
+diagnostics, redacted support export, signed-update fixtures, install/upgrade gates, and activity
+modes—on top of Phase 8 validated repair candidates, capability-separated Safe Apply, transaction
+rollback, deterministic Demo Lab, and Product Self-Test. The product also retains multiple versioned Runtime Profiles, Git-optional Source Identity v2, settled
 Episodes, incremental content-addressed Save Points, explicit known-good milestones, Browser/API/CLI/
 Process/Test/Manual Probes, deterministic evidence states, and isolated Repair Workspaces to the
 Phase 1–6 foundation. It is not a released product. A changed file or dependency is only a reason to
 recheck; only comparable reproducible prior-PASS/current-FAIL evidence can support a confirmed
 regression. Exact completion, package, and platform status is authoritative only in
-[`docs/validation/PHASE_7_RUNTIME_MEMORY_PROBE_VALIDATION_REPORT.md`](docs/validation/PHASE_7_RUNTIME_MEMORY_PROBE_VALIDATION_REPORT.md).
+[`docs/validation/PHASE_9_TECHNICAL_PREVIEW_READINESS_REPORT.md`](docs/validation/PHASE_9_TECHNICAL_PREVIEW_READINESS_REPORT.md).
 
 The complete workflow described in this README is the product direction. Implementation must advance through verified stages.
 
@@ -819,6 +822,30 @@ filesystem atomicity. Local packages remain unsigned and unnotarized.
 
 Phase 8 documentation and synthetic screenshots are indexed in
 [`docs/phase-8-delivery/README.md`](docs/phase-8-delivery/README.md).
+
+### Phase 9 — Technical Preview readiness
+
+- implemented persisted first run with replay and upgrade-safe skip for existing installations;
+- implemented disconnected-project visibility and identity-checked reconnect/relocate without moving source;
+- implemented privacy-safe dynamic native tray state, single-instance focus, close-to-tray, and explicit Quit;
+- implemented allowlisted notification activation routes with in-app fallback and safe rejection of forged/stale routes;
+- implemented local diagnostics, storage integrity, bounded diagnostic copy data, and redacted support bundles;
+- implemented a disposable loopback signed-updater validator covering valid, tampered, wrong-key, lower/no-update, and interrupted content;
+- implemented clean-install, Phase 8 upgrade, package acceptance, artifact inventory, and current-platform lifecycle evidence;
+- implemented Active/Balanced/Battery Saver behavior without weakening identity, recovery, integrity, verification, or Apply safeguards;
+- configured native macOS Intel/Apple Silicon, Windows x64, and Linux x64 build jobs with honest per-platform status;
+- added migration `0009_technical_preview_readiness` while preserving migrations `0001`–`0008` and existing installation identity/data;
+- retained translation-key-only English/Hebrew UI with complete Hebrew RTL, reduced motion, focus, and zoom/reflow behavior.
+
+Phase 9 does **not** add cloud sync, accounts, analytics upload, model/provider SDKs, prompt/history
+access, automatic repair or Apply, Git push, deployment, APC runtime dependency, public release, or a
+real-project acceptance claim. The Intel macOS package is locally verified but unsigned and
+unnotarized. Apple Silicon, Windows, Linux, production updater delivery, and physical native
+notification-click behavior remain explicitly unverified.
+
+Phase 9 implementation, exact evidence, screenshots/PDF, package inventory, platform/signing matrix,
+security review, troubleshooting, and operator acceptance guidance are indexed in
+[`docs/phase-9-delivery/README.md`](docs/phase-9-delivery/README.md).
 
 ---
 

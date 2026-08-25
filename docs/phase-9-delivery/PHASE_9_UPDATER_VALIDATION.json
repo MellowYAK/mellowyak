@@ -1,0 +1,16 @@
+{
+  "ephemeral_private_key": true,
+  "interrupted_download_rejected": true,
+  "loopback_metadata": true,
+  "lower_fixture_preserved": true,
+  "newer_update_detected": true,
+  "no_update": true,
+  "private_key_persisted": false,
+  "production_configuration_changed": false,
+  "production_updater": "IMPLEMENTED_NOT_RUNTIME_VERIFIED",
+  "schema": "mellowyak.phase9.local-updater-validation.v1",
+  "status": "VERIFIED_WORKING",
+  "tampered_artifact_rejected": true,
+  "valid_signature": true,
+  "wrong_key_rejected": true
+}

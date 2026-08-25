@@ -20,6 +20,85 @@ export interface SetupSnapshot {
   storage: StoragePaths;
 }
 
+export interface OnboardingState {
+  completed: boolean;
+  current_step: string;
+  replay_active: boolean;
+  selected_path: "real_project" | "demo_lab" | "existing_installation" | null;
+  completed_at: string | null;
+  requires_first_run: boolean;
+  source_modified: false;
+}
+
+export interface DisconnectedProject {
+  project_id: string;
+  project_name: string;
+  state: "CONNECTED" | "DISCONNECTED" | "MISSING" | "PAUSED" | "NEEDS_ATTENTION";
+  last_known_safe_path: string;
+  last_source_identity: { head_sha: string | null; worktree_fingerprint: string | null };
+  disconnect_time: string | null;
+  data_retained: boolean;
+  data_size_bytes: number;
+  behavior_count: number;
+  regression_count: number;
+  last_activity: string;
+  source_modified: false;
+}
+
+export interface Diagnostics {
+  run_id: string;
+  desktop_version: string;
+  engine_version: string;
+  schema_migration: string;
+  installation_identity: string;
+  local_api_state: string;
+  loopback_address: string;
+  bearer_token_exposed: false;
+  data_root: "<DATA_ROOT>";
+  data_root_size_bytes: number;
+  evidence_size_bytes: number;
+  projects: number;
+  snapshot_objects: number;
+  incomplete_transactions: number;
+  recovery_required: number;
+  browser_runtime_available: boolean;
+  runtime_adapter_available: boolean;
+  tray: TrayState;
+  notification_permission: string;
+  updater_state: string;
+  signing_state: string;
+  platform: string;
+  architecture: string;
+  recent_engine_starts: string[];
+  self_test_last_result: string;
+  outbound_product_network: false;
+  cloud_connected: false;
+}
+
+export interface TrayState {
+  state: string;
+  unread_alert_count: number;
+  critical_alert_count: number;
+  active_project_count: number;
+  paused_project_count: number;
+  quiet_mode_active?: boolean;
+  projects: Array<{ project_id: string; name: string; monitoring_state: string; muted: boolean }>;
+  recent_alerts: Array<{ alert_id: string; severity: string; title_key: string }>;
+  private_paths_exposed: false;
+  source_content_exposed: false;
+}
+
+export interface ActivityPreferences {
+  activity_mode: "normal" | "reduced" | "battery_saver";
+  notification_permission: string;
+  updater_state: string;
+  last_update_check_at: string | null;
+  core_file_observation: true;
+  snapshot_correctness: true;
+  critical_alerts: true;
+  deferred: string[];
+}
+
 export type StartupStatus =
   | "starting"
   | "loading_database"
@@ -908,6 +987,88 @@ export async function openDataFolder(): Promise<void> {
 export async function listProjects(): Promise<Project[]> {
   const response = await engineFetch<{ projects: Project[] }>("/projects");
   return response.projects;
+}
+
+export async function getOnboarding(): Promise<OnboardingState> {
+  return engineFetch<OnboardingState>("/app/onboarding");
+}
+
+export async function updateOnboarding(
+  currentStep: string,
+  selectedPath: OnboardingState["selected_path"],
+  completed = false,
+): Promise<OnboardingState> {
+  return engineFetch<OnboardingState>("/app/onboarding", {
+    method: "PUT",
+    body: JSON.stringify({ current_step: currentStep, selected_path: selectedPath, completed }),
+  });
+}
+
+export async function replayOnboarding(): Promise<OnboardingState> {
+  return engineFetch<OnboardingState>("/app/onboarding/replay", { method: "POST", body: "{}" });
+}
+
+export async function listDisconnectedProjects(): Promise<DisconnectedProject[]> {
+  const response = await engineFetch<{ projects: DisconnectedProject[] }>("/projects/disconnected");
+  return response.projects;
+}
+
+export async function previewProjectIdentity(projectId: string, path: string): Promise<Record<string, unknown>> {
+  return engineFetch(`/projects/${encodeURIComponent(projectId)}/identity-preview?path=${encodeURIComponent(path)}`);
+}
+
+export async function reconnectProject(projectId: string, path: string): Promise<Record<string, unknown>> {
+  return engineFetch(`/projects/${encodeURIComponent(projectId)}/reconnect`, {
+    method: "POST",
+    body: JSON.stringify({ path }),
+  });
+}
+
+export async function relocateProject(projectId: string, path: string): Promise<Record<string, unknown>> {
+  return engineFetch(`/projects/${encodeURIComponent(projectId)}/relocate`, {
+    method: "POST",
+    body: JSON.stringify({ path }),
+  });
+}
+
+export async function getDiagnostics(): Promise<Diagnostics> {
+  return engineFetch<Diagnostics>("/diagnostics");
+}
+
+export async function verifyStorageIntegrity(): Promise<Record<string, unknown>> {
+  return engineFetch("/diagnostics/storage-integrity", { method: "POST", body: "{}" });
+}
+
+export async function exportSupportBundle(): Promise<Record<string, unknown>> {
+  return engineFetch("/diagnostics/support-bundle", { method: "POST", body: "{}" });
+}
+
+export async function getActivityPreferences(): Promise<ActivityPreferences> {
+  return engineFetch<ActivityPreferences>("/app/activity-mode");
+}
+
+export async function setActivityMode(
+  activityMode: ActivityPreferences["activity_mode"],
+): Promise<ActivityPreferences> {
+  return engineFetch<ActivityPreferences>("/app/activity-mode", {
+    method: "PUT",
+    body: JSON.stringify({ activity_mode: activityMode }),
+  });
+}
+
+export async function getTrayState(): Promise<TrayState> {
+  return engineFetch<TrayState>("/tray/state");
+}
+
+export async function updateNativeTray(state: TrayState): Promise<void> {
+  await invoke("update_tray_state", { state });
+}
+
+export async function validateNotificationRoute(route: Record<string, string>): Promise<Record<string, unknown>> {
+  return engineFetch("/notifications/activate", {
+    method: "POST",
+    body: JSON.stringify({ route }),
+  });
 }
 
 export async function detectProject(path: string): Promise<ProjectDetection> {

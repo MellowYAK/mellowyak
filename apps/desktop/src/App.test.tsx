@@ -22,6 +22,8 @@ const responses: Record<string, unknown> = {
   "/settings/privacy": { mode: "local", cloud_connected: false, outbound_network_enabled: false, source_upload_enabled: false, telemetry_upload_enabled: false, account_required: false },
   "/storage/paths": { data_root: "/local/MellowYak", database: "/local/MellowYak/database", evidence: "/local/MellowYak/evidence", projects: "/local/MellowYak/projects", cache: "/local/MellowYak/cache", logs: "/local/MellowYak/logs", runtime: "/local/MellowYak/runtime", backups: "/local/MellowYak/backups" },
   "/projects": { projects: [] },
+  "/app/onboarding": { completed: true, current_step: "complete", replay_active: false, selected_path: "existing_installation", completed_at: "2026-08-25T00:00:00Z", requires_first_run: false, source_modified: false },
+  "/tray/state": { state: "MONITORING", unread_alert_count: 0, critical_alert_count: 0, active_project_count: 0, paused_project_count: 0, projects: [], recent_alerts: [], private_paths_exposed: false, source_content_exposed: false },
   "/projects/detect": {
     selected_path: "/work/demo", repository_path: "/work/demo", suggested_name: "demo",
     git: { available: true, branch: "main", head_sha: "1234567890abcdef", is_detached: false, is_dirty: true, staged: ["src/a.ts"], unstaged: [], untracked: ["notes.txt"], ignored_count: 2, worktree_fingerprint: "fp", error: null },
@@ -50,6 +52,7 @@ beforeEach(() => {
   tauriInvoke.mockResolvedValue({ host: "127.0.0.1", port: 43123, token: "memory-only" });
   responses["/projects"] = { projects: [] };
   responses["/readiness"] = { ready: true, checks: { local_only: true, database_ready: true } };
+  responses["/app/onboarding"] = { completed: true, current_step: "complete", replay_active: false, selected_path: "existing_installation", completed_at: "2026-08-25T00:00:00Z", requires_first_run: false, source_modified: false };
   vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
     const path = new URL(String(input)).pathname;
     return new Response(JSON.stringify(responses[path]), { status: 200, headers: { "Content-Type": "application/json" } });
@@ -61,7 +64,66 @@ test("waits for an asynchronously starting packaged engine without crashing", as
   render(<App />);
   expect(screen.getByText("Preparing your local engine")).toBeInTheDocument();
   await waitFor(() => expect(screen.getByText("Running")).toBeInTheDocument());
-  expect(tauriInvoke).toHaveBeenCalledTimes(2);
+  expect(tauriInvoke.mock.calls.length).toBeGreaterThanOrEqual(2);
+});
+
+test("keeps the translated alert poll stable between scheduled refreshes", async () => {
+  render(<App />);
+  await waitFor(() => expect(screen.getByText("Running")).toBeInTheDocument());
+  await new Promise((resolve) => window.setTimeout(resolve, 100));
+  const fetchMock = vi.mocked(fetch);
+  const alertCalls = () => fetchMock.mock.calls.filter(([input]) => new URL(String(input)).pathname === "/alerts").length;
+  const initialCalls = alertCalls();
+  await new Promise((resolve) => window.setTimeout(resolve, 300));
+  expect(alertCalls()).toBe(initialCalls);
+});
+
+test("renders deterministic Phase 9 diagnostics and Hebrew RTL capture states", async () => {
+  window.history.replaceState({}, "", "/?phase9State=diagnostics");
+  render(<App />);
+  expect(screen.getByRole("heading", { name: "Diagnostics Center" })).toBeInTheDocument();
+  cleanup();
+  window.history.replaceState({}, "", "/?phase9State=hebrew-diagnostics");
+  render(<App />);
+  await waitFor(() => expect(document.documentElement.dir).toBe("rtl"));
+  expect(screen.getByRole("heading", { name: "מרכז האבחון בעברית ובכיוון מימין לשמאל" })).toBeInTheDocument();
+});
+
+test("shows persisted first run and completes the synthetic Demo Lab choice", async () => {
+  const onboarding = {
+    completed: false,
+    current_step: "welcome",
+    replay_active: false,
+    selected_path: null,
+    completed_at: null,
+    requires_first_run: true,
+    source_modified: false,
+  };
+  responses["/app/onboarding"] = onboarding;
+  vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = new URL(String(input)).pathname;
+    if (path === "/app/onboarding" && init?.method === "PUT") {
+      const request = JSON.parse(String(init.body)) as { current_step: string; selected_path: string | null; completed: boolean };
+      Object.assign(onboarding, {
+        current_step: request.current_step,
+        selected_path: request.selected_path,
+        completed: request.completed,
+        requires_first_run: !request.completed,
+      });
+      return new Response(JSON.stringify(onboarding), { status: 200 });
+    }
+    return new Response(JSON.stringify(responses[path]), { status: 200, headers: { "Content-Type": "application/json" } });
+  }));
+  render(<App />);
+  expect(await screen.findByRole("heading", { name: "Welcome to MellowYak" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+  fireEvent.click(await screen.findByRole("button", { name: /Try the synthetic Demo Lab/ }));
+  await waitFor(() => expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled());
+  fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+  await waitFor(() => expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled());
+  fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Finish setup" }));
+  expect(await screen.findByRole("heading", { name: "Try MellowYak with a Demo Project" })).toBeInTheDocument();
 });
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });

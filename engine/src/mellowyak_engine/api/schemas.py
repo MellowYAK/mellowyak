@@ -439,6 +439,81 @@ class BackgroundSettingsRequest(BaseModel):
     start_at_login: bool | None = None
 
 
+class OnboardingUpdateRequest(BaseModel):
+    current_step: str = Field(min_length=1, max_length=40)
+    selected_path: str | None = Field(default=None, max_length=40)
+    completed: bool = False
+
+
+class ProjectLocationRequest(BaseModel):
+    path: str | None = Field(default=None, min_length=1, max_length=4000)
+
+
+class ActivityModeRequest(BaseModel):
+    activity_mode: str = Field(min_length=1, max_length=30)
+
+
+class NotificationActivationRequest(BaseModel):
+    route: dict[str, object]
+
+
+class UpdateFixtureRequest(BaseModel):
+    fixture: str = Field(min_length=1, max_length=40)
+
+
+class UpdateCheckRecordRequest(BaseModel):
+    result: str = Field(default="NO_UPDATE", max_length=40)
+
+
+class PackageAcceptanceRecordRequest(BaseModel):
+    status: str = Field(max_length=20)
+    summary: dict[str, object] = Field(default_factory=dict)
+
+
+class OnboardingResponse(BaseModel):
+    completed: bool
+    current_step: str
+    replay_active: bool
+    selected_path: str | None
+    completed_at: str | None
+    requires_first_run: bool
+    source_modified: bool
+
+
+class DisconnectedProjectListResponse(BaseModel):
+    projects: list[dict[str, object]]
+
+
+class DiagnosticsResponse(BaseModel):
+    run_id: str
+    desktop_version: str
+    engine_version: str
+    schema_migration: str
+    installation_identity: str
+    local_api_state: str
+    loopback_address: str
+    bearer_token_exposed: bool
+    data_root: str
+    data_root_size_bytes: int
+    evidence_size_bytes: int
+    projects: int
+    snapshot_objects: int
+    incomplete_transactions: int
+    recovery_required: int
+    browser_runtime_available: bool
+    runtime_adapter_available: bool
+    tray: dict[str, object]
+    notification_permission: str
+    updater_state: str
+    signing_state: str
+    platform: str
+    architecture: str
+    recent_engine_starts: list[str]
+    self_test_last_result: str
+    outbound_product_network: bool
+    cloud_connected: bool
+
+
 class RuntimeProfileCreateRequest(BaseModel):
     display_name: str = Field(min_length=1, max_length=240)
     runtime_type: str = Field(min_length=1, max_length=40)

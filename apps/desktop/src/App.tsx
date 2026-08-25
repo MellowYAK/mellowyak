@@ -16,17 +16,23 @@ import {
   listProjects,
   getNotificationSettings,
   getQuietMode,
+  getOnboarding,
+  getTrayState,
   loadStartup,
   openDataFolder,
   openProjectFolder,
+  replayOnboarding,
   searchImpact,
   setChangeIntent,
   setProjectMonitoring,
+  setProjectMuted,
   startProjectScan,
   startQuietMode,
   stopQuietMode,
   showDesktopNotification,
   takePendingDesktopRoute,
+  updateNativeTray,
+  validateNotificationRoute,
   updateBehaviorCandidate,
   type BehaviorCandidate,
   type Change,
@@ -39,6 +45,7 @@ import {
   type SetupSnapshot,
   type StartupStatus,
   type LocalAlert,
+  type OnboardingState,
 } from "./api";
 import { useI18n, type Locale, type TranslationKey } from "./i18n";
 import { mascotAssets, type MascotId } from "./mascots";
@@ -52,9 +59,17 @@ import { ReadyWithLimitsDetails } from "./Phase7Details";
 import { RuntimeScreen } from "./RuntimeScreen";
 import { RuntimeWizard } from "./RuntimeWizard";
 import { Phase8Experience, phase8CaptureStates, type Phase8CaptureState } from "./Phase8Experience";
+import {
+  DiagnosticsCenter,
+  DisconnectedProjectsManager,
+  FirstRunExperience,
+  Phase9Capture,
+  phase9CaptureStates,
+  type Phase9CaptureState,
+} from "./Phase9Experience";
 
 type ProjectScreen = "project" | "change" | "impact" | "behaviors" | "runtime" | "memory";
-type Screen = "home" | "projects" | "alerts" | "settings" | "lab" | "add" | "runtimeSetup" | ProjectScreen;
+type Screen = "home" | "projects" | "disconnected" | "alerts" | "settings" | "diagnostics" | "lab" | "add" | "runtimeSetup" | ProjectScreen;
 type Tone = "good" | "warn" | "neutral";
 
 function StatusRow({ label, value, tone = "neutral" }: { label: string; value: string; tone?: Tone }) {
@@ -177,10 +192,13 @@ export function App() {
   const [startupAttempt, setStartupAttempt] = useState(0);
   const [focusBehaviorId, setFocusBehaviorId] = useState<string | null>(null);
   const [alerts, setAlerts] = useState<LocalAlert[]>([]);
+  const [onboarding, setOnboarding] = useState<OnboardingState | null>(null);
   const notifiedAlerts = useRef(new Set<string>());
   const notificationsPrimed = useRef(false);
   const captureStateValue = new URLSearchParams(window.location.search).get("phase8State");
   const captureState = phase8CaptureStates.includes(captureStateValue as Phase8CaptureState) ? captureStateValue as Phase8CaptureState : null;
+  const phase9StateValue = new URLSearchParams(window.location.search).get("phase9State");
+  const phase9CaptureState = phase9CaptureStates.includes(phase9StateValue as Phase9CaptureState) ? phase9StateValue as Phase9CaptureState : null;
 
   const productT = useCallback((key: string, parameters: Record<string, string | number> = {}) => t(key as TranslationKey, parameters), [t]);
 
@@ -189,16 +207,39 @@ export function App() {
 
   useEffect(() => {
     const navigate = (event: Event) => {
-      const destination = (event as CustomEvent<string>).detail as Screen;
-      if (["home", "projects", "alerts", "settings", "lab"].includes(destination)) setScreen(destination);
+      const rawValue = (event as CustomEvent<unknown>).detail;
+      if (typeof rawValue !== "string") return;
+      const raw = rawValue;
+      let destination = raw as Screen;
+      if (raw.startsWith("{")) {
+        try {
+          const route = JSON.parse(raw) as { screen?: string; project_id?: string };
+          destination = (route.screen ?? "alerts") as Screen;
+          const project = projects.find((item) => item.id === route.project_id);
+          if (project) {
+            setSelected(project);
+            destination = route.screen === "change" || route.screen === "recovery" ? "change" : route.screen === "behaviors" ? "behaviors" : route.screen === "runtime" ? "runtime" : "project";
+          } else if (route.project_id) destination = "alerts";
+        } catch { destination = "alerts"; }
+      }
+      if (["home", "projects", "disconnected", "alerts", "settings", "diagnostics", "lab"].includes(destination)) setScreen(destination);
+      else if (destination.startsWith("project:")) {
+        const project = projects.find((item) => item.id === destination.slice(8));
+        if (project) {
+          setSelected(project);
+          setImpact(null);
+          setError("");
+          setScreen("project");
+        }
+      }
     };
     window.addEventListener("mellowyak:navigate", navigate);
     return () => window.removeEventListener("mellowyak:navigate", navigate);
-  }, []);
+  }, [projects]);
 
   useEffect(() => {
-    if (captureState?.startsWith("hebrew-") && locale !== "he") setLocale("he");
-  }, [captureState, locale, setLocale]);
+    if ((captureState?.startsWith("hebrew-") || phase9CaptureState?.startsWith("hebrew-")) && locale !== "he") setLocale("he");
+  }, [captureState, locale, phase9CaptureState, setLocale]);
 
   useEffect(() => {
     let active = true;
@@ -209,9 +250,18 @@ export function App() {
       if (event.payload === "off") void stopQuietMode();
       else void startQuietMode(event.payload as "one_hour" | "until_tomorrow");
     }).then((cleanup) => active ? cleanups.push(cleanup) : cleanup()).catch(() => undefined);
+    void listen<string>("mellowyak:project-action", (event) => {
+      const separator = event.payload.indexOf(":");
+      const action = event.payload.slice(0, separator);
+      const projectId = event.payload.slice(separator + 1);
+      const project = projects.find((item) => item.id === projectId);
+      if (!project) return;
+      if (action === "pause-project") void setProjectMonitoring(projectId, project.monitoring_status !== "active").then(reloadProjects);
+      if (action === "mute-project") void setProjectMuted(projectId, !project.notifications_muted).then(reloadProjects);
+    }).then((cleanup) => active ? cleanups.push(cleanup) : cleanup()).catch(() => undefined);
     void takePendingDesktopRoute().then((destination) => { if (destination) route(destination); }).catch(() => undefined);
     return () => { active = false; cleanups.forEach((cleanup) => cleanup()); };
-  }, []);
+  }, [projects, reloadProjects]);
 
   useEffect(() => {
     if (startupVisible) return;
@@ -221,6 +271,8 @@ export function App() {
         const items = await listAlerts("all");
         if (!active) return;
         setAlerts(items);
+        const tray = await getTrayState();
+        await updateNativeTray(tray).catch(() => undefined);
         if (!notificationsPrimed.current) {
           items.forEach((item) => notifiedAlerts.current.add(item.id));
           notificationsPrimed.current = true;
@@ -252,12 +304,14 @@ export function App() {
           const summary = redactDetails
             ? productT("alerts.privateSummary")
             : productT(item.summary_key, parameters);
-          await showDesktopNotification(productT(item.title_key, parameters), summary, "alerts").catch(() => undefined);
+          const validated = await validateNotificationRoute(item.route as Record<string, string>).catch(() => ({ status: "REJECTED", route: { screen: "alerts" } }));
+          const destination = validated.status === "ACCEPTED" ? JSON.stringify(validated.route) : "alerts";
+          await showDesktopNotification(productT(item.title_key, parameters), summary, destination).catch(() => undefined);
         }
       } catch { /* the local engine reports its own recoverable state */ }
     };
     void poll();
-    const interval = window.setInterval(() => void poll(), 5000);
+    const interval = window.setInterval(() => void poll(), 15_000);
     return () => { active = false; window.clearInterval(interval); };
   }, [productT, projects, startupVisible]);
 
@@ -274,11 +328,15 @@ export function App() {
     setStartupStatus("starting");
     setStartupVisible(true);
     timers.push(window.setTimeout(() => active && setStartupSlow(true), 10_000));
-    loadStartup((next) => { currentStep = next; if (active) setStartupStatus(next); })
-      .then(({ snapshot: setup, projects: saved }) => {
+    Promise.all([
+      loadStartup((next) => { currentStep = next; if (active) setStartupStatus(next); }),
+      getOnboarding(),
+    ])
+      .then(([{ snapshot: setup, projects: saved }, onboardingState]) => {
         if (!active) return;
         setSnapshot(setup);
         setProjects(saved);
+        setOnboarding(onboardingState);
         void reloadAlerts().catch(() => undefined);
         const minimumRemaining = Math.max(0, 800 - (Date.now() - startedAt));
         timers.push(window.setTimeout(() => {
@@ -400,15 +458,23 @@ export function App() {
     return Math.min(100, Math.round(selected.scan.processed_files * 100 / selected.scan.total_candidates));
   }, [selected]);
 
+  if (phase9CaptureState) return <main className="app-shell" dir={direction} data-phase9-state={phase9CaptureState}><Header home={() => undefined} locale={locale} setLocale={setLocale} t={t} updater={updater} /><Phase9Capture t={t} state={phase9CaptureState} /></main>;
+
   if (captureState) return <main className="app-shell" dir={direction}><Header home={() => undefined} locale={locale} setLocale={setLocale} t={t} updater={updater} /><Phase8Experience t={t} captureState={captureState} /></main>;
 
   if (startupVisible) return <StartupScreen status={startupStatus} failedStep={startupFailedStep} leaving={startupLeaving} error={startupError} slow={startupSlow} retry={() => setStartupAttempt((attempt) => attempt + 1)} locale={locale} setLocale={setLocale} t={t} errorText={errorText} updater={updater} />;
 
+  if (onboarding?.requires_first_run || onboarding?.replay_active) return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} /><FirstRunExperience state={onboarding} t={t} onAddProject={() => setScreen("add")} onDemo={() => setScreen("lab")} onComplete={setOnboarding} /></main>;
+
   if (screen === "projects") return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} /><ProjectsScreen projects={projects} t={productT} openProject={openProject} reload={reloadProjects} add={() => setScreen("add")} /></main>;
+
+  if (screen === "disconnected") return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} /><DisconnectedProjectsManager t={t} /></main>;
+
+  if (screen === "diagnostics") return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} /><DiagnosticsCenter t={t} runSelfTest={() => setScreen("lab")} /></main>;
 
   if (screen === "alerts") return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} /><AlertsScreen t={productT} openRoute={(alert) => { const project = projects.find((item) => item.id === alert.project_id); if (project) openProject(project, alert.regression_id || alert.gate_id ? "change" : "project"); }} /></main>;
 
-  if (screen === "settings") return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} /><SettingsScreen t={productT} /><section className="panel"><div className="section-head"><div><h2>{t("phase8.selfTest.title")}</h2><p className="muted">{t("phase8.selfTest.disposable")}</p></div><button className="primary" onClick={() => setScreen("lab")}>{t("phase8.selfTest.run")}</button></div></section></main>;
+  if (screen === "settings") return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} /><SettingsScreen t={productT} /><section className="panel"><div className="section-head"><div><h2>{t("phase8.selfTest.title")}</h2><p className="muted">{t("phase8.selfTest.disposable")}</p></div><button className="primary" onClick={() => setScreen("lab")}>{t("phase8.selfTest.run")}</button></div></section><section className="panel"><div className="section-head"><div><h2>{t("phase9.settings.tools.title")}</h2><p className="muted">{t("phase9.settings.tools.body")}</p></div><div className="button-row"><button onClick={() => void replayOnboarding().then(setOnboarding)}>{t("phase9.settings.replay")}</button><button onClick={() => setScreen("disconnected")}>{t("phase9.disconnected.title")}</button><button onClick={() => setScreen("diagnostics")}>{t("phase9.diagnostics.title")}</button></div></div></section></main>;
 
   if (screen === "lab") return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} />{error && <section className="panel error" role="alert">{errorText(error)}</section>}<Phase8Experience t={t} onError={setError} /></main>;
 
@@ -506,7 +572,7 @@ export function App() {
     {error ? <section className="panel error" role="alert"><h2>{t("home.engineUnavailable")}</h2><p>{errorText(error)}</p></section> : snapshot ? <>
       {projects.length ? <section className="project-list"><div className="section-head"><h2>{t("home.connectedProjects")}</h2><button className="primary" onClick={() => setScreen("add")}>{t("home.addProject")}</button></div>{projects.map((project) => { const ready = readiness(project, t); return <button className="project-card" key={project.id} onClick={() => { setSelected(project); setImpact(null); setScreen("project"); }}><span><strong>{project.display_name}</strong><small>{project.repository_path}</small></span><span className={`readiness ${ready.tone}`}>{ready.label}</span></button>; })}</section>
         : <div className="content-grid"><section className="panel"><div className="section-head"><h2>{t("home.verifiedStatus")}</h2><span className="live-dot">{t("common.live")}</span></div><StatusRow label={t("home.localEngine")} value={snapshot.health.status === "ready" ? t("home.running") : status(snapshot.health.status)} tone="good" /><StatusRow label={t("home.storage")} value={snapshot.storage.data_root} /><StatusRow label={t("home.database")} value={t("home.sqliteLocal")} tone="good" /><StatusRow label={t("home.networkMode")} value={t("common.localOnly")} tone="good" /><StatusRow label={t("home.cloud")} value={snapshot.privacy.cloud_connected ? t("home.connected") : t("home.notConnected")} /></section><section className="panel privacy-card"><h2>{t("home.privateTitle")}</h2><ul><li>{t("home.codeLocal")}</li><li>{t("home.projectLocal")}</li><li>{t("home.evidenceLocal")}</li></ul><p>{t("home.connectorNotice")}</p><div className="versions"><span>{t("common.app")} <strong>{snapshot.health.app_version}</strong></span><span>{t("common.engine")} <strong>{snapshot.health.engine_version}</strong></span><span>{t("common.schema")} <strong>{snapshot.health.database_schema_version}</strong></span></div></section></div>}
-      <footer className="actions">{!projects.length && <button className="primary" onClick={() => setScreen("add")}>{t("home.firstProject")}</button>}<button className="secondary" onClick={() => setScreen("lab")}>{t("phase8.state.demo-lab")}</button><button className="secondary" onClick={() => void openDataFolder()}>{t("home.openData")}</button><details><summary>{t("home.diagnostics")}</summary><pre dir="ltr">{JSON.stringify(snapshot.readiness, null, 2)}</pre></details></footer>
+      <footer className="actions">{!projects.length && <button className="primary" onClick={() => setScreen("add")}>{t("home.firstProject")}</button>}<button className="secondary" onClick={() => setScreen("lab")}>{t("phase8.state.demo-lab")}</button><button className="secondary" onClick={() => setScreen("disconnected")}>{t("phase9.disconnected.title")}</button><button className="secondary" onClick={() => setScreen("diagnostics")}>{t("phase9.diagnostics.title")}</button><button className="secondary" onClick={() => void openDataFolder()}>{t("home.openData")}</button><details><summary>{t("home.diagnostics")}</summary><pre dir="ltr">{JSON.stringify(snapshot.readiness, null, 2)}</pre></details></footer>
     </> : null}
   </main>;
 }
