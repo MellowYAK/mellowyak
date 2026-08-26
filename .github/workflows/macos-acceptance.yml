@@ -76,7 +76,7 @@ jobs:
           engine/.venv/bin/python scripts/validate_macos_acceptance_lab.py --engine "$engine_path" --fixture fixtures/macos_acceptance_lab --output acceptance-lab.json
           engine/.venv/bin/python scripts/validate_macos_native_lifecycle.py --app apps/desktop/src-tauri/target/release/bundle/macos/MellowYak.app --output lifecycle.json
           engine/.venv/bin/python scripts/validate_macos_updater_e2e.py --app apps/desktop/src-tauri/target/release/bundle/macos/MellowYak.app --output updater.json
-          engine/.venv/bin/python scripts/validate_packaged_phase11m.py --app apps/desktop/src-tauri/target/release/bundle/macos/MellowYak.app --dmg apps/desktop/src-tauri/target/release/bundle/dmg/MellowYak_0.3.0-preview.1_x64.dmg --output phase11m.json
+          engine/.venv/bin/python scripts/validate_packaged_phase11m.py --app apps/desktop/src-tauri/target/release/bundle/macos/MellowYak.app --dmg apps/desktop/src-tauri/target/release/bundle/dmg/MellowYak_0.3.0-preview.2_x64.dmg --output phase11m.json
       - name: Produce immutable package identities
         run: |
           shasum -a 256 apps/desktop/src-tauri/target/release/bundle/macos/MellowYak.app/Contents/MacOS/mellowyak-desktop > macos-intel-checksums.txt

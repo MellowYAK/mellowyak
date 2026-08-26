@@ -31,6 +31,18 @@ export function MonitoringSettingsPanel({ t }: { t: T }) {
     }
   };
 
+  const configuredHours = policy?.allowed_hours;
+  const allowedHours = {
+    enabled: Boolean(configuredHours?.enabled),
+    timezone: configuredHours?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+    weekdays: configuredHours?.weekdays ?? [0, 1, 2, 3, 4, 5, 6],
+    start: configuredHours?.start || "09:00",
+    end: configuredHours?.end || "17:00",
+  };
+  const updateAllowedHours = (value: Partial<typeof allowedHours>) =>
+    update({ allowed_hours: { ...allowedHours, ...value } });
+  const weekdayKeys = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+
   return <section className="panel phase13-live-settings" aria-labelledby="phase13-monitoring-settings-title">
     <div className="section-head">
       <div>
@@ -59,6 +71,36 @@ export function MonitoringSettingsPanel({ t }: { t: T }) {
         <span>{t("phase13.episodeBudget")}</span>
         <input type="number" min={1} max={2} value={policy.max_concurrent_probes ?? 2} disabled={status === "saving"} onChange={(event) => void update({ max_concurrent_probes: Number(event.target.value) })} />
       </label>
+      <label className="field">
+        <span>{t("phase13.dailyRuntimeBudget")}</span>
+        <input type="number" min={60} max={86400} value={policy.daily_runtime_budget_seconds ?? 3600} disabled={status === "saving"} onChange={(event) => void update({ daily_runtime_budget_seconds: Number(event.target.value) })} />
+        <small>{t("phase13.dailyRuntimeBudgetHelp")}</small>
+      </label>
+      <label className="toggle-row">
+        <span><strong>{t("phase13.allowedHours")}</strong><small>{t("phase13.allowedHoursHelp")}</small></span>
+        <input type="checkbox" checked={Boolean(allowedHours.enabled)} disabled={status === "saving"} onChange={(event) => void updateAllowedHours({ enabled: event.target.checked })} />
+      </label>
+      {allowedHours.enabled && <>
+        <label className="field">
+          <span>{t("phase13.timezone")}</span>
+          <input key={`${policy.version}-${allowedHours.timezone}`} type="text" defaultValue={allowedHours.timezone} disabled={status === "saving"} placeholder={t("phase13.timezonePlaceholder")} onBlur={(event) => void updateAllowedHours({ timezone: event.target.value })} />
+        </label>
+        <label className="field">
+          <span>{t("phase13.allowedStart")}</span>
+          <input type="time" value={allowedHours.start} disabled={status === "saving"} onChange={(event) => void updateAllowedHours({ start: event.target.value })} />
+        </label>
+        <label className="field">
+          <span>{t("phase13.allowedEnd")}</span>
+          <input type="time" value={allowedHours.end} disabled={status === "saving"} onChange={(event) => void updateAllowedHours({ end: event.target.value })} />
+        </label>
+        <fieldset className="field phase13-weekdays">
+          <legend>{t("phase13.allowedWeekdays")}</legend>
+          {weekdayKeys.map((key, day) => <label key={key}>
+            <input type="checkbox" checked={allowedHours.weekdays.includes(day)} disabled={status === "saving"} onChange={(event) => void updateAllowedHours({ weekdays: event.target.checked ? [...allowedHours.weekdays, day].sort() : allowedHours.weekdays.filter((value) => value !== day) })} />
+            <span>{t(`phase13.weekday.${key}`)}</span>
+          </label>)}
+        </fieldset>
+      </>}
     </div>}
     <p className="muted" role="status" aria-live="polite">{t(status === "saving" ? "phase13.savingPolicy" : "phase13.policySafety")}</p>
   </section>;

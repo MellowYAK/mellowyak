@@ -252,8 +252,7 @@ class OrchestrationService:
         return policy
 
     def run_now(self, project_id: str) -> dict[str, Any]:
-        resumed = self.scheduler.resume_deferred(project_id)
-        return {"status": "QUEUED_CURRENT_ELIGIBLE_WORK", "resumed_count": resumed}
+        return self.scheduler.run_now(project_id)
 
     def impact_plan(self, project_id: str, episode_id: str) -> dict[str, Any]:
         with self.sessions() as session:

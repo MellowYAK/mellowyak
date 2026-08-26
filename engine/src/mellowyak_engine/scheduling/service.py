@@ -3,10 +3,11 @@ from __future__ import annotations
 import json
 import threading
 import uuid
+from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -15,6 +16,8 @@ from mellowyak_engine.db.models import (
     OrchestrationJob,
     OrchestrationJobAttempt,
     OrchestrationRun,
+    ProbeDefinition,
+    ProbeVersion,
     SchedulerRecoveryRecord,
     SourceSnapshot,
 )
@@ -36,21 +39,33 @@ class SchedulerService:
         probes: Any,
         impact_memory: Any,
         noise_control: Any,
+        policies: Any,
         engine_run_id: str,
         worker_count: int = 2,
+        clock: Callable[[], datetime] | None = None,
     ) -> None:
         self.sessions = sessions
         self.events = events
         self.probes = probes
         self.impact_memory = impact_memory
         self.noise_control = noise_control
+        self.policies = policies
         self.engine_run_id = engine_run_id
         self.worker_count = max(1, min(worker_count, 2))
+        self._clock = clock or _now
+        browser_limit = int(self.policies.global_policy()["max_concurrent_browser_probes"])
+        self._browser_slots = threading.BoundedSemaphore(max(1, min(browser_limit, 2)))
         self._stop = threading.Event()
         self._wake = threading.Condition()
         self._active_projects: set[str] = set()
         self._active_lock = threading.Lock()
         self._threads: list[threading.Thread] = []
+
+    def _now(self) -> datetime:
+        value = self._clock()
+        if value.tzinfo is None:
+            raise RuntimeError("SCHEDULER_CLOCK_MUST_BE_TIMEZONE_AWARE")
+        return value.astimezone(UTC)
 
     @staticmethod
     def _public(row: OrchestrationJob) -> dict[str, Any]:
@@ -93,7 +108,7 @@ class SchedulerService:
         deferred: bool = False,
         defer_reason: str | None = None,
     ) -> dict[str, Any]:
-        now = _now()
+        now = self._now()
         job = OrchestrationJob(
             id=str(uuid.uuid4()),
             orchestration_run_id=orchestration_run_id,
@@ -158,6 +173,67 @@ class SchedulerService:
             self._threads.append(thread)
             thread.start()
 
+    @staticmethod
+    def _source_is_current(session: Session, row: OrchestrationJob) -> bool:
+        latest = session.scalars(
+            select(SourceSnapshot)
+            .where(SourceSnapshot.project_id == row.project_id)
+            .order_by(SourceSnapshot.created_at.desc())
+            .limit(1)
+        ).first()
+        return bool(latest and latest.manifest_digest == row.source_identity_digest)
+
+    def _policy_decision(self, row: OrchestrationJob) -> dict[str, Any]:
+        with self.sessions() as session:
+            version = session.get(ProbeVersion, row.probe_version_id)
+            probe = session.get(ProbeDefinition, row.probe_id)
+            if version is None or probe is None:
+                return {
+                    "eligible": False,
+                    "deferred": False,
+                    "reason_codes": ["PROBE_VERSION_NOT_FOUND"],
+                }
+            return self.policies.eligibility(
+                row.project_id, row.behavior_id, version, probe.probe_type
+            )
+
+    def reconsider_deferred(self, project_id: str | None = None) -> int:
+        """Re-evaluate policy-deferred work without bypassing source identity."""
+        changed = 0
+        with self.sessions() as session:
+            query = select(OrchestrationJob).where(OrchestrationJob.state == "DEFERRED")
+            if project_id:
+                query = query.where(OrchestrationJob.project_id == project_id)
+            ids = [row.id for row in session.scalars(query).all()]
+        for job_id in ids:
+            with self.sessions() as session:
+                row = session.get(OrchestrationJob, job_id)
+                if row is None or row.state != "DEFERRED":
+                    continue
+                current = self._source_is_current(session, row)
+                decision = self._policy_decision(row) if current else None
+            now = self._now()
+            with self.sessions.begin() as session:
+                row = session.get(OrchestrationJob, job_id)
+                if row is None or row.state != "DEFERRED":
+                    continue
+                if not current:
+                    row.state = "STALE"
+                    row.defer_reason = "SOURCE_IDENTITY_SUPERSEDED"
+                    row.completed_at = now
+                    changed += 1
+                elif decision and decision["eligible"]:
+                    row.state = "QUEUED"
+                    row.defer_reason = None
+                    changed += 1
+                elif decision:
+                    row.defer_reason = str(decision["reason_codes"][0])
+                row.updated_at = now
+        if changed:
+            with self._wake:
+                self._wake.notify_all()
+        return changed
+
     def _claim(self) -> dict[str, Any] | None:
         with self.sessions.begin() as session:
             candidates = session.scalars(
@@ -167,12 +243,21 @@ class SchedulerService:
                 .limit(50)
             ).all()
             for row in candidates:
+                if row.reason_code != "USER_RUN_NOW_OVERRIDE":
+                    decision = self._policy_decision(row)
+                    if not decision["eligible"]:
+                        row.state = "DEFERRED" if decision["deferred"] else "BLOCKED"
+                        row.defer_reason = str(decision["reason_codes"][0])
+                        row.updated_at = self._now()
+                        if row.state == "BLOCKED":
+                            row.completed_at = row.updated_at
+                        continue
                 with self._active_lock:
                     if row.project_id in self._active_projects:
                         continue
                     self._active_projects.add(row.project_id)
                 row.state = "RUNNING"
-                row.started_at = _now()
+                row.started_at = self._now()
                 row.updated_at = row.started_at
                 session.flush()
                 return self._public(row)
@@ -180,6 +265,7 @@ class SchedulerService:
 
     def _worker(self) -> None:
         while not self._stop.is_set():
+            self.reconsider_deferred()
             job = self._claim()
             if job is None:
                 with self._wake:
@@ -209,9 +295,18 @@ class SchedulerService:
             project_id,
             {"job_id": job["id"], "probe_id": job["probe_id"]},
         )
-        started = _now()
+        started = self._now()
         try:
-            result = self.probes.run(project_id, str(job["probe_id"]), str(job["snapshot_id"]))
+            with self.sessions() as session:
+                probe = session.get(ProbeDefinition, str(job["probe_id"]))
+                browser_probe = bool(probe and probe.probe_type == "BROWSER")
+            if browser_probe:
+                with self._browser_slots:
+                    result = self.probes.run(
+                        project_id, str(job["probe_id"]), str(job["snapshot_id"])
+                    )
+            else:
+                result = self.probes.run(project_id, str(job["probe_id"]), str(job["snapshot_id"]))
         except Exception as error:
             self._finish(str(job["id"]), "FAILED", type(error).__name__[:120], None)
             self.events.publish(
@@ -227,9 +322,19 @@ class SchedulerService:
             str(job["source_identity_digest"]),
             attempts or [{"result": result["result"], "observed": result.get("observed", {})}],
         )
-        completed = _now()
+        completed = self._now()
         with self.sessions.begin() as session:
-            for number, attempt in enumerate(attempts or [{"result": result["result"]}], start=1):
+            previous_attempt = (
+                session.scalar(
+                    select(func.max(OrchestrationJobAttempt.attempt_number)).where(
+                        OrchestrationJobAttempt.job_id == str(job["id"])
+                    )
+                )
+                or 0
+            )
+            for number, attempt in enumerate(
+                attempts or [{"result": result["result"]}], start=previous_attempt + 1
+            ):
                 session.add(
                     OrchestrationJobAttempt(
                         id=str(uuid.uuid4()),
@@ -276,7 +381,7 @@ class SchedulerService:
         )
 
     def _finish(self, job_id: str, state: str, reason: str, probe_run_id: str | None) -> None:
-        now = _now()
+        now = self._now()
         with self.sessions.begin() as session:
             row = session.get(OrchestrationJob, job_id)
             if row is None:
@@ -323,7 +428,7 @@ class SchedulerService:
             return self._public(row)
 
     def cancel(self, job_id: str) -> dict[str, Any]:
-        now = _now()
+        now = self._now()
         with self.sessions.begin() as session:
             row = session.get(OrchestrationJob, job_id)
             if row is None:
@@ -341,33 +446,124 @@ class SchedulerService:
         return value
 
     def resume_deferred(self, project_id: str | None = None) -> int:
-        count = 0
+        return self.reconsider_deferred(project_id)
+
+    def run_now(self, project_id: str) -> dict[str, Any]:
+        """Queue at most one source-bound deferred job and durably audit the override."""
+        with self.sessions() as session:
+            row = session.scalars(
+                select(OrchestrationJob)
+                .where(
+                    OrchestrationJob.project_id == project_id,
+                    OrchestrationJob.state == "DEFERRED",
+                )
+                .order_by(OrchestrationJob.priority.desc(), OrchestrationJob.created_at)
+                .limit(1)
+            ).first()
+            if row is None:
+                return {"status": "NO_DEFERRED_CURRENT_WORK", "resumed_count": 0}
+            job_id = row.id
+            current = self._source_is_current(session, row)
+            decision = self._policy_decision(row) if current else None
+        if not current:
+            now = self._now()
+            with self.sessions.begin() as session:
+                row = session.get(OrchestrationJob, job_id)
+                if row:
+                    row.state = "STALE"
+                    row.defer_reason = "SOURCE_IDENTITY_SUPERSEDED"
+                    row.updated_at = now
+                    row.completed_at = now
+            return {"status": "SOURCE_IDENTITY_SUPERSEDED", "resumed_count": 0}
+        if not decision or (not decision["eligible"] and not decision["deferred"]):
+            return {"status": "BLOCKED_BY_NON_OVERRIDABLE_POLICY", "resumed_count": 0}
+        now = self._now()
+        override = bool(decision["deferred"])
         with self.sessions.begin() as session:
-            query = select(OrchestrationJob).where(OrchestrationJob.state == "DEFERRED")
-            if project_id:
-                query = query.where(OrchestrationJob.project_id == project_id)
-            for row in session.scalars(query).all():
-                row.state = "QUEUED"
-                row.defer_reason = None
-                row.updated_at = _now()
-                count += 1
+            row = session.get(OrchestrationJob, job_id)
+            if row is None or row.state != "DEFERRED":
+                return {"status": "NO_DEFERRED_CURRENT_WORK", "resumed_count": 0}
+            run = session.get(OrchestrationRun, row.orchestration_run_id)
+            audit = {
+                "action": "RUN_NOW",
+                "created_at": now.isoformat(),
+                "job_id": row.id,
+                "project_id": row.project_id,
+                "source_identity_digest": row.source_identity_digest,
+                "overridden_reason_codes": decision["reason_codes"] if override else [],
+                "bounded_seconds": int(
+                    decision.get("runtime_budget", {}).get("requested_reservation_seconds", 0)
+                ),
+                "critical_sentinel": row.priority >= 90,
+                "source_identity_rechecked": True,
+            }
+            row.state = "QUEUED"
+            if override:
+                row.reason_code = "USER_RUN_NOW_OVERRIDE"
+            row.defer_reason = None
+            row.updated_at = now
+            if run:
+                eligibility = json.loads(run.eligibility_json)
+                if not isinstance(eligibility, list):
+                    eligibility = []
+                eligibility.append({"run_now_override": audit})
+                run.eligibility_json = json.dumps(eligibility, sort_keys=True)
+                budget = json.loads(run.scheduler_budget_json)
+                budget.setdefault("run_now_overrides", []).append(audit)
+                run.scheduler_budget_json = json.dumps(budget, sort_keys=True)
+                run.state = "QUEUED"
+                run.updated_at = now
+        self.events.publish("orchestration_run_now", project_id, audit)
         with self._wake:
             self._wake.notify_all()
-        return count
+        return {
+            "status": "QUEUED_SOURCE_BOUND_OVERRIDE" if override else "QUEUED_CURRENT_WORK",
+            "resumed_count": 1,
+        }
 
     def recover(self) -> dict[str, int]:
         recovered = stale = interrupted = 0
-        now = _now()
+        now = self._now()
         with self.sessions.begin() as session:
             for row in session.scalars(
                 select(OrchestrationJob).where(OrchestrationJob.state.in_(["QUEUED", "RUNNING"]))
             ).all():
-                snapshot = session.get(SourceSnapshot, row.snapshot_id)
-                if snapshot is None or snapshot.manifest_digest != row.source_identity_digest:
+                latest = session.scalars(
+                    select(SourceSnapshot)
+                    .where(SourceSnapshot.project_id == row.project_id)
+                    .order_by(SourceSnapshot.created_at.desc())
+                    .limit(1)
+                ).first()
+                if latest is None or latest.manifest_digest != row.source_identity_digest:
                     row.state = "STALE"
                     row.defer_reason = "RECOVERY_SOURCE_STALE"
                     stale += 1
                 elif row.state == "RUNNING":
+                    started_at = row.started_at or row.updated_at
+                    previous_attempt = (
+                        session.scalar(
+                            select(func.max(OrchestrationJobAttempt.attempt_number)).where(
+                                OrchestrationJobAttempt.job_id == row.id
+                            )
+                        )
+                        or 0
+                    )
+                    session.add(
+                        OrchestrationJobAttempt(
+                            id=str(uuid.uuid4()),
+                            job_id=row.id,
+                            project_id=row.project_id,
+                            attempt_number=previous_attempt + 1,
+                            reason="ENGINE_RESTART_INTERRUPTED",
+                            result="INTERRUPTED",
+                            classification="RETRYABLE",
+                            details_json=json.dumps(
+                                {"engine_run_id": self.engine_run_id}, sort_keys=True
+                            ),
+                            started_at=started_at,
+                            completed_at=now,
+                        )
+                    )
                     row.state = "QUEUED" if row.idempotence == "SAFE" else "BLOCKED"
                     row.defer_reason = (
                         "RECOVERED_INTERRUPTED_SAFE_JOB"
@@ -376,6 +572,7 @@ class SchedulerService:
                     )
                     interrupted += 1
                     recovered += int(row.state == "QUEUED")
+                    row.started_at = None
                 else:
                     recovered += 1
                 row.updated_at = now

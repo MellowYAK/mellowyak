@@ -675,15 +675,17 @@ The intended principle is:
 
 ## Project status
 
-MellowYak Phase 10 adds an evidence-bound daily workflow—operational Home, Project Overview,
-Activity/Episode Detail, Regression Detail, Diagnostics and meaningful First Run—on top of Phase 9
-Technical Preview lifecycle and Phase 8 validated repair safety. The product also retains multiple versioned Runtime Profiles, Git-optional Source Identity v2, settled
-Episodes, incremental content-addressed Save Points, explicit known-good milestones, Browser/API/CLI/
-Process/Test/Manual Probes, deterministic evidence states, and isolated Repair Workspaces to the
-Phase 1–6 foundation. It is not a released product. A changed file or dependency is only a reason to
-recheck; only comparable reproducible prior-PASS/current-FAIL evidence can support a confirmed
-regression. Exact completion, package, and platform status is authoritative only in
-[`docs/validation/PHASE_10_PRODUCT_TRUTH_VALIDATION_REPORT.md`](docs/validation/PHASE_10_PRODUCT_TRUTH_VALIDATION_REPORT.md).
+MellowYak `0.3.0-preview.2` completes the verified automated Intel macOS boundary for Phase 13M:
+Passive Sentinel orchestration, bounded automatic rechecks, persisted policy revisions, a durable
+restart-safe queue, Noise Control, and evidence-backed Impact Memory. It builds on the evidence-bound
+daily workflow, Technical Preview lifecycle, validated repair safety, multiple versioned Runtime
+Profiles, Git-optional Source Identity v2, settled Episodes, incremental content-addressed Save
+Points, explicit known-good milestones, Browser/API/CLI/Process/Test/Manual Probes, deterministic
+evidence states, and isolated Repair Workspaces. It is not a public released product. A changed file
+or dependency is only a reason to recheck; only comparable reproducible prior-PASS/current-FAIL
+evidence can support a confirmed regression. Exact Phase 13M source, package, platform, and manual
+boundaries are authoritative in
+[`docs/phase-13m-delivery/PHASE_13M_MASTER_REPORT.md`](docs/phase-13m-delivery/PHASE_13M_MASTER_REPORT.md).
 
 The complete workflow described in this README is the product direction. Implementation must advance through verified stages.
 
@@ -910,14 +912,24 @@ The complete implementation, exact local evidence, screenshots and limitations a
 - adds a persistent SQLite queue with per-project serialization, bounded global concurrency,
   source-identity deduplication, stale-job protection, deferred work, cancellation, and restart
   recovery for safe idempotent jobs only;
+- enforces persisted global/project daily runtime budgets with restart-safe accounting and explicit
+  `DAILY_RUNTIME_BUDGET_EXHAUSTED` deferral;
+- enforces validated IANA-timezone allowed-hours schedules, including overnight and DST boundaries,
+  with explicit `OUTSIDE_ALLOWED_HOURS` deferral and next-eligible timestamps;
+- makes Run Now a bounded, source-bound, durable audited override for one current safe deferred job
+  rather than a release of the whole queue;
 - classifies retry evidence as pass, confirmed, flaky, inconclusive, cancelled, or needs review and
   keeps confirmed incidents deduplicated by stable behavior/baseline/source/category identity;
 - records evidence-backed Impact Memory relations with provenance and explicit limitations;
 - expands the synthetic loopback-only RideFlow reference project to four behaviors: nearest-ride
   selection, driver availability, ride cancellation, and deterministic fare preview;
-- adds operational monitoring settings plus 38 translation-key-only English/Hebrew RTL product-truth
+- adds operational monitoring settings plus translation-key-only English/Hebrew RTL product-truth
   surfaces for policies, queue state, recovery, fan-out, flakiness, and background results;
-- adds migration `0010_passive_sentinel_orchestration` while preserving migrations `0001`–`0009`.
+- adds migration `0010_passive_sentinel_orchestration` while preserving migrations `0001`–`0009`;
+- passes 198 Python tests, 28 React tests, the migration matrix, package validators Phase 8–13M,
+  updater transaction, native lifecycle, Acceptance Lab, and case-sensitive filesystem safety on
+  Intel macOS; Developer ID signing, notarization, public updater publication, and physical OS
+  interaction boundaries remain explicitly unverified.
 
 Phase 13M does **not** add automatic repair or Apply, model/provider access, cloud/source upload,
 external analytics, Git push, deployment, public releases, or APC coupling. It remains Git-optional,

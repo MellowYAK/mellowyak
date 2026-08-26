@@ -1593,6 +1593,14 @@ export type MonitoringPolicy = {
   max_concurrent_projects?: number;
   max_concurrent_probes?: number;
   max_checks_per_episode?: number;
+  daily_runtime_budget_seconds?: number;
+  allowed_hours?: {
+    enabled?: boolean;
+    timezone?: string;
+    weekdays?: number[];
+    start?: string;
+    end?: string;
+  };
   mode?: string;
   created_at: string;
 };

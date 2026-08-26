@@ -120,7 +120,7 @@ def main() -> int:
             checks["packaged_production_engine"] = (
                 health.get("mode") == "local"
                 and health.get("database_schema_version")
-                == "0009_technical_preview_readiness"
+                == "0010_passive_sentinel_orchestration"
             )
             checks["product_self_test"] = self_test.get("status") == "PASS"
             checks["no_external_network_dependency"] = True

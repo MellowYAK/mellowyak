@@ -22,8 +22,9 @@ REVISIONS = [
     "0006_desktop_productization",
     "0007_runtime_snapshot_probe_foundation",
     "0008_validated_repair_apply",
+    "0009_technical_preview_readiness",
 ]
-HEAD = "0009_technical_preview_readiness"
+HEAD = "0010_passive_sentinel_orchestration"
 
 
 def config(database: Path) -> Config:

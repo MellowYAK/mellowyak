@@ -299,14 +299,19 @@ def create_app(settings: EngineSettings) -> FastAPI:
     monitoring_policies = MonitoringPolicyService(database.sessions, events)
     impact_memory = ImpactMemoryService(database.sessions)
     noise_control = NoiseControlService(database.sessions)
+    global_monitoring_policy = monitoring_policies.global_policy()
     scheduler = SchedulerService(
         database.sessions,
         events,
         probes,
         impact_memory,
         noise_control,
+        monitoring_policies,
         run_id,
-        worker_count=int(monitoring_policies.global_policy()["max_concurrent_probes"]),
+        worker_count=min(
+            int(global_monitoring_policy["max_concurrent_probes"]),
+            int(global_monitoring_policy["max_concurrent_projects"]),
+        ),
     )
     orchestration = OrchestrationService(
         database.sessions,

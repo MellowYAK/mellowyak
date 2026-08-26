@@ -21,7 +21,7 @@ from validate_packaged_phase7 import (
 )
 
 TOKEN = "packaged-phase-ten-validation-token-2026"
-SCHEMA = "0009_technical_preview_readiness"
+SCHEMA = "0010_passive_sentinel_orchestration"
 
 
 def parse_args() -> argparse.Namespace:

@@ -25,6 +25,7 @@ from validate_packaged_phase7 import (
 SUPPORTED_DATABASE_SCHEMAS = {
     "0008_validated_repair_apply",
     "0009_technical_preview_readiness",
+    "0010_passive_sentinel_orchestration",
 }
 REPORT_SCHEMA = "mellowyak.phase8_packaged_validation.v1"
 AUTH_TOKEN = "packaged-phase-eight-validation-token-2026"

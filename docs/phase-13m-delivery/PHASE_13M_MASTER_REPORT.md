@@ -6,7 +6,7 @@ This is the single consolidated implementation report, operator guide, and scree
 
 Phase 13M implementation is present on the local branch. The watcher now feeds one authoritative settled-Episode callback; orchestration runs, jobs, attempts, policy revisions, recovery records, Impact Memory, flakiness state, and alert deduplication are persistent. A bounded two-worker scheduler serializes each project, rejects stale source identities, and never writes live source. The product exposes real monitoring settings and a complete translated truth surface.
 
-Status is **IMPLEMENTED / OPERATOR MANUAL ACCEPTANCE PENDING**. The operator explicitly stopped further automated and packaged acceptance. Consequently this report does not call the phase verified, does not bump `0.3.0-preview.1`, and does not create the verified tag.
+Status is **VERIFIED WORKING within the automated Intel macOS boundary**. Gate A closure on 2026-08-26 added persisted daily runtime-budget enforcement, timezone-aware allowed-hours enforcement, restart-safe accounting, bounded source-bound Run Now audit, and deferred-job re-evaluation. Version `0.3.0-preview.2` was built as a fresh Intel `.app` and DMG and passed the complete automated source/package gate. Physical macOS interactions, Developer ID signing, notarization, and public updater publication remain explicitly manual or unavailable boundaries.
 
 ## 2. מקור ו־Git
 
@@ -56,6 +56,8 @@ Three immutable revision tables implement explicit controls:
 - Behavior: `AUTOMATIC`, `ASK`, `MANUAL_ONLY`, or `DISABLED`, plus retry, duration, runtime eligibility, sentinel, escalation, flaky handling, and resolution.
 
 There is no ambiguous “Autopilot” switch. Project and behavior policy must explicitly permit automatic work.
+
+Daily runtime budgets are now enforced from persisted completed durations plus conservative reservations for running work. Global and project limits use local calendar-day boundaries and remain restart-safe. Allowed-hours policy requires an explicit IANA timezone, validated weekdays and `HH:MM` start/end values, supports overnight windows, normalizes DST gaps, and records the next eligible UTC instant. Exhausted budgets defer with `DAILY_RUNTIME_BUDGET_EXHAUSTED`; closed schedules defer with `OUTSIDE_ALLOWED_HOURS`.
 
 ## 9. Automatic Eligibility
 
@@ -166,21 +168,37 @@ Shared Python/React/SQLite logic contains no `/Users/...` assumptions, no macOS-
 
 ## 34. Performance
 
-The hot path performs one post-settle selection and short SQLite writes. Worker count is capped at two; per-project concurrency is one; selection and changed-path recording are bounded; idle workers wait on a condition; tray uses events rather than busy polling. No post-implementation performance benchmark was run because the operator ended automated acceptance.
+The hot path performs one post-settle selection and short SQLite writes. Worker count is capped by policy; per-project concurrency is one; Browser Probe concurrency has its own semaphore; selection and changed-path recording are bounded; idle workers wait on a condition; tray uses events rather than busy polling. The packaged Phase 12M reference flow completed in `27.657377s`; this is acceptance timing, not a general benchmark.
 
 ## 35. Tests and Exact Results
 
-Exact Phase 12M baseline: Python `191 passed, 1 warning` in `123.92s`; React `28 passed` in `21.30s`; TypeScript, Vite, Ruff, translation-key policy, OpenAPI determinism, migration matrix, and packaged Phase 12M passed.
+Gate A exact results on 2026-08-26:
 
-After Phase 13M implementation, only non-suite completion checks requested for safe authoring were performed: TypeScript compile passed; Ruff static check passed; the language-policy checker returned `UI_TRANSLATION_KEYS_ONLY`; OpenAPI export migrated a fresh temporary database through `0010`; generated TypeScript contract compiled; all 34 English screenshots rendered. The operator explicitly directed that remaining automated/package tests not run and be performed manually. Therefore Phase 13M packaged acceptance and prior packaged regression validators are **NOT RUN after the final implementation**.
+- Python: `198 passed`, with one upstream Starlette deprecation warning.
+- Focused Phase 13 budget/hours/restart/Run Now coverage: 7 tests passed as part of the 198-test suite.
+- React/Vitest: `28 passed` in `20.83s`.
+- TypeScript, Vite, Cargo check, Cargo format, Ruff check, Ruff format, and `git diff --check`: passed.
+- Translation policy: `UI_TRANSLATION_KEYS_ONLY`; English/Hebrew keys remain paired and Hebrew remains RTL.
+- OpenAPI: exported twice with identical SHA-256 `414622f9942cfc4b3851f45f807aee024e796a429c0c86d31e25ccac96b715f1` before the version-only bump, then regenerated at `0.3.0-preview.2` with SHA-256 `8cd81ee0d4006c766685da8902b9829460200cec43505fe8b11724e7448b786d`; generated TypeScript compiled.
+- Migration matrix: empty and every migration start from `0001` through `0009` upgraded to `0010_passive_sentinel_orchestration` with existing data preserved.
+- Packaged Phase 8, 9, 10, 11M, 12M, and new 13M validators: `VERIFIED_WORKING`.
+- Disposable two-version signed updater transaction: `VERIFIED_WORKING`, including tamper, wrong-key, incomplete-download, downgrade, data-preservation, restart, and orphan-process checks.
+- macOS Acceptance Lab, native lifecycle, and case-sensitive filesystem safety: `VERIFIED_WORKING`.
+- Signing readiness: structurally valid ad-hoc signature; Developer ID count `0`, notarization absent, Gatekeeper public-distribution acceptance false. This is reported as `IMPLEMENTED_NOT_RUNTIME_VERIFIED`, not production ready.
 
 ## 36. Packaging
 
-No final Phase 13M `.app` or DMG was built after implementation because the mandatory validation sequence was stopped by operator direction. No package was added to Git or this delivery directory. Existing package outputs remain previous-phase artifacts and are not reused as Phase 13M evidence.
+A fresh Intel package was built from the closure source at version `0.3.0-preview.2`:
+
+- `.app` desktop SHA-256: `1ec356382f353cfb94b2c2c2662b7c29ec74cb402735f6fa1776769733711074`
+- packaged engine SHA-256: `71fcfd4d33d3fb3856a3663c07df747b1e4b549e57ed77de8df89e952c74525e`
+- DMG SHA-256: `89aa14c0e85847ac807cb4b47e6879868e08566c443a9f0c8712f2f76970d3`
+
+The DMG mounted read-only, contained the application and Applications link, matched the built executable, detached cleanly, and contained no runtime database or user data. Build artifacts remain ignored and were not added to Git.
 
 ## 37. Installation
 
-`/Applications/MellowYak.app` was not replaced during this final pass. The existing safe installer retains recoverable previous app bundles, but running it now would misleadingly imply package acceptance. Installation of the current Phase 13M source is an operator-manual next action after validation.
+The prior `/Applications/MellowYak.app` was moved intact to the recoverable backup `/Applications/MellowYak-previous-20260826-174525-30806a.app`, then the fresh `0.3.0-preview.2` bundle was installed atomically. Installed desktop and engine hashes exactly matched the verified build. The installed desktop was launched with `/tmp/mellowyak-phase13-installed-isolated` as its data root; exactly one desktop and one child engine were observed, schema `0010_passive_sentinel_orchestration` was created there, explicit Quit left zero owned processes, and the ordinary operator data root was not used. The installed engine then passed the Phase 12M RideFlow flow and Phase 13M policy/restart/Product Self-Test validator again using disposable data roots.
 
 ## 38. Screenshots and Delivery
 
@@ -396,18 +414,17 @@ Not physically performed or claimed: Notification Center click routing, real log
 
 ## 40. Limitations
 
-- Final source and packaged automated acceptance were intentionally not run after implementation.
-- No Phase 13M package/install evidence exists yet.
 - Runtime unavailable is fail-open and may need more granular adapter-specific human copy.
 - Impact Memory records and exposes relations but does not yet feed a weighted learning algorithm; selection remains deterministic.
-- Daily runtime budget and allowed-hours fields are persisted but enforcement is not fully wired into scheduling.
 - Native notification suppression/delivery relies on existing Phase 9 preferences and still needs physical OS validation.
+- Finder alias handling remains `IMPLEMENTED_NOT_RUNTIME_VERIFIED` in the disposable filesystem harness.
+- Developer ID signing, notarization, Gatekeeper public distribution, login-item relaunch, physical tray clicks, Notification Center clicks, sleep/wake, lock/unlock, and sustained battery transitions were not physically verified.
 - No Apple Silicon, Windows, or Linux acceptance is claimed.
 
 ## 41. Next-Phase Readiness
 
-Before Phase 14M, the operator should run the full source suite, migration upgrade matrix, Phase 8/9/10/11M/12M/13M packaged validators, performance bounds, package build, isolated install/lifecycle, and manual macOS boundaries. If all mandatory gates pass, synchronize every version surface to `0.3.0-preview.2`, rebuild, install, record hashes, create the verified annotated tag, and only then begin any next phase with explicit approval.
+All mandatory automated Gate A boundaries are green and every source/package version surface is synchronized at `0.3.0-preview.2`. Phase 14M may begin from the annotated verified tag. The listed physical OS/signing boundaries remain honest manual limitations and do not block local Phase 14 implementation.
 
 ## 42. Local Commit and Tag
 
-The implementation is prepared for one local commit with message `feat: add passive sentinel orchestration and impact memory`. No push is authorized. The requested verified tag is `phase-13m-passive-sentinel-verified-2026-08-26`, but it must not be created while mandatory acceptance remains operator-deferred. Final commit identity and tag status are updated in the operator handoff after the commit is created.
+The original Phase 13 implementation commit is `93ff5546e03163adb1f4d98ae5cc44dc781cbb6a` (`feat: add passive sentinel orchestration and impact memory`). Gate A closure is recorded in one subsequent local commit with exact message `fix: close passive sentinel acceptance gaps`. The annotated tag `phase-13m-passive-sentinel-verified-2026-08-26` resolves to that closure commit. No push, GitHub Release, public updater publication, or APC mutation is authorized or performed.

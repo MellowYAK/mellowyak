@@ -129,8 +129,8 @@ def main() -> int:
         higher = root / "higher" / "MellowYak.app"
         shutil.copytree(arguments.app, lower, symlinks=True)
         shutil.copytree(arguments.app, higher, symlinks=True)
-        set_version(lower, "0.2.0-preview.1")
-        set_version(higher, "0.2.0-preview.2-update-test")
+        set_version(lower, "0.3.0-preview.1")
+        set_version(higher, "0.3.0-preview.2")
 
         user_data = root / "user-data"
         source = root / "synthetic-source"
@@ -222,7 +222,7 @@ def main() -> int:
         Handler.artifact = artifact.read_bytes()
         Handler.metadata = json.dumps(
             {
-                "version": "0.2.0-preview.2-update-test",
+                "version": "0.3.0-preview.2",
                 "url": f"http://127.0.0.1:{port}/MellowYak.app.tar.gz",
                 "signature": signature.read_text(encoding="utf-8"),
             },
@@ -271,7 +271,7 @@ def main() -> int:
         (extracted / "MellowYak.app").rename(installed)
         with (installed / "Contents" / "Info.plist").open("rb") as stream:
             installed_version = plistlib.load(stream)["CFBundleShortVersionString"]
-        downgrade_rejected = installed_version != "0.2.0-preview.1"
+        downgrade_rejected = installed_version != "0.3.0-preview.1"
         preservation = (
             tree_digest(source) == source_digest
             and (user_data / "settings.json").read_text(encoding="utf-8")
@@ -311,17 +311,16 @@ def main() -> int:
             "tampered_artifact_rejected": tampered_rejected,
             "wrong_key_rejected": wrong_key_rejected,
             "incomplete_download_rejected": incomplete_rejected,
-            "higher_version_installed": installed_version
-            == "0.2.0-preview.2-update-test",
+            "higher_version_installed": installed_version == "0.3.0-preview.2",
             "downgrade_rejected": downgrade_rejected,
             "data_source_settings_preserved": preservation,
             "lower_application_engine_launched": lower_health.get("mode") == "local",
-            "lower_schema_0009": lower_health.get("database_schema_version")
-            == "0009_technical_preview_readiness",
+            "lower_schema_0010": lower_health.get("database_schema_version")
+            == "0010_passive_sentinel_orchestration",
             "lower_product_self_test": lower_self_test.get("status") == "PASS",
             "higher_application_engine_launched": higher_health.get("mode") == "local",
-            "higher_schema_0009": higher_health.get("database_schema_version")
-            == "0009_technical_preview_readiness",
+            "higher_schema_0010": higher_health.get("database_schema_version")
+            == "0010_passive_sentinel_orchestration",
             "higher_product_self_test": higher_self_test.get("status") == "PASS",
             "project_identity_preserved": project_identity_preserved,
             "durable_database_history_preserved": durable_history_preserved,

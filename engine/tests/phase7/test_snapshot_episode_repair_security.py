@@ -50,7 +50,7 @@ def rig(tmp_path: Path) -> IntegrationRig:
     assert not (project_root / ".git").exists()
     paths = StoragePaths.create(tmp_path / "mellowyak-data")
     database = LocalDatabase(paths)
-    assert database.migrate() == "0009_technical_preview_readiness"
+    assert database.migrate() == "0010_passive_sentinel_orchestration"
     with database.sessions.begin() as session:
         session.add(
             Project(
