@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import threading
@@ -675,6 +676,16 @@ class ProbeService:
             )
             if self.productization is not None:
                 try:
+                    incident_material = "\x00".join(
+                        [
+                            project_id,
+                            probe.behavior_id or "-",
+                            milestone.id if milestone else "-",
+                            snapshot.manifest_digest,
+                            "CONFIRMED_PROBE_REGRESSION",
+                        ]
+                    )
+                    incident_key = hashlib.sha256(incident_material.encode()).hexdigest()
                     self.productization.create_alert(
                         project_id=project_id,
                         change_id=None,
@@ -684,7 +695,7 @@ class ProbeService:
                         title_key="alerts.confirmedProbeRegressionTitle",
                         summary_key="alerts.confirmedProbeRegressionSummary",
                         parameters={},
-                        deduplication_key=f"probe-regression:{regression_id}",
+                        deduplication_key=f"probe-regression:{incident_key}",
                         route={
                             "screen": "change",
                             "project_id": project_id,

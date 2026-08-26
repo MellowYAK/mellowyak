@@ -72,6 +72,8 @@ import {
   type Phase10CaptureState,
 } from "./Phase10Experience";
 import { Phase12Capture, phase12CaptureStates, type Phase12CaptureState } from "./Phase12Experience";
+import { Phase13Capture, phase13CaptureStates, type Phase13CaptureState } from "./Phase13Experience";
+import { MonitoringSettingsPanel } from "./MonitoringSettingsPanel";
 
 type ProjectScreen = "project" | "activity" | "regression" | "change" | "impact" | "behaviors" | "runtime" | "memory";
 type Screen = "home" | "projects" | "disconnected" | "alerts" | "settings" | "diagnostics" | "lab" | "add" | "runtimeSetup" | ProjectScreen;
@@ -209,6 +211,9 @@ export function App() {
   const phase12StateValue = new URLSearchParams(window.location.search).get("phase12State");
   const phase12Marker = new URLSearchParams(window.location.search).get("phase12Fixture");
   const phase12CaptureState = phase12Marker === "mellowyak.phase12.screenshots.v1" && phase12CaptureStates.includes(phase12StateValue as Phase12CaptureState) ? phase12StateValue as Phase12CaptureState : null;
+  const phase13StateValue = new URLSearchParams(window.location.search).get("phase13State");
+  const phase13Marker = new URLSearchParams(window.location.search).get("phase13Fixture");
+  const phase13CaptureState = phase13Marker === "mellowyak.phase13.screenshots.v1" && phase13CaptureStates.includes(phase13StateValue as Phase13CaptureState) ? phase13StateValue as Phase13CaptureState : null;
 
   const productT = useCallback((key: string, parameters: Record<string, string | number> = {}) => t(key as TranslationKey, parameters), [t]);
 
@@ -254,8 +259,8 @@ export function App() {
   }, [projects]);
 
   useEffect(() => {
-    if ((captureState?.startsWith("hebrew-") || phase9CaptureState?.startsWith("hebrew-") || phase10CaptureState?.startsWith("hebrew-") || /^3[3-7]-hebrew-/.test(phase12CaptureState ?? "")) && locale !== "he") setLocale("he");
-  }, [captureState, locale, phase9CaptureState, phase10CaptureState, phase12CaptureState, setLocale]);
+    if ((captureState?.startsWith("hebrew-") || phase9CaptureState?.startsWith("hebrew-") || phase10CaptureState?.startsWith("hebrew-") || /^3[3-7]-hebrew-/.test(phase12CaptureState ?? "") || /^3[4-7]-hebrew-/.test(phase13CaptureState ?? "")) && locale !== "he") setLocale("he");
+  }, [captureState, locale, phase9CaptureState, phase10CaptureState, phase12CaptureState, phase13CaptureState, setLocale]);
 
   useEffect(() => {
     let active = true;
@@ -446,6 +451,8 @@ export function App() {
     finally { setBusy(false); }
   };
 
+  if (phase13CaptureState) return <main className="app-shell" dir={direction} data-phase13-state={phase13CaptureState}><Header home={() => undefined} locale={locale} setLocale={setLocale} t={t} updater={updater} /><Phase13Capture t={productT} state={phase13CaptureState} /></main>;
+
   if (phase12CaptureState) return <main className="app-shell" dir={direction} data-phase12-state={phase12CaptureState}><Header home={() => undefined} locale={locale} setLocale={setLocale} t={t} updater={updater} /><Phase12Capture t={productT} state={phase12CaptureState} /></main>;
 
   if (phase10CaptureState) return <main className="app-shell" dir={direction} data-phase10-state={phase10CaptureState}><Header home={() => undefined} locale={locale} setLocale={setLocale} t={t} updater={updater} /><Phase10Capture t={productT} state={phase10CaptureState} /></main>;
@@ -466,7 +473,7 @@ export function App() {
 
   if (screen === "alerts") return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} /><AlertsScreen t={productT} openRoute={(alert) => { const project = projects.find((item) => item.id === alert.project_id); if (!project) return; if (alert.regression_id) { setSelectedRegressionId(alert.regression_id); openProject(project, "regression"); } else openProject(project, alert.gate_id ? "change" : "project"); }} /></main>;
 
-  if (screen === "settings") return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} /><SettingsScreen t={productT} /><ActivityModeSettings t={productT} /><section className="panel"><div className="section-head"><div><h2>{t("phase8.selfTest.title")}</h2><p className="muted">{t("phase8.selfTest.disposable")}</p></div><button className="primary" onClick={() => setScreen("lab")}>{t("phase8.selfTest.run")}</button></div></section><section className="panel"><div className="section-head"><div><h2>{t("phase9.settings.tools.title")}</h2><p className="muted">{t("phase9.settings.tools.body")}</p></div><div className="button-row"><button onClick={() => void replayOnboarding().then(setOnboarding)}>{t("phase9.settings.replay")}</button><button onClick={() => setScreen("disconnected")}>{t("phase9.disconnected.title")}</button><button onClick={() => setScreen("diagnostics")}>{t("phase9.diagnostics.title")}</button></div></div></section></main>;
+  if (screen === "settings") return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} /><SettingsScreen t={productT} /><MonitoringSettingsPanel t={productT} /><ActivityModeSettings t={productT} /><section className="panel"><div className="section-head"><div><h2>{t("phase8.selfTest.title")}</h2><p className="muted">{t("phase8.selfTest.disposable")}</p></div><button className="primary" onClick={() => setScreen("lab")}>{t("phase8.selfTest.run")}</button></div></section><section className="panel"><div className="section-head"><div><h2>{t("phase9.settings.tools.title")}</h2><p className="muted">{t("phase9.settings.tools.body")}</p></div><div className="button-row"><button onClick={() => void replayOnboarding().then(setOnboarding)}>{t("phase9.settings.replay")}</button><button onClick={() => setScreen("disconnected")}>{t("phase9.disconnected.title")}</button><button onClick={() => setScreen("diagnostics")}>{t("phase9.diagnostics.title")}</button></div></div></section></main>;
 
   if (screen === "lab") return <main className="app-shell" dir={direction}><Header home={home} locale={locale} setLocale={setLocale} t={t} updater={updater} />{error && <section className="panel error" role="alert">{errorText(error)}</section>}<Phase8Experience t={t} onError={setError} /></main>;
 

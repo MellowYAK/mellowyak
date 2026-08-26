@@ -120,6 +120,11 @@ class ProductizationService:
                 row.updated_at = now
                 row.resolved_at = None
                 row.parameters_json = json.dumps(parameters or {}, sort_keys=True)
+                row.route_json = json.dumps(route, sort_keys=True)
+                row.change_id = change_id or row.change_id
+                row.behavior_id = behavior_id or row.behavior_id
+                row.regression_id = regression_id or row.regression_id
+                row.gate_id = gate_id or row.gate_id
                 event_type = "alert_updated"
             session.flush()
             value = self._alert(row)

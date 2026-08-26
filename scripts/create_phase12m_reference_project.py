@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create the disposable, loopback-only RideFlow Phase 12M reference project."""
+"""Create the disposable, loopback-only multi-behavior RideFlow reference project."""
 
 from __future__ import annotations
 
@@ -14,6 +14,12 @@ MARKER = {
     "synthetic": True,
     "product": "RideFlow Reference",
     "fixture_scenario": "rideflow",
+    "phase13_capabilities": [
+        "request_nearest_ride",
+        "driver_becomes_available",
+        "cancel_ride",
+        "fare_preview",
+    ],
 }
 
 
@@ -43,7 +49,7 @@ def create(root: Path, web_port: int, api_port: int) -> dict[str, object]:
         """
 # RideFlow Reference
 
-Synthetic, loopback-only Phase 12M acceptance project. It contains no credentials,
+Synthetic, loopback-only Phase 12M/13M acceptance project. It contains no credentials,
 external services, production data, maps provider, payment provider, or database.
 """,
     )
@@ -120,6 +126,19 @@ def select_driver(pickup: tuple[float, float], mode_file: Path) -> Driver:
     )[0]
 
 
+def distance(start: tuple[float, float], end: tuple[float, float]) -> float:
+    return round(math.hypot(end[0] - start[0], end[1] - start[1]), 3)
+
+
+def fare_preview(pickup: tuple[float, float], destination: tuple[float, float]) -> dict:
+    route_distance = distance(pickup, destination)
+    return {
+        "currency": "RFC",
+        "distance": route_distance,
+        "fare": round(4.0 + route_distance * 1.75, 2),
+    }
+
+
 def create_ride(pickup: tuple[float, float], destination: tuple[float, float], mode_file: Path):
     driver = select_driver(pickup, mode_file)
     return {
@@ -128,7 +147,21 @@ def create_ride(pickup: tuple[float, float], destination: tuple[float, float], m
         "pickup": list(pickup),
         "destination": list(destination),
         "status": "DRIVER_ON_THE_WAY",
+        "fare_preview": fare_preview(pickup, destination),
     }
+
+
+def available_driver(driver_id: str) -> dict:
+    driver = next((item for item in DRIVERS if item.driver_id == driver_id), None)
+    if driver is None:
+        raise ValueError("DRIVER_NOT_FOUND")
+    return {**driver.__dict__, "available": True}
+
+
+def cancel_ride(ride: dict) -> dict:
+    if ride.get("status") == "CANCELLED":
+        return ride
+    return {**ride, "status": "CANCELLED", "driver_available": True}
 """,
     )
     _write(
@@ -142,7 +175,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
-from domain import DRIVERS, create_ride
+from domain import DRIVERS, available_driver, cancel_ride, create_ride, fare_preview
 
 ROOT = Path(__file__).resolve().parents[1]
 MODE = ROOT / "api" / "selection_mode.txt"
@@ -187,6 +220,18 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(400, {"error": "JSON_INVALID"})
         if path == "/drivers/position":
             return self.reply(200, {"status": "FAKE_GPS_ACCEPTED", "position": payload})
+        if path == "/drivers/available":
+            try:
+                driver = available_driver(str(payload.get("driver_id", "")))
+            except ValueError:
+                return self.reply(404, {"error": "DRIVER_NOT_FOUND"})
+            return self.reply(200, {"status": "AVAILABLE", "driver": driver})
+        if path == "/fare-preview":
+            try:
+                preview = fare_preview(point(payload.get("pickup")), point(payload.get("destination")))
+            except (TypeError, ValueError):
+                return self.reply(400, {"error": "FARE_REQUEST_INVALID"})
+            return self.reply(200, preview)
         if path == "/rides":
             try:
                 ride = create_ride(point(payload.get("pickup")), point(payload.get("destination")), MODE)
@@ -194,6 +239,13 @@ class Handler(BaseHTTPRequestHandler):
                 return self.reply(400, {"error": "RIDE_REQUEST_INVALID"})
             RIDES[ride["ride_id"]] = ride
             return self.reply(201, ride)
+        if path.startswith("/rides/") and path.endswith("/cancel"):
+            ride_id = path.split("/")[2]
+            ride = RIDES.get(ride_id)
+            if ride is None:
+                return self.reply(404, {"error": "NOT_FOUND"})
+            RIDES[ride_id] = cancel_ride(ride)
+            return self.reply(200, RIDES[ride_id])
         return self.reply(404, {"error": "NOT_FOUND"})
 
 
@@ -264,12 +316,14 @@ server.listen(port, "127.0.0.1");
   en: {
     title: "RideFlow Reference", pickup: "Pickup", destination: "Destination",
     request: "Request ride", ready: "Ready", confirmed: "Driver is on the way",
-    driver: "Selected driver"
+    driver: "Selected driver", fare: "Preview fare", cancel: "Cancel ride",
+    available: "Make driver available"
   },
   he: {
     title: "RideFlow לדוגמה", pickup: "נקודת איסוף", destination: "יעד",
     request: "בקשת נסיעה", ready: "מוכן", confirmed: "הנהג בדרך",
-    driver: "נהג שנבחר"
+    driver: "נהג שנבחר", fare: "תצוגה מקדימה של המחיר", cancel: "ביטול נסיעה",
+    available: "הפיכת נהג לזמין"
   }
 };
 """,
@@ -287,6 +341,9 @@ input,button{font:inherit;padding:12px;border-radius:9px}button{background:#39d7
 <label><span data-i18n="pickup"></span><input data-testid="pickup" name="pickup" value="0,0"></label>
 <label><span data-i18n="destination"></span><input data-testid="destination" name="destination" value="8,8"></label>
 <button data-testid="request-ride" data-i18n="request"></button>
+<button data-testid="fare-preview" data-i18n="fare"></button>
+<button data-testid="cancel-ride" data-i18n="cancel"></button>
+<button data-testid="driver-available" data-i18n="available"></button>
 <p data-testid="ride-status" id="ride-status" aria-live="polite"></p></main>
 <script type="module">import {messages} from './i18n.js';
 const locale = new URL(location.href).searchParams.get('lang') === 'he' ? 'he' : 'en';
@@ -299,7 +356,14 @@ document.querySelector('[data-testid=request-ride]').addEventListener('click', a
   const ride=await result.json();const status=document.querySelector('[data-testid=ride-status]');
   status.textContent=`${messages[locale].confirmed} · ${messages[locale].driver}: ${ride.driver_id}`;
   status.dataset.driverId=ride.driver_id;status.dataset.httpStatus=String(result.status);
-});</script></body></html>
+});
+document.querySelector('[data-testid=fare-preview]').addEventListener('click', async()=>{
+  const parse=(value)=>value.split(',').map(Number);const result=await fetch('/api/fare-preview',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pickup:parse(document.querySelector('[data-testid=pickup]').value),destination:parse(document.querySelector('[data-testid=destination]').value)})});
+  const preview=await result.json();document.querySelector('[data-testid=ride-status]').textContent=`${messages[locale].fare}: ${preview.fare} ${preview.currency}`;
+});
+document.querySelector('[data-testid=cancel-ride]').addEventListener('click',async()=>{const result=await fetch('/api/rides/ride-reference-001/cancel',{method:'POST'});document.querySelector('[data-testid=ride-status]').textContent=(await result.json()).status;});
+document.querySelector('[data-testid=driver-available]').addEventListener('click',async()=>{const result=await fetch('/api/drivers/available',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({driver_id:'driver-offline'})});document.querySelector('[data-testid=ride-status]').textContent=(await result.json()).status;});
+</script></body></html>
 """,
     )
     _write(
@@ -331,7 +395,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "api"))
-from domain import create_ride, select_driver  # noqa: E402
+from domain import available_driver, cancel_ride, create_ride, fare_preview, select_driver  # noqa: E402
 
 
 class RideFlowTests(unittest.TestCase):
@@ -344,6 +408,18 @@ class RideFlowTests(unittest.TestCase):
         ride = create_ride((0.0, 0.0), (8.0, 8.0), mode)
         self.assertEqual(ride["driver_id"], "driver-near")
         self.assertEqual(ride["status"], "DRIVER_ON_THE_WAY")
+
+    def test_driver_becomes_available(self):
+        self.assertTrue(available_driver("driver-offline")["available"])
+
+    def test_cancel_ride_releases_driver(self):
+        ride = {"ride_id": "ride-reference-001", "status": "DRIVER_ON_THE_WAY"}
+        cancelled = cancel_ride(ride)
+        self.assertEqual(cancelled["status"], "CANCELLED")
+        self.assertTrue(cancelled["driver_available"])
+
+    def test_deterministic_fare_preview(self):
+        self.assertEqual(fare_preview((0.0, 0.0), (3.0, 4.0))["fare"], 12.75)
 
 
 if __name__ == "__main__":
@@ -428,6 +504,8 @@ if __name__ == "__main__":
         "web_url": f"http://127.0.0.1:{web_port}/",
         "api_url": f"http://127.0.0.1:{api_port}",
         "runtime_profile_count": 4,
+        "protected_behavior_count": 4,
+        "protected_behaviors": list(MARKER["phase13_capabilities"]),
     }
 
 

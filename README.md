@@ -901,6 +901,30 @@ Center clicks, a real login-session restart, sleep/wake and lock/unlock remain m
 The complete implementation, exact local evidence, screenshots and limitations are indexed in
 [`docs/phase-11m-macos-delivery/README.md`](docs/phase-11m-macos-delivery/README.md).
 
+### Phase 13M — Passive Sentinel and bounded automatic rechecks
+
+- connects the existing watcher, settled Episodes, immutable snapshots, Impact selection, approved
+  Probe versions, accepted Known Good milestones, and Regression Findings through one authoritative
+  local orchestration path;
+- adds immutable global, project, and behavior policy revisions with conservative ask-first defaults;
+- adds a persistent SQLite queue with per-project serialization, bounded global concurrency,
+  source-identity deduplication, stale-job protection, deferred work, cancellation, and restart
+  recovery for safe idempotent jobs only;
+- classifies retry evidence as pass, confirmed, flaky, inconclusive, cancelled, or needs review and
+  keeps confirmed incidents deduplicated by stable behavior/baseline/source/category identity;
+- records evidence-backed Impact Memory relations with provenance and explicit limitations;
+- expands the synthetic loopback-only RideFlow reference project to four behaviors: nearest-ride
+  selection, driver availability, ride cancellation, and deterministic fare preview;
+- adds operational monitoring settings plus 38 translation-key-only English/Hebrew RTL product-truth
+  surfaces for policies, queue state, recovery, fan-out, flakiness, and background results;
+- adds migration `0010_passive_sentinel_orchestration` while preserving migrations `0001`–`0009`.
+
+Phase 13M does **not** add automatic repair or Apply, model/provider access, cloud/source upload,
+external analytics, Git push, deployment, public releases, or APC coupling. It remains Git-optional,
+local-first, fail-open for ordinary source editing, and bound to exact source identities. See the
+single consolidated delivery document in
+[`docs/phase-13m-delivery/PHASE_13M_MASTER_REPORT.md`](docs/phase-13m-delivery/PHASE_13M_MASTER_REPORT.md).
+
 ---
 
 ## Built from APC—without carrying the monolith

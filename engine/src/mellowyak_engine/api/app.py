@@ -26,6 +26,7 @@ from mellowyak_engine.api.schemas import (
     BehaviorCandidateListResponse,
     BehaviorCandidateResponse,
     BehaviorDraftRequest,
+    BehaviorMonitoringPolicyRequest,
     BrowserCaptureListResponse,
     BrowserCaptureResponse,
     BrowserCaptureStartRequest,
@@ -50,11 +51,13 @@ from mellowyak_engine.api.schemas import (
     EvidenceListResponse,
     GateDecisionResponse,
     GitStateResponse,
+    GlobalMonitoringPolicyRequest,
     HandshakeResponse,
     HealthResponse,
     HomeSummaryResponse,
     HumanVerificationRequest,
     ImpactAnalyzeRequest,
+    ImpactMemoryResponse,
     ImpactPathListResponse,
     ImpactSearchResponse,
     ImpactSummaryResponse,
@@ -63,12 +66,16 @@ from mellowyak_engine.api.schemas import (
     LocalEventListResponse,
     LocalExportResponse,
     MilestoneCreateRequest,
+    MonitoringPolicyResponse,
     MonitoringResponse,
     NotificationActivationRequest,
     NotificationSettingsRequest,
     OnboardingResponse,
     OnboardingUpdateRequest,
     OpenDataFolderResponse,
+    OrchestrationActionResponse,
+    OrchestrationJobListResponse,
+    OrchestrationRunListResponse,
     PackageAcceptanceRecordRequest,
     PerformanceMetricRequest,
     PortableRepairRequest,
@@ -88,6 +95,7 @@ from mellowyak_engine.api.schemas import (
     ProjectDetectRequest,
     ProjectListResponse,
     ProjectLocationRequest,
+    ProjectMonitoringPolicyRequest,
     ProjectNotificationRequest,
     ProjectOverviewAggregateResponse,
     ProjectRelocateRequest,
@@ -147,7 +155,10 @@ from mellowyak_engine.evidence.store import EvidenceStore
 from mellowyak_engine.gate.service import GateError, GateService
 from mellowyak_engine.impact.models import TraversalPolicy
 from mellowyak_engine.impact.service import ImpactService, ImpactServiceError
+from mellowyak_engine.impact_memory.service import ImpactMemoryService
 from mellowyak_engine.monitoring.service import MonitoringService
+from mellowyak_engine.noise_control.service import NoiseControlService
+from mellowyak_engine.orchestration.service import OrchestrationService
 from mellowyak_engine.probes.service import ProbeService, ProbeServiceError
 from mellowyak_engine.product_truth.service import ProductTruthService
 from mellowyak_engine.productization.service import ProductizationError, ProductizationService
@@ -174,6 +185,8 @@ from mellowyak_engine.runtime_profiles.service import (
 )
 from mellowyak_engine.safe_apply.service import SafeApplyService, SafeApplyServiceError
 from mellowyak_engine.scanning.service import ScanCoordinator, SourceScanner
+from mellowyak_engine.scheduling.policy import MonitoringPolicyError, MonitoringPolicyService
+from mellowyak_engine.scheduling.service import SchedulerService
 from mellowyak_engine.security.auth import SessionTokenGuard
 from mellowyak_engine.settings.config import EngineSettings
 from mellowyak_engine.snapshots.service import SnapshotService, SnapshotServiceError
@@ -222,6 +235,11 @@ class EngineRuntime:
     self_test: ProductSelfTestService
     technical_preview: TechnicalPreviewService
     product_truth: ProductTruthService
+    monitoring_policies: MonitoringPolicyService
+    scheduler: SchedulerService
+    orchestration: OrchestrationService
+    impact_memory: ImpactMemoryService
+    noise_control: NoiseControlService
 
 
 def _open_folder(path: str) -> str:
@@ -278,7 +296,27 @@ def create_app(settings: EngineSettings) -> FastAPI:
     product_truth = ProductTruthService(database.sessions, technical_preview)
     probes = ProbeService(database.sessions, events, snapshots, productization)
     browser = BrowserCaptureService(database.sessions, evidence, events, probes)
-    episodes.bind_selection_callback(probes.select_impacted)
+    monitoring_policies = MonitoringPolicyService(database.sessions, events)
+    impact_memory = ImpactMemoryService(database.sessions)
+    noise_control = NoiseControlService(database.sessions)
+    scheduler = SchedulerService(
+        database.sessions,
+        events,
+        probes,
+        impact_memory,
+        noise_control,
+        run_id,
+        worker_count=int(monitoring_policies.global_policy()["max_concurrent_probes"]),
+    )
+    orchestration = OrchestrationService(
+        database.sessions,
+        events,
+        probes,
+        monitoring_policies,
+        scheduler,
+        impact_memory,
+    )
+    episodes.bind_selection_callback(orchestration.handle_episode)
     repair_workspaces = RepairWorkspaceService(database.sessions, paths.root, events, _open_folder)
     repair_candidates = RepairCandidateService(database.sessions, paths.root, events)
     repair_validations = RepairValidationService(database.sessions, paths.root, events)
@@ -338,6 +376,11 @@ def create_app(settings: EngineSettings) -> FastAPI:
         self_test=self_test,
         technical_preview=technical_preview,
         product_truth=product_truth,
+        monitoring_policies=monitoring_policies,
+        scheduler=scheduler,
+        orchestration=orchestration,
+        impact_memory=impact_memory,
+        noise_control=noise_control,
     )
 
     app = FastAPI(
@@ -2592,6 +2635,181 @@ def create_app(settings: EngineSettings) -> FastAPI:
     def package_acceptance() -> dict[str, object]:
         return technical_preview.package_acceptance()
 
+    def monitoring_policy_error(error: MonitoringPolicyError) -> HTTPException:
+        return HTTPException(
+            status_code=404 if error.code.endswith("_NOT_FOUND") else 400,
+            detail=error.code,
+        )
+
+    @app.get(
+        "/monitoring/policy",
+        response_model=MonitoringPolicyResponse,
+        dependencies=[Depends(guard)],
+    )
+    def global_monitoring_policy() -> MonitoringPolicyResponse:
+        return MonitoringPolicyResponse(**monitoring_policies.global_policy())
+
+    @app.put(
+        "/monitoring/policy",
+        response_model=MonitoringPolicyResponse,
+        dependencies=[Depends(guard)],
+    )
+    def update_global_monitoring_policy(
+        request: GlobalMonitoringPolicyRequest,
+    ) -> MonitoringPolicyResponse:
+        try:
+            result = monitoring_policies.update_global(request.model_dump(exclude_none=True))
+            return MonitoringPolicyResponse(**result)
+        except MonitoringPolicyError as error:
+            raise monitoring_policy_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/monitoring-policy",
+        response_model=MonitoringPolicyResponse,
+        dependencies=[Depends(guard)],
+    )
+    def project_monitoring_policy(project_id: str) -> MonitoringPolicyResponse:
+        try:
+            return MonitoringPolicyResponse(**monitoring_policies.project_policy(project_id))
+        except MonitoringPolicyError as error:
+            raise monitoring_policy_error(error) from error
+
+    @app.put(
+        "/projects/{project_id}/monitoring-policy",
+        response_model=MonitoringPolicyResponse,
+        dependencies=[Depends(guard)],
+    )
+    def update_project_monitoring_policy(
+        project_id: str,
+        request: ProjectMonitoringPolicyRequest,
+    ) -> MonitoringPolicyResponse:
+        try:
+            result = monitoring_policies.update_project(
+                project_id, request.model_dump(exclude_none=True)
+            )
+            return MonitoringPolicyResponse(**result)
+        except MonitoringPolicyError as error:
+            raise monitoring_policy_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/behaviors/{behavior_id}/monitoring-policy",
+        response_model=MonitoringPolicyResponse,
+        dependencies=[Depends(guard)],
+    )
+    def behavior_monitoring_policy(project_id: str, behavior_id: str) -> MonitoringPolicyResponse:
+        try:
+            return MonitoringPolicyResponse(
+                **monitoring_policies.behavior_policy(project_id, behavior_id)
+            )
+        except MonitoringPolicyError as error:
+            raise monitoring_policy_error(error) from error
+
+    @app.put(
+        "/projects/{project_id}/behaviors/{behavior_id}/monitoring-policy",
+        response_model=MonitoringPolicyResponse,
+        dependencies=[Depends(guard)],
+    )
+    def update_behavior_monitoring_policy(
+        project_id: str,
+        behavior_id: str,
+        request: BehaviorMonitoringPolicyRequest,
+    ) -> MonitoringPolicyResponse:
+        try:
+            result = monitoring_policies.update_behavior(
+                project_id, behavior_id, request.model_dump(exclude_none=True)
+            )
+            return MonitoringPolicyResponse(**result)
+        except MonitoringPolicyError as error:
+            raise monitoring_policy_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/orchestration",
+        response_model=OrchestrationRunListResponse,
+        dependencies=[Depends(guard)],
+    )
+    def orchestration_runs(project_id: str) -> OrchestrationRunListResponse:
+        return OrchestrationRunListResponse(runs=orchestration.list(project_id))
+
+    @app.get(
+        "/projects/{project_id}/orchestration/{orchestration_run_id}",
+        dependencies=[Depends(guard)],
+    )
+    def orchestration_run(project_id: str, orchestration_run_id: str) -> dict[str, object]:
+        try:
+            return orchestration.get(project_id, orchestration_run_id)
+        except RuntimeError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+
+    @app.post(
+        "/projects/{project_id}/orchestration/pause",
+        response_model=MonitoringPolicyResponse,
+        dependencies=[Depends(guard)],
+    )
+    def pause_orchestration(project_id: str) -> MonitoringPolicyResponse:
+        return MonitoringPolicyResponse(**orchestration.pause(project_id))
+
+    @app.post(
+        "/projects/{project_id}/orchestration/resume",
+        response_model=MonitoringPolicyResponse,
+        dependencies=[Depends(guard)],
+    )
+    def resume_orchestration(project_id: str) -> MonitoringPolicyResponse:
+        return MonitoringPolicyResponse(**orchestration.resume(project_id))
+
+    @app.post(
+        "/projects/{project_id}/orchestration/run-now",
+        response_model=OrchestrationActionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def run_orchestration_now(project_id: str) -> OrchestrationActionResponse:
+        return OrchestrationActionResponse(**orchestration.run_now(project_id))
+
+    @app.get(
+        "/orchestration/jobs",
+        response_model=OrchestrationJobListResponse,
+        dependencies=[Depends(guard)],
+    )
+    def orchestration_jobs(
+        project_id: str | None = None, state: str | None = None
+    ) -> OrchestrationJobListResponse:
+        return OrchestrationJobListResponse(jobs=scheduler.list(project_id, state))
+
+    @app.get("/orchestration/jobs/{job_id}", dependencies=[Depends(guard)])
+    def orchestration_job(job_id: str) -> dict[str, object]:
+        try:
+            return scheduler.get(job_id)
+        except RuntimeError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+
+    @app.post("/orchestration/jobs/{job_id}/cancel", dependencies=[Depends(guard)])
+    def cancel_orchestration_job(job_id: str) -> dict[str, object]:
+        try:
+            return scheduler.cancel(job_id)
+        except RuntimeError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+
+    @app.get(
+        "/projects/{project_id}/episodes/{episode_id}/impact-plan",
+        dependencies=[Depends(guard)],
+    )
+    def episode_impact_plan(project_id: str, episode_id: str) -> dict[str, object]:
+        try:
+            return orchestration.impact_plan(project_id, episode_id)
+        except RuntimeError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+
+    @app.get(
+        "/projects/{project_id}/impact-memory",
+        response_model=ImpactMemoryResponse,
+        dependencies=[Depends(guard)],
+    )
+    def project_impact_memory(project_id: str) -> ImpactMemoryResponse:
+        try:
+            projects.get_model(project_id)
+        except ProjectError as error:
+            raise project_error(error) from error
+        return ImpactMemoryResponse(**impact_memory.list(project_id))
+
     @app.post(
         "/package-acceptance/run",
         dependencies=[Depends(guard)],
@@ -2614,6 +2832,7 @@ def create_app(settings: EngineSettings) -> FastAPI:
     def stop_background_services() -> None:
         monitoring.stop_all()
         episodes.stop_all()
+        scheduler.stop()
         runtime_profiles.stop_all()
         scans.stop_all()
         browser.close()
@@ -2622,6 +2841,8 @@ def create_app(settings: EngineSettings) -> FastAPI:
     episodes.recover()
     runtime_profiles.recover()
     safe_apply.recover_pending()
+    scheduler.recover()
+    scheduler.start()
     monitoring.start_persisted()
 
     logger.info("engine_runtime_ready schema=%s", schema_version)

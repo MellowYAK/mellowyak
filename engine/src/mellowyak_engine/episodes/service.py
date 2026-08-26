@@ -15,8 +15,8 @@ from sqlalchemy.orm import Session, sessionmaker
 from mellowyak_engine.core.events import LocalEventBus
 from mellowyak_engine.db.models import Project, SignalClassification, SourceEpisode, SourceSnapshot
 
-SETTLE_SECONDS = 1.2
-MAX_EPISODE_SECONDS = 30.0
+SETTLE_SECONDS = 2.0
+MAX_EPISODE_SECONDS = 60.0
 MAX_EPISODE_PATHS = 5_000
 DEPENDENCY_FILES = frozenset(
     {
@@ -98,6 +98,15 @@ class EpisodeService:
             active.timer = threading.Timer(SETTLE_SECONDS, self._stabilize_safe, args=(project_id,))
             active.timer.daemon = True
             active.timer.start()
+            self.events.publish(
+                "episode_settling",
+                project_id,
+                {
+                    "episode_id": active.episode_id,
+                    "settle_seconds": SETTLE_SECONDS,
+                    "changed_path_count": len(active.paths),
+                },
+            )
             return active.episode_id
 
     def _open(self, project_id: str, now_mono: float) -> _ActiveEpisode:

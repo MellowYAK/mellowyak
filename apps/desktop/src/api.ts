@@ -1585,6 +1585,83 @@ export async function cancelProbe(projectId: string, probeId: string): Promise<{
   return engineFetch<{ status: string }>(`/projects/${encodeURIComponent(projectId)}/probes/${encodeURIComponent(probeId)}/cancel`, { method: "POST", body: "{}" });
 }
 
+export type MonitoringPolicy = {
+  id: string;
+  version: number;
+  source_observation_enabled?: boolean;
+  automatic_checking_enabled?: boolean;
+  max_concurrent_projects?: number;
+  max_concurrent_probes?: number;
+  max_checks_per_episode?: number;
+  mode?: string;
+  created_at: string;
+};
+
+export type OrchestrationRun = {
+  id: string;
+  project_id: string;
+  episode_id: string;
+  state: string;
+  terminal_status: string | null;
+  selected_behaviors: Array<Record<string, unknown>>;
+  omitted_behaviors: Array<Record<string, unknown>>;
+  eligibility: Array<Record<string, unknown>>;
+  created_at: string;
+};
+
+export type OrchestrationJob = {
+  id: string;
+  project_id: string;
+  behavior_id: string | null;
+  probe_id: string;
+  state: string;
+  reason_code: string;
+  defer_reason: string | null;
+  source_identity_digest: string;
+  created_at: string;
+};
+
+export async function getMonitoringPolicy(): Promise<MonitoringPolicy> {
+  return engineFetch<MonitoringPolicy>("/monitoring/policy");
+}
+
+export async function putMonitoringPolicy(value: Partial<MonitoringPolicy>): Promise<MonitoringPolicy> {
+  return engineFetch<MonitoringPolicy>("/monitoring/policy", { method: "PUT", body: JSON.stringify(value) });
+}
+
+export async function getProjectMonitoringPolicy(projectId: string): Promise<MonitoringPolicy> {
+  return engineFetch<MonitoringPolicy>(`/projects/${encodeURIComponent(projectId)}/monitoring-policy`);
+}
+
+export async function putProjectMonitoringPolicy(projectId: string, value: Partial<MonitoringPolicy>): Promise<MonitoringPolicy> {
+  return engineFetch<MonitoringPolicy>(`/projects/${encodeURIComponent(projectId)}/monitoring-policy`, { method: "PUT", body: JSON.stringify(value) });
+}
+
+export async function listOrchestrationRuns(projectId: string): Promise<OrchestrationRun[]> {
+  const response = await engineFetch<{ runs?: OrchestrationRun[] }>(`/projects/${encodeURIComponent(projectId)}/orchestration`);
+  return Array.isArray(response.runs) ? response.runs : [];
+}
+
+export async function listOrchestrationJobs(projectId?: string, state?: string): Promise<OrchestrationJob[]> {
+  const query = new URLSearchParams();
+  if (projectId) query.set("project_id", projectId);
+  if (state) query.set("state", state);
+  const response = await engineFetch<{ jobs?: OrchestrationJob[] }>(`/orchestration/jobs?${query.toString()}`);
+  return Array.isArray(response.jobs) ? response.jobs : [];
+}
+
+export async function pauseProjectOrchestration(projectId: string): Promise<MonitoringPolicy> {
+  return engineFetch<MonitoringPolicy>(`/projects/${encodeURIComponent(projectId)}/orchestration/pause`, { method: "POST", body: "{}" });
+}
+
+export async function resumeProjectOrchestration(projectId: string): Promise<MonitoringPolicy> {
+  return engineFetch<MonitoringPolicy>(`/projects/${encodeURIComponent(projectId)}/orchestration/resume`, { method: "POST", body: "{}" });
+}
+
+export async function runProjectOrchestrationNow(projectId: string): Promise<{ status: string; resumed_count: number }> {
+  return engineFetch(`/projects/${encodeURIComponent(projectId)}/orchestration/run-now`, { method: "POST", body: "{}" });
+}
+
 export async function createRepairWorkspace(projectId: string, regressionId: string): Promise<RepairWorkspace> {
   return engineFetch<RepairWorkspace>(`/projects/${encodeURIComponent(projectId)}/regressions/${encodeURIComponent(regressionId)}/repair-workspace`, { method: "POST", body: "{}" });
 }

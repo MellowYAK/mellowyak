@@ -453,6 +453,77 @@ class ActivityModeRequest(BaseModel):
     activity_mode: str = Field(min_length=1, max_length=30)
 
 
+class GlobalMonitoringPolicyRequest(BaseModel):
+    source_observation_enabled: bool | None = None
+    automatic_checking_enabled: bool | None = None
+    default_project_mode: str | None = Field(default=None, max_length=40)
+    max_concurrent_projects: int | None = Field(default=None, ge=1, le=8)
+    max_concurrent_probes: int | None = Field(default=None, ge=1, le=8)
+    max_concurrent_browser_probes: int | None = Field(default=None, ge=1, le=2)
+    daily_runtime_budget_seconds: int | None = Field(default=None, ge=60, le=86_400)
+    default_activity_mode: str | None = Field(default=None, max_length=30)
+    allowed_hours: dict[str, object] | None = None
+    battery_policy: dict[str, object] | None = None
+    quiet_policy: dict[str, object] | None = None
+    runtime_start_default: str | None = Field(default=None, max_length=60)
+    notification_policy: dict[str, object] | None = None
+
+
+class ProjectMonitoringPolicyRequest(BaseModel):
+    mode: str | None = Field(default=None, max_length=40)
+    settle_seconds: float | None = Field(default=None, ge=0.5, le=15)
+    max_episode_seconds: int | None = Field(default=None, ge=5, le=300)
+    max_checks_per_episode: int | None = Field(default=None, ge=1, le=100)
+    max_automatic_duration_seconds: int | None = Field(default=None, ge=5, le=1800)
+    runtime_start_policy: str | None = Field(default=None, max_length=60)
+    network_policy: str | None = Field(default=None, max_length=40)
+    resource_budget: dict[str, object] | None = None
+    notification_policy: dict[str, object] | None = None
+    allowed_hours: dict[str, object] | None = None
+    muted: bool | None = None
+
+
+class BehaviorMonitoringPolicyRequest(BaseModel):
+    mode: str | None = Field(default=None, max_length=40)
+    retry_policy: dict[str, object] | None = None
+    max_duration_seconds: int | None = Field(default=None, ge=5, le=1800)
+    automatic_runtime_eligible: bool | None = None
+    sentinel: bool | None = None
+    notification_escalation: str | None = Field(default=None, max_length=40)
+    flaky_handling: str | None = Field(default=None, max_length=40)
+    resolution_policy: str | None = Field(default=None, max_length=40)
+    muted: bool | None = None
+
+
+class MonitoringPolicyResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    id: str
+    version: int
+    created_at: str
+
+
+class OrchestrationRunListResponse(BaseModel):
+    runs: list[dict[str, object]]
+
+
+class OrchestrationJobListResponse(BaseModel):
+    jobs: list[dict[str, object]]
+
+
+class OrchestrationActionResponse(BaseModel):
+    status: str
+    resumed_count: int = 0
+
+
+class ImpactMemoryResponse(BaseModel):
+    project_id: str
+    relations: list[dict[str, object]]
+    known_facts: list[str]
+    unknowns: list[str]
+    limitations: list[str]
+
+
 class NotificationActivationRequest(BaseModel):
     route: dict[str, object]
 

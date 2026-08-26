@@ -1026,6 +1026,84 @@ class TechnicalPreviewPreference(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
+class MonitoringPolicy(Base):
+    __tablename__ = "monitoring_policies"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, unique=True)
+    source_observation_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    automatic_checking_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    default_project_mode: Mapped[str] = mapped_column(
+        String(40), nullable=False, default="ASK_BEFORE_CHECKS"
+    )
+    max_concurrent_projects: Mapped[int] = mapped_column(Integer, nullable=False, default=2)
+    max_concurrent_probes: Mapped[int] = mapped_column(Integer, nullable=False, default=2)
+    max_concurrent_browser_probes: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    daily_runtime_budget_seconds: Mapped[int] = mapped_column(Integer, nullable=False, default=3600)
+    default_activity_mode: Mapped[str] = mapped_column(String(30), nullable=False, default="normal")
+    allowed_hours_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    battery_policy_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    quiet_policy_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    runtime_start_default: Mapped[str] = mapped_column(
+        String(60), nullable=False, default="ASK_BEFORE_START"
+    )
+    notification_policy_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class ProjectMonitoringPolicy(Base):
+    __tablename__ = "project_monitoring_policies"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    mode: Mapped[str] = mapped_column(String(40), nullable=False, default="ASK_BEFORE_CHECKS")
+    settle_seconds: Mapped[float] = mapped_column(Float, nullable=False, default=2.0)
+    max_episode_seconds: Mapped[int] = mapped_column(Integer, nullable=False, default=60)
+    max_checks_per_episode: Mapped[int] = mapped_column(Integer, nullable=False, default=10)
+    max_automatic_duration_seconds: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=300
+    )
+    runtime_start_policy: Mapped[str] = mapped_column(
+        String(60), nullable=False, default="ASK_BEFORE_START"
+    )
+    network_policy: Mapped[str] = mapped_column(String(40), nullable=False, default="LOOPBACK_ONLY")
+    resource_budget_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    notification_policy_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    allowed_hours_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    muted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (UniqueConstraint("project_id", "version"),)
+
+
+class BehaviorMonitoringPolicy(Base):
+    __tablename__ = "behavior_monitoring_policies"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    behavior_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("protected_behaviors.id"), nullable=False
+    )
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    mode: Mapped[str] = mapped_column(String(40), nullable=False, default="ASK")
+    retry_policy_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    max_duration_seconds: Mapped[int] = mapped_column(Integer, nullable=False, default=120)
+    automatic_runtime_eligible: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    sentinel: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    notification_escalation: Mapped[str] = mapped_column(
+        String(40), nullable=False, default="CONFIRMED"
+    )
+    flaky_handling: Mapped[str] = mapped_column(String(40), nullable=False, default="BOUNDED_RETRY")
+    resolution_policy: Mapped[str] = mapped_column(
+        String(40), nullable=False, default="COMPARABLE_PASS"
+    )
+    muted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (UniqueConstraint("behavior_id", "version"),)
+
+
 class ProjectLocationHistory(Base):
     __tablename__ = "project_location_history"
 
@@ -1187,6 +1265,159 @@ class RuntimeInstance(Base):
     stopped_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     exit_code: Mapped[int | None] = mapped_column(Integer, nullable=True)
     sanitized_observation_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+
+
+class OrchestrationRun(Base):
+    __tablename__ = "orchestration_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    episode_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("source_episodes.id"), nullable=False
+    )
+    base_snapshot_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    resulting_snapshot_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_identity_json: Mapped[str] = mapped_column(Text, nullable=False)
+    runtime_profile_versions_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    selected_behaviors_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    omitted_behaviors_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    selected_probe_versions_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    policy_versions_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    scheduler_budget_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    eligibility_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    evidence_references_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    state: Mapped[str] = mapped_column(String(40), nullable=False)
+    terminal_status: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    error_code: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (UniqueConstraint("episode_id"),)
+
+
+class OrchestrationJob(Base):
+    __tablename__ = "orchestration_jobs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    orchestration_run_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("orchestration_runs.id"), nullable=False
+    )
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    behavior_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    probe_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("probe_definitions.id"), nullable=False
+    )
+    probe_version_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("probe_versions.id"), nullable=False
+    )
+    runtime_profile_version_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    snapshot_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_identity_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    priority: Mapped[int] = mapped_column(Integer, nullable=False, default=50)
+    job_type: Mapped[str] = mapped_column(String(40), nullable=False, default="PROBE")
+    idempotence: Mapped[str] = mapped_column(String(40), nullable=False, default="SAFE")
+    state: Mapped[str] = mapped_column(String(40), nullable=False, default="QUEUED")
+    reason_code: Mapped[str] = mapped_column(String(120), nullable=False)
+    defer_reason: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    probe_run_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (UniqueConstraint("probe_version_id", "source_identity_digest"),)
+
+
+class OrchestrationJobAttempt(Base):
+    __tablename__ = "orchestration_job_attempts"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    job_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("orchestration_jobs.id"), nullable=False
+    )
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    attempt_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    reason: Mapped[str] = mapped_column(String(120), nullable=False)
+    result: Mapped[str] = mapped_column(String(40), nullable=False)
+    classification: Mapped[str] = mapped_column(String(40), nullable=False)
+    details_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    completed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (UniqueConstraint("job_id", "attempt_number"),)
+
+
+class SchedulerRecoveryRecord(Base):
+    __tablename__ = "scheduler_recovery_records"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    engine_run_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    recovered_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    stale_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    interrupted_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    details_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class ImpactMemoryRelation(Base):
+    __tablename__ = "impact_memory_relations"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    source_key: Mapped[str] = mapped_column(Text, nullable=False)
+    behavior_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("protected_behaviors.id"), nullable=False
+    )
+    provenance: Mapped[str] = mapped_column(String(40), nullable=False)
+    source_identity_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    runtime_version_scope: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    evidence_reference: Mapped[str | None] = mapped_column(Text, nullable=True)
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    stale_reason: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    reason: Mapped[str] = mapped_column(String(240), nullable=False)
+    first_observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    last_observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "project_id", "source_key", "behavior_id", "provenance", "source_identity_digest"
+        ),
+    )
+
+
+class ProbeFlakinessRecord(Base):
+    __tablename__ = "probe_flakiness_records"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    probe_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("probe_definitions.id"), nullable=False
+    )
+    source_identity_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    classification: Mapped[str] = mapped_column(String(40), nullable=False)
+    consecutive_flaky_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    quarantined: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    last_attempts_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (UniqueConstraint("probe_id", "source_identity_digest"),)
+
+
+class AlertDeduplicationRecord(Base):
+    __tablename__ = "alert_deduplication_records"
+
+    deduplication_key: Mapped[str] = mapped_column(String(255), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    behavior_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    baseline_identity: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    source_identity_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    signal_category: Mapped[str] = mapped_column(String(40), nullable=False)
+    alert_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    delivery_status: Mapped[str] = mapped_column(String(40), nullable=False, default="PERSISTED")
+    occurrence_count: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
 class SourceEpisode(Base):

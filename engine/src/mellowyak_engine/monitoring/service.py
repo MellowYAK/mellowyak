@@ -55,6 +55,11 @@ class MonitoringService:
                 continue
         if not relative_paths:
             return
+        self.projects.events.publish(
+            "filesystem_burst_observed",
+            project_id,
+            {"changed_path_count": len(relative_paths)},
+        )
         try:
             self.projects.refresh_git(project_id, sorted(relative_paths))
             if self.episodes is not None:
