@@ -49,6 +49,13 @@ class RuntimeDetectionService:
                         reason="runtime.detection.adapter_failed",
                     )
                 )
+        # An explicit, validated MellowYak runtime manifest is the operator's complete
+        # declaration for this project. Automatic metadata adapters must not append
+        # duplicate inferred profiles beside that authoritative set.
+        if any(item.adapter_name == "mellowyak_runtime_manifest" for item in detections):
+            detections = [
+                item for item in detections if item.adapter_name == "mellowyak_runtime_manifest"
+            ]
         confidence_rank = {
             DetectionConfidence.HIGH: 0,
             DetectionConfidence.MEDIUM: 1,

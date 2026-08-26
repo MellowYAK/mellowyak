@@ -15,6 +15,9 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from mellowyak_engine.core.events import LocalEventBus
 from mellowyak_engine.db.models import (
+    ProbeDefinition,
+    ProbeRun,
+    ProbeVersion,
     Project,
     RegressionFinding,
     RepairWorkspace,
@@ -126,6 +129,35 @@ class RepairWorkspaceService:
                 )
                 .where(RuntimeProfile.project_id == project_id)
             ).all()
+            failed_probe_check: dict[str, Any] | None = None
+            if regression.probe_run_id:
+                failed_run = session.get(ProbeRun, regression.probe_run_id)
+                failed_probe = (
+                    session.get(ProbeDefinition, failed_run.probe_id) if failed_run else None
+                )
+                failed_version = (
+                    session.get(ProbeVersion, failed_run.probe_version_id) if failed_run else None
+                )
+                if failed_probe and failed_version and failed_probe.probe_type in {"CLI", "TEST"}:
+                    definition = json.loads(failed_version.definition_json or "{}")
+                    expected = json.loads(failed_version.expected_result_json or "{}")
+                    executable = definition.get("executable")
+                    argv = definition.get("argv", [])
+                    if (
+                        isinstance(executable, str)
+                        and isinstance(argv, list)
+                        and all(isinstance(item, str) for item in argv)
+                    ):
+                        failed_probe_check = {
+                            "id": f"original-failed-probe-{failed_version.id}",
+                            "type": "PROCESS",
+                            "requirement": "REQUIRED",
+                            "executable": executable,
+                            "argv": argv,
+                            "cwd": str(definition.get("cwd") or "."),
+                            "expected_exit_code": int(expected.get("exit_code", 0)),
+                            "stdout_contains": expected.get("contains"),
+                        }
             changed_paths = sorted(
                 set(
                     (json.loads(episode.modified_paths_json) if episode else [])
@@ -179,6 +211,8 @@ class RepairWorkspaceService:
                         "stdout_contains": definition.get("stdout_contains"),
                     }
                 )
+        if failed_probe_check is not None:
+            executable_checks.append(failed_probe_check)
         validation = {
             "schema": "mellowyak.validation_plan.v1",
             "required_rechecks": ["ORIGINAL_FAILED_CHECK", "IMPACT_SELECTED_CHECKS"],

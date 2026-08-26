@@ -4930,6 +4930,118 @@
         "title": "ProjectActivityAggregateResponse",
         "type": "object"
       },
+      "ProjectCompatibilityResponse": {
+        "properties": {
+          "approved_runtimes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Approved Runtimes",
+            "type": "array"
+          },
+          "assessment_scope": {
+            "title": "Assessment Scope",
+            "type": "string"
+          },
+          "automatic_checks_eligible": {
+            "title": "Automatic Checks Eligible",
+            "type": "boolean"
+          },
+          "available_probe_types": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Available Probe Types",
+            "type": "array"
+          },
+          "detected_structure": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Detected Structure",
+            "type": "array"
+          },
+          "external_service_requirement": {
+            "title": "External Service Requirement",
+            "type": "string"
+          },
+          "inventory": {
+            "additionalProperties": true,
+            "title": "Inventory",
+            "type": "object"
+          },
+          "known_limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Known Limitations",
+            "type": "array"
+          },
+          "missing_prerequisites": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Prerequisites",
+            "type": "array"
+          },
+          "passive_monitoring_ready": {
+            "title": "Passive Monitoring Ready",
+            "type": "boolean"
+          },
+          "project_alias": {
+            "title": "Project Alias",
+            "type": "string"
+          },
+          "runtimes": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Runtimes",
+            "type": "array"
+          },
+          "safe_next_action": {
+            "title": "Safe Next Action",
+            "type": "string"
+          },
+          "source": {
+            "additionalProperties": true,
+            "title": "Source",
+            "type": "object"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "unknowns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unknowns",
+            "type": "array"
+          }
+        },
+        "required": [
+          "project_alias",
+          "state",
+          "detected_structure",
+          "source",
+          "inventory",
+          "runtimes",
+          "approved_runtimes",
+          "available_probe_types",
+          "passive_monitoring_ready",
+          "automatic_checks_eligible",
+          "missing_prerequisites",
+          "external_service_requirement",
+          "known_limitations",
+          "unknowns",
+          "safe_next_action",
+          "assessment_scope"
+        ],
+        "title": "ProjectCompatibilityResponse",
+        "type": "object"
+      },
       "ProjectCreateRequest": {
         "properties": {
           "display_name": {
@@ -8234,13 +8346,28 @@
         ],
         "title": "VerificationStartRequest",
         "type": "object"
+      },
+      "WatcherRescanRequest": {
+        "properties": {
+          "reason": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "WatcherRescanRequest",
+        "type": "object"
       }
     }
   },
   "info": {
     "description": "Loopback-only API used by the MellowYak desktop shell.",
     "title": "MellowYak Local Engine",
-    "version": "0.3.0-preview.2"
+    "version": "0.4.0-preview.1"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -13593,6 +13720,61 @@
           }
         },
         "summary": "Verify Required"
+      }
+    },
+    "/projects/{project_id}/compatibility": {
+      "get": {
+        "operationId": "project_compatibility_projects__project_id__compatibility_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectCompatibilityResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Project Compatibility"
       }
     },
     "/projects/{project_id}/delete-local-data": {
@@ -19311,6 +19493,71 @@
           }
         },
         "summary": "Retry Verification"
+      }
+    },
+    "/projects/{project_id}/watcher/rescan": {
+      "post": {
+        "operationId": "watcher_rescan_projects__project_id__watcher_rescan_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatcherRescanRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Watcher Rescan"
       }
     },
     "/readiness": {

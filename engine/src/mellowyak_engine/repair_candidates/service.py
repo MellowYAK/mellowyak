@@ -72,7 +72,12 @@ class RepairCandidateService:
         store = SnapshotStore(self.data_root, workspace.project_id)
         base_manifest = store.load_manifest(workspace.snapshot_id)
         base = {entry.relative_path: entry for entry in base_manifest.entries}
-        current_entries, workspace_digest = scan_workspace(self._workspace_root(workspace))
+        # A real project snapshot may legitimately contain far more files than a
+        # single repair is allowed to change. Candidate limits apply to the
+        # computed delta below, not to unchanged files materialized as context.
+        current_entries, workspace_digest = scan_workspace(
+            self._workspace_root(workspace), enforce_candidate_limits=False
+        )
         current = {entry.relative_path: entry for entry in current_entries}
         deleted = set(base) - set(current)
         added = set(current) - set(base)

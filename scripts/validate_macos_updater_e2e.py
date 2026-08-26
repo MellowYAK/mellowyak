@@ -122,6 +122,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--app", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--lower-version", default="0.3.0-preview.2")
+    parser.add_argument("--higher-version", default="0.4.0-preview.1")
     arguments = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix="mellowyak-phase11m-updater-") as temporary:
         root = Path(temporary)
@@ -129,8 +131,8 @@ def main() -> int:
         higher = root / "higher" / "MellowYak.app"
         shutil.copytree(arguments.app, lower, symlinks=True)
         shutil.copytree(arguments.app, higher, symlinks=True)
-        set_version(lower, "0.3.0-preview.1")
-        set_version(higher, "0.3.0-preview.2")
+        set_version(lower, arguments.lower_version)
+        set_version(higher, arguments.higher_version)
 
         user_data = root / "user-data"
         source = root / "synthetic-source"
@@ -222,7 +224,7 @@ def main() -> int:
         Handler.artifact = artifact.read_bytes()
         Handler.metadata = json.dumps(
             {
-                "version": "0.3.0-preview.2",
+                "version": arguments.higher_version,
                 "url": f"http://127.0.0.1:{port}/MellowYak.app.tar.gz",
                 "signature": signature.read_text(encoding="utf-8"),
             },
@@ -271,7 +273,7 @@ def main() -> int:
         (extracted / "MellowYak.app").rename(installed)
         with (installed / "Contents" / "Info.plist").open("rb") as stream:
             installed_version = plistlib.load(stream)["CFBundleShortVersionString"]
-        downgrade_rejected = installed_version != "0.3.0-preview.1"
+        downgrade_rejected = installed_version != arguments.lower_version
         preservation = (
             tree_digest(source) == source_digest
             and (user_data / "settings.json").read_text(encoding="utf-8")
@@ -311,7 +313,7 @@ def main() -> int:
             "tampered_artifact_rejected": tampered_rejected,
             "wrong_key_rejected": wrong_key_rejected,
             "incomplete_download_rejected": incomplete_rejected,
-            "higher_version_installed": installed_version == "0.3.0-preview.2",
+            "higher_version_installed": installed_version == arguments.higher_version,
             "downgrade_rejected": downgrade_rejected,
             "data_source_settings_preserved": preservation,
             "lower_application_engine_launched": lower_health.get("mode") == "local",
@@ -333,6 +335,8 @@ def main() -> int:
         report = {
             "schema": "mellowyak.phase11m.macos-updater-e2e.v1",
             "status": "VERIFIED_WORKING" if all(checks.values()) else "BROKEN",
+            "lower_version": arguments.lower_version,
+            "higher_version": arguments.higher_version,
             "artifact_sha256": hashlib.sha256(artifact.read_bytes()).hexdigest(),
             "artifact_bytes": artifact.stat().st_size,
             "checks": checks,

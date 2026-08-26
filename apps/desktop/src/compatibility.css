@@ -1,0 +1,16 @@
+.compatibility-panel { display: grid; gap: 1rem; }
+.compatibility-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .65rem; }
+.compatibility-metrics > div { display: grid; gap: .25rem; padding: .75rem; border: 1px solid var(--line); border-radius: 12px; background: rgba(7, 28, 43, .72); }
+.compatibility-metrics span, .compatibility-runtime-list small { color: var(--muted); }
+.compatibility-columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.compatibility-columns h3, .compatibility-runtime-list h3 { margin: 0 0 .55rem; }
+.compatibility-columns ul { margin: 0; padding-inline-start: 1.2rem; }
+.compatibility-columns li { margin-block: .28rem; }
+.compatibility-columns li:has(> strong) { display: flex; justify-content: space-between; gap: .75rem; }
+.compatibility-runtime-list { display: grid; gap: .5rem; }
+.compatibility-runtime-list article { display: grid; grid-template-columns: minmax(9rem, 1.2fr) 1fr .7fr 1fr; align-items: center; gap: .75rem; padding: .7rem .8rem; border: 1px solid var(--line); border-radius: 10px; }
+.compatibility-runtime-list article > div { display: grid; }
+@media (max-width: 900px) {
+  .compatibility-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .compatibility-columns, .compatibility-runtime-list article { grid-template-columns: 1fr; }
+}

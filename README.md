@@ -675,17 +675,16 @@ The intended principle is:
 
 ## Project status
 
-MellowYak `0.3.0-preview.2` completes the verified automated Intel macOS boundary for Phase 13M:
-Passive Sentinel orchestration, bounded automatic rechecks, persisted policy revisions, a durable
-restart-safe queue, Noise Control, and evidence-backed Impact Memory. It builds on the evidence-bound
-daily workflow, Technical Preview lifecycle, validated repair safety, multiple versioned Runtime
-Profiles, Git-optional Source Identity v2, settled Episodes, incremental content-addressed Save
-Points, explicit known-good milestones, Browser/API/CLI/Process/Test/Manual Probes, deterministic
-evidence states, and isolated Repair Workspaces. It is not a public released product. A changed file
-or dependency is only a reason to recheck; only comparable reproducible prior-PASS/current-FAIL
-evidence can support a confirmed regression. Exact Phase 13M source, package, platform, and manual
-boundaries are authoritative in
-[`docs/phase-13m-delivery/PHASE_13M_MASTER_REPORT.md`](docs/phase-13m-delivery/PHASE_13M_MASTER_REPORT.md).
+MellowYak `0.4.0-preview.1` is the Phase 14M Intel macOS release-candidate source. It extends the
+verified Phase 13M Passive Sentinel with installation-specific compatibility assessment, bounded
+Python and Node workspace discovery, honest Git-less and monorepo operation, explicit source/test/
+manifest/lock/generated/build/cache/sensitive/unsupported/ignored file classification, and watcher-
+gap recovery. Acceptance uses disposable copies of four immutable public repositories; it is not a
+universal framework-support claim or a public release. A changed file or dependency is only a reason
+to recheck; only comparable reproducible prior-PASS/current-FAIL evidence can support a confirmed
+regression. Exact results, limitations, package evidence, and the English screenshot guide are in
+[`docs/phase-14m-delivery/PHASE_14M_MASTER_REPORT.md`](docs/phase-14m-delivery/PHASE_14M_MASTER_REPORT.md)
+and [`docs/phase-14m-delivery/PHASE_14M_USER_MANUAL.md`](docs/phase-14m-delivery/PHASE_14M_USER_MANUAL.md).
 
 The complete workflow described in this README is the product direction. Implementation must advance through verified stages.
 
@@ -936,6 +935,31 @@ external analytics, Git push, deployment, public releases, or APC coupling. It r
 local-first, fail-open for ordinary source editing, and bound to exact source identities. See the
 single consolidated delivery document in
 [`docs/phase-13m-delivery/PHASE_13M_MASTER_REPORT.md`](docs/phase-13m-delivery/PHASE_13M_MASTER_REPORT.md).
+
+### Phase 14M — Real-world public-project compatibility
+
+- verifies the Phase 13M closure before branching from its annotated local tag;
+- exercises disposable, immutable copies of Datasette, Excalidraw, Vite, and Tauri with exact
+  upstream commits and recorded licenses, without committing any upstream source;
+- adds a typed, installation-specific compatibility model whose eight states never turn partial
+  understanding into a universal support claim;
+- discovers bounded nested Python and Node package roots, runtime ownership, package managers,
+  frameworks, tests, entry points, expected loopback ports, and approval-required executable-plus-
+  argv command definitions without running detected project scripts automatically;
+- classifies files as source, test, dependency manifest, dependency lock, generated, build output,
+  cache, sensitive, unsupported, or ignored while keeping sensitive contents out of evidence;
+- validates Git-less, monorepo, large-project, generated-file, lockfile, large-fan-out, symlink,
+  watcher-gap, stale-work, retry/flakiness, budget, allowed-hours, repair, explicit Apply, and byte-
+  identical rollback boundaries through the production loopback API;
+- keeps all GUI copy translation-key-only with exact English/Hebrew catalog parity, Hebrew RTL, and
+  a future-locale-ready catalog architecture;
+- keeps the database at `0010_passive_sentinel_orchestration`; no schema change is required.
+
+Phase 14M does **not** claim universal framework support, root cause, complete behavior coverage,
+Windows/Linux/Apple Silicon runtime acceptance, physical macOS interaction acceptance, Developer ID
+signing, notarization, Gatekeeper public distribution, production updater publication, cloud/source
+upload, private-project acceptance, automatic repair generation, or automatic Apply. Those boundaries
+remain explicit in the Phase 14M master report and user manual.
 
 ---
 

@@ -27,6 +27,7 @@ import {
   type RegressionTruthDetail,
 } from "./api";
 import { FirstRunExperience } from "./Phase9Experience";
+import { ProjectCompatibilityPanel } from "./ProjectCompatibilityPanel";
 import { useLocalEvents } from "./useLocalEvents";
 import "./phase10.css";
 
@@ -315,6 +316,7 @@ export function OperationalProjectOverview({ t, projectId, data, openActivity, o
       <button className="truth-card" onClick={openRuntime}><span>{t("phase10.card.runtime")}</span><strong>{humanState(t, project.runtime_state)}</strong><small>{t("phase10.card.runtimeDetail")}</small></button>
       <div className="truth-card"><span>{t("phase10.card.storage")}</span><strong>{humanState(t, String(overview.storage.integrity_state))}</strong><small>{t("phase10.card.storageDetail", { count: Number(overview.storage.snapshot_count), size: bytes(Number(overview.storage.logical_bytes)) })}</small></div>
     </section>
+    <ProjectCompatibilityPanel projectId={projectId} t={t} />
     <div className="truth-columns">
       <section className="panel truth-section"><div className="section-head"><div><h2>{t("phase10.project.latestChecks")}</h2><p>{t("phase10.project.latestChecksBody")}</p></div></div>{overview.latest_checks.length ? overview.latest_checks.map((check) => <CheckRow key={check.id} t={t} check={check} />) : <p className="muted">{t("phase10.project.noChecks")}</p>}</section>
       <section className="panel truth-section"><div className="section-head"><div><h2>{t("phase10.project.recent")}</h2><p>{t("phase10.project.recentBody")}</p></div>{openActivity && <button className="secondary" onClick={openActivity}>{t("phase10.action.viewAll")}</button>}</div>{overview.recent_activity.map((item) => <ActivityRow key={`${item.entity_type}-${item.id}`} t={t} item={item} />)}</section>
@@ -490,7 +492,7 @@ function LocationSurface({ t, state }: { t: T; state: Phase10CaptureState }) {
 }
 
 function UpdateStatusSurface({ t, capture = true }: { t: T; capture?: boolean }) {
-  const [status, setStatus] = useState<Record<string, unknown> | null>(capture ? { state: "NO_UPDATE", current_version: "0.3.0-preview.2", last_check_at: "2026-08-25T08:45:00Z", signature_required: true } : null);
+  const [status, setStatus] = useState<Record<string, unknown> | null>(capture ? { state: "NO_UPDATE", current_version: "0.4.0-preview.1", last_check_at: "2026-08-26T08:45:00Z", signature_required: true } : null);
   const [acceptance, setAcceptance] = useState<Record<string, unknown> | null>(capture ? { status: "VERIFIED_WORKING", platform: "macOS x86_64" } : null);
   useEffect(() => { if (!capture) void Promise.all([getUpdaterStatus(), getPackageAcceptance()]).then(([next, packageResult]) => { setStatus(next); setAcceptance(packageResult); }); }, [capture]);
   return <div className="truth-page"><header className="truth-heading"><div><span className="eyebrow">{t("phase10.update.eyebrow")}</span><h1>{t("phase10.update.title")}</h1><p>{t("phase10.update.subtitle")}</p></div><TruthPill t={t} state={String(status?.state ?? "NOT_RUN")} /></header><section className="panel truth-section"><dl className="truth-dl"><div><dt>{t("phase10.update.current")}</dt><dd dir="ltr">{String(status?.current_version ?? "—")}</dd></div><div><dt>{t("phase10.update.lastCheck")}</dt><dd>{dateTime(String(status?.last_check_at ?? ""))}</dd></div><div><dt>{t("phase10.update.signature")}</dt><dd>{String(status?.signature_required ?? true)}</dd></div><div><dt>{t("phase10.update.package")}</dt><dd>{String(acceptance?.status ?? "—")}</dd></div></dl><button className="secondary">{t("phase10.update.check")}</button></section></div>;

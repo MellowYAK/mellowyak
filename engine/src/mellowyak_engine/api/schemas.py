@@ -166,6 +166,29 @@ class ProjectListResponse(BaseModel):
     projects: list[ProjectResponse]
 
 
+class ProjectCompatibilityResponse(BaseModel):
+    project_alias: str
+    state: str
+    detected_structure: list[str]
+    source: dict[str, object]
+    inventory: dict[str, object]
+    runtimes: list[dict[str, object]]
+    approved_runtimes: list[str]
+    available_probe_types: list[str]
+    passive_monitoring_ready: bool
+    automatic_checks_eligible: bool
+    missing_prerequisites: list[str]
+    external_service_requirement: str
+    known_limitations: list[str]
+    unknowns: list[str]
+    safe_next_action: str
+    assessment_scope: str
+
+
+class WatcherRescanRequest(BaseModel):
+    reason: str = Field(min_length=1, max_length=40)
+
+
 class ActionResponse(BaseModel):
     status: str
 

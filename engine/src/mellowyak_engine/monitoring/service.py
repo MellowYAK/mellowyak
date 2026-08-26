@@ -19,6 +19,10 @@ if False:  # pragma: no cover - import cycle guard for type checkers
 
 
 class MonitoringService:
+    _RESCAN_REASONS = frozenset(
+        {"FSEVENTS_GAP", "FSEVENTS_OVERFLOW", "WATCHER_RESTART", "MANUAL_RECOVERY"}
+    )
+
     def __init__(
         self,
         projects: ProjectService,
@@ -30,6 +34,7 @@ class MonitoringService:
         self.episodes = episodes
         self._workers: dict[str, tuple[threading.Thread, threading.Event]] = {}
         self._lock = threading.Lock()
+        self._rescan_pending: set[str] = set()
 
     def _allowed_filter(self, root: Path):
         ignore = build_ignore_spec(root)
@@ -136,6 +141,40 @@ class MonitoringService:
 
     def resume(self, project_id: str) -> bool:
         return self.start(project_id)
+
+    def request_rescan(self, project_id: str, reason: str) -> str:
+        """Recover from a watcher gap using a bounded full scan as source truth."""
+
+        normalized_reason = reason.strip().upper()
+        if normalized_reason not in self._RESCAN_REASONS:
+            raise ValueError("WATCHER_RESCAN_REASON_INVALID")
+        with self._lock:
+            if project_id in self._rescan_pending:
+                return "already_requested"
+            self._rescan_pending.add(project_id)
+        try:
+            self.projects.events.publish(
+                "watcher_gap_detected",
+                project_id,
+                {"reason": normalized_reason, "monitoring_state": "RESCAN_REQUIRED"},
+            )
+            identity = self.projects.refresh_git(project_id)
+            if self.episodes is not None:
+                self.episodes.record(project_id, ["."])
+            status = self.scans.start(project_id)
+            self.projects.events.publish(
+                "watcher_rescan_requested",
+                project_id,
+                {
+                    "reason": normalized_reason,
+                    "scan_status": status,
+                    "source_fingerprint": identity.get("worktree_fingerprint"),
+                },
+            )
+            return status
+        finally:
+            with self._lock:
+                self._rescan_pending.discard(project_id)
 
     def start_persisted(self) -> None:
         for project in self.projects.list():

@@ -155,7 +155,7 @@ class RepairValidationService:
             if candidate.binary_count:
                 raise RepairValidationServiceError("REPAIR_CANDIDATE_BINARY_BLOCKED")
             try:
-                _, current_digest = scan_workspace(root)
+                _, current_digest = scan_workspace(root, enforce_candidate_limits=False)
             except CandidateManifestError as error:
                 raise RepairValidationServiceError(error.code) from error
             if current_digest != candidate.workspace_manifest_digest:
@@ -220,7 +220,7 @@ class RepairValidationService:
                 {"validation_id": validation_id, "ordinal": ordinal, "result": result},
             )
         try:
-            _, final_workspace_digest = scan_workspace(root)
+            _, final_workspace_digest = scan_workspace(root, enforce_candidate_limits=False)
         except CandidateManifestError as error:
             raise RepairValidationServiceError(error.code) from error
         required_pass = all(

@@ -95,7 +95,9 @@ def _digest_file(path: Path, size: int) -> tuple[str, str]:
     return digest.hexdigest(), "binary" if binary else "text"
 
 
-def scan_workspace(root: Path) -> tuple[tuple[WorkspaceEntry, ...], str]:
+def scan_workspace(
+    root: Path, *, enforce_candidate_limits: bool = True
+) -> tuple[tuple[WorkspaceEntry, ...], str]:
     root = root.resolve(strict=True)
     if not root.is_dir() or root.is_symlink():
         raise CandidateManifestError("CANDIDATE_WORKSPACE_INVALID")
@@ -134,7 +136,7 @@ def scan_workspace(root: Path) -> tuple[tuple[WorkspaceEntry, ...], str]:
             if info.st_size > MAX_FILE_BYTES:
                 raise CandidateManifestError("CANDIDATE_FILE_TOO_LARGE", relative)
             total += info.st_size
-            if total > MAX_CANDIDATE_BYTES:
+            if enforce_candidate_limits and total > MAX_CANDIDATE_BYTES:
                 raise CandidateManifestError("CANDIDATE_TOTAL_BYTES_EXCEEDED")
             digest, classification = _digest_file(path, info.st_size)
             mode = stat.S_IMODE(info.st_mode)
@@ -143,7 +145,7 @@ def scan_workspace(root: Path) -> tuple[tuple[WorkspaceEntry, ...], str]:
                     relative, digest, info.st_size, mode, bool(mode & 0o111), classification
                 )
             )
-            if len(entries) > MAX_CANDIDATE_FILES:
+            if enforce_candidate_limits and len(entries) > MAX_CANDIDATE_FILES:
                 raise CandidateManifestError("CANDIDATE_FILE_COUNT_EXCEEDED")
     entries.sort(key=lambda item: item.relative_path)
     digest = hashlib.sha256(canonical_json([entry.public() for entry in entries])).hexdigest()

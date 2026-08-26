@@ -89,6 +89,7 @@ from mellowyak_engine.api.schemas import (
     ProbeSelectionResponse,
     ProductSelfTestResponse,
     ProjectActivityAggregateResponse,
+    ProjectCompatibilityResponse,
     ProjectCreateRequest,
     ProjectDeleteRequest,
     ProjectDetectionResponse,
@@ -141,9 +142,14 @@ from mellowyak_engine.api.schemas import (
     UpdateFixtureRequest,
     VerificationRunResponse,
     VerificationStartRequest,
+    WatcherRescanRequest,
 )
 from mellowyak_engine.behaviors.service import BehaviorService, BehaviorServiceError
 from mellowyak_engine.browser.service import BrowserCaptureError, BrowserCaptureService
+from mellowyak_engine.compatibility.service import (
+    CompatibilityError,
+    ProjectCompatibilityService,
+)
 from mellowyak_engine.core.events import LocalEventBus
 from mellowyak_engine.core.logging import configure_logging
 from mellowyak_engine.db.database import LocalDatabase
@@ -240,6 +246,7 @@ class EngineRuntime:
     orchestration: OrchestrationService
     impact_memory: ImpactMemoryService
     noise_control: NoiseControlService
+    compatibility: ProjectCompatibilityService
 
 
 def _open_folder(path: str) -> str:
@@ -278,6 +285,7 @@ def create_app(settings: EngineSettings) -> FastAPI:
     episodes.bind_snapshot_callback(snapshots.create)
     monitoring = MonitoringService(projects, scans, episodes)
     runtime_profiles = RuntimeProfileService(database.sessions, events)
+    compatibility = ProjectCompatibilityService(database.sessions)
     impact = ImpactService(database.sessions, events)
     behaviors = BehaviorService(database.sessions, events)
     evidence = EvidenceService(database.sessions, EvidenceStore(paths.evidence), events)
@@ -386,6 +394,7 @@ def create_app(settings: EngineSettings) -> FastAPI:
         orchestration=orchestration,
         impact_memory=impact_memory,
         noise_control=noise_control,
+        compatibility=compatibility,
     )
 
     app = FastAPI(
@@ -583,6 +592,18 @@ def create_app(settings: EngineSettings) -> FastAPI:
             raise project_error(error) from error
 
     @app.get(
+        "/projects/{project_id}/compatibility",
+        response_model=ProjectCompatibilityResponse,
+        dependencies=[Depends(guard)],
+    )
+    def project_compatibility(project_id: str) -> ProjectCompatibilityResponse:
+        try:
+            return ProjectCompatibilityResponse(**compatibility.assess(project_id))
+        except CompatibilityError as error:
+            status = 404 if error.code == "PROJECT_NOT_FOUND" else 409
+            raise HTTPException(status_code=status, detail=error.code) from error
+
+    @app.get(
         "/projects/{project_id}/overview",
         response_model=ProjectOverviewAggregateResponse,
         dependencies=[Depends(guard)],
@@ -614,6 +635,19 @@ def create_app(settings: EngineSettings) -> FastAPI:
     )
     def cancel_scan(project_id: str) -> ActionResponse:
         return ActionResponse(status="cancelling" if scans.cancel(project_id) else "not_running")
+
+    @app.post(
+        "/projects/{project_id}/watcher/rescan",
+        response_model=ActionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def watcher_rescan(project_id: str, request: WatcherRescanRequest) -> ActionResponse:
+        try:
+            return ActionResponse(status=monitoring.request_rescan(project_id, request.reason))
+        except ProjectError as error:
+            raise project_error(error) from error
+        except (RuntimeError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
 
     @app.get(
         "/projects/{project_id}/scan",

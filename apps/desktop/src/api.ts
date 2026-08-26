@@ -200,6 +200,52 @@ export interface Project {
   phase7?: Record<string, unknown>;
 }
 
+export interface ProjectCompatibility {
+  project_alias: string;
+  state: "READY_FOR_PASSIVE_MONITORING" | "READY_FOR_AUTOMATIC_CHECKS" | "NEEDS_RUNTIME_APPROVAL" | "NEEDS_SETUP" | "OBSERVE_ONLY" | "SUPPORTED_WITH_LIMITS" | "UNSUPPORTED" | "ERROR";
+  detected_structure: string[];
+  source: { path_alias: string; git_available: boolean; source_remains_local: true };
+  inventory: {
+    total_candidates: number;
+    included_files: number;
+    excluded_items: number;
+    unsupported_files: number;
+    sensitive_files: number;
+    classification_counts: Record<string, number>;
+    classification_samples: Record<string, Array<{ path: string; reason: string }>>;
+    excluded_directories: Array<{ path: string; reason: string }>;
+  };
+  runtimes: Array<{
+    runtime_type: string;
+    adapter_name: string;
+    adapter_version: string;
+    confidence: string;
+    runtime_version: string | null;
+    runtime_owner: string;
+    workspace_root: string;
+    package_root: string;
+    package_manager: string | null;
+    executable: string | null;
+    scripts: string[];
+    test_commands: Array<Record<string, unknown>>;
+    development_commands: Array<Record<string, unknown>>;
+    expected_ports: number[];
+    health_checks: Array<Record<string, unknown>>;
+    approved: boolean;
+    limitations: string[];
+  }>;
+  approved_runtimes: string[];
+  available_probe_types: string[];
+  passive_monitoring_ready: boolean;
+  automatic_checks_eligible: boolean;
+  missing_prerequisites: string[];
+  external_service_requirement: string;
+  known_limitations: string[];
+  unknowns: string[];
+  safe_next_action: string;
+  assessment_scope: string;
+}
+
 export type ProjectType =
   | "WEB_APP"
   | "API_SERVICE"
@@ -1166,6 +1212,18 @@ export async function createProject(
 
 export async function getProject(projectId: string): Promise<Project> {
   return engineFetch<Project>(`/projects/${encodeURIComponent(projectId)}`);
+}
+
+export async function getProjectCompatibility(projectId: string): Promise<ProjectCompatibility> {
+  return engineFetch<ProjectCompatibility>(`/projects/${encodeURIComponent(projectId)}/compatibility`);
+}
+
+export async function requestWatcherRescan(projectId: string, reason: string): Promise<string> {
+  const response = await engineFetch<{ status: string }>(`/projects/${encodeURIComponent(projectId)}/watcher/rescan`, {
+    method: "POST",
+    body: JSON.stringify({ reason }),
+  });
+  return response.status;
 }
 
 export async function getImpactSummary(projectId: string): Promise<ImpactSummary> {

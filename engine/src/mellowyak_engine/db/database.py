@@ -20,7 +20,11 @@ def _configure_sqlite(connection: sqlite3.Connection, _record: object) -> None:
     cursor = connection.cursor()
     cursor.execute("PRAGMA journal_mode=WAL")
     cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.execute("PRAGMA busy_timeout=5000")
+    # Real monorepo snapshots can persist thousands of content-addressed entries while
+    # watcher recovery or the UI records another bounded write. Give the existing WAL
+    # writer time to finish instead of converting normal bounded contention into an
+    # installation-specific failure.
+    cursor.execute("PRAGMA busy_timeout=30000")
     cursor.close()
 
 
@@ -35,7 +39,8 @@ class LocalDatabase:
     def __init__(self, paths: StoragePaths) -> None:
         self.paths = paths
         self.engine: Engine = create_engine(
-            f"sqlite:///{paths.sqlite_file}", connect_args={"check_same_thread": False}
+            f"sqlite:///{paths.sqlite_file}",
+            connect_args={"check_same_thread": False, "timeout": 30.0},
         )
         event.listen(self.engine, "connect", _configure_sqlite)
         self.sessions = sessionmaker(bind=self.engine, expire_on_commit=False)
