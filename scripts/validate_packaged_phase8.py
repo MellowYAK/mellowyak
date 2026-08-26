@@ -363,7 +363,10 @@ def validate(engine: Path, work_root: Path) -> dict[str, Any]:
             base_url,
             f"/projects/{recovery_project_id}/apply-transactions/{recovery_transaction_id}",
         )
-        if recovery_transaction["state"] != "FAILED_RECOVERY_REQUIRED":
+        if recovery_transaction["state"] not in {
+            "RECOVERY_REQUIRED",
+            "FAILED_RECOVERY_REQUIRED",
+        }:
             raise AssertionError(
                 "unprovable recovery did not stop in RECOVERY_REQUIRED"
             )

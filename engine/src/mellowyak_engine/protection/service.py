@@ -100,7 +100,7 @@ class ProtectionPlanService:
                 select(ProtectedBehavior)
                 .where(
                     ProtectedBehavior.project_id == project_id,
-                    ProtectedBehavior.lifecycle_state == "PROTECTED",
+                    ProtectedBehavior.lifecycle_state == "KNOWN_GOOD",
                 )
                 .order_by(ProtectedBehavior.stable_key)
             ).all()

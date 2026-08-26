@@ -19,12 +19,14 @@ from mellowyak_engine.runtime_adapters.base import (
 )
 from mellowyak_engine.runtime_adapters.generic_process import GenericProcessRuntimeAdapter
 from mellowyak_engine.runtime_adapters.java import JavaMetadataRuntimeAdapter
+from mellowyak_engine.runtime_adapters.manifest import RuntimeManifestAdapter
 from mellowyak_engine.runtime_adapters.node import NodeRuntimeAdapter
 from mellowyak_engine.runtime_adapters.php import PhpRuntimeAdapter
 from mellowyak_engine.runtime_adapters.python import PythonRuntimeAdapter
 from mellowyak_engine.runtime_adapters.ruby import RubyMetadataRuntimeAdapter
 
 DEFAULT_RUNTIME_ADAPTERS: tuple[RuntimeAdapter, ...] = (
+    RuntimeManifestAdapter(),
     PythonRuntimeAdapter(),
     NodeRuntimeAdapter(),
     PhpRuntimeAdapter(),
@@ -66,6 +68,7 @@ __all__ = [
     "PhpRuntimeAdapter",
     "PythonRuntimeAdapter",
     "RubyMetadataRuntimeAdapter",
+    "RuntimeManifestAdapter",
     "RuntimeAdapter",
     "RuntimeAvailability",
     "RuntimeDescription",

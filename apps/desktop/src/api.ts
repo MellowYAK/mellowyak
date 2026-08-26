@@ -220,7 +220,14 @@ export interface RuntimeCandidate {
   display_name?: string;
   runtime_version?: string | null;
   executable_reference?: string | null;
+  argv?: string[];
+  execution_mode?: ExecutionMode | string;
   relative_working_directory?: string;
+  health_definition?: Record<string, unknown>;
+  expected_ports?: number[];
+  environment_schema?: string[];
+  network_policy?: string;
+  dependency_fingerprint?: string | null;
   dependency_manifests?: string[];
   test_definitions?: Array<Record<string, unknown>>;
   limitations?: string[];
@@ -531,6 +538,7 @@ export interface ApplyTransaction {
   files: Array<Record<string, unknown>>;
   events: Array<Record<string, unknown>>;
   rollbacks: Array<Record<string, unknown>>;
+  rollback_evidence: Record<string, unknown>;
   created_at: string;
   updated_at: string;
   completed_at: string | null;
@@ -715,7 +723,7 @@ export interface ProtectedBehavior {
   project_id: string;
   stable_key: string;
   display_name: string;
-  lifecycle_state: "DRAFT" | "PROTECTED" | "ARCHIVED";
+  lifecycle_state: "DRAFT" | "CAPTURING" | "CAPTURED" | "VALIDATING" | "KNOWN_GOOD" | "NEEDS_REVIEW" | "DISABLED" | "INVALID";
   current_version_id: string;
   last_accepted_baseline_id: string | null;
   always_recheck: boolean;
@@ -760,7 +768,7 @@ export interface BrowserCapture {
   behavior_id: string;
   behavior_version_id: string;
   runtime_configuration_id: string;
-  status: "STARTING" | "RECORDING" | "STOPPING" | "REVIEW_REQUIRED" | "ACCEPTED" | "CANCELLED" | "FAILED" | "STALE_SOURCE";
+  status: "STARTING" | "RECORDING" | "STOPPING" | "REVIEW_REQUIRED" | "VALIDATING" | "VALIDATED" | "ACCEPTED" | "CANCELLED" | "FAILED" | "STALE_SOURCE";
   entry_url: string;
   source_revision: Record<string, unknown>;
   source_stale: boolean;
@@ -961,7 +969,9 @@ export async function loadStartup(
   onStatus: (status: Exclude<StartupStatus, "ready" | "error">) => void,
 ): Promise<StartupResult> {
   onStatus("starting");
+  const handshakeStarted = performance.now();
   const health = await engineFetch<Health>("/health");
+  void recordPerformanceMetric("engine_handshake", performance.now() - handshakeStarted, "startup");
   if (health.status !== "ready") throw new Error("LOCAL_ENGINE_UNAVAILABLE");
 
   onStatus("loading_database");
@@ -983,6 +993,7 @@ export async function loadStartup(
 
   onStatus("finalizing");
   const snapshot = { health, readiness, installation, privacy, storage };
+  void recordPerformanceMetric("frontend_ready", performance.now() - handshakeStarted, "startup");
   return { snapshot, projects };
 }
 
@@ -1063,6 +1074,22 @@ export async function getDiagnostics(): Promise<Diagnostics> {
 
 export async function getDiagnosticsTruthOverview(): Promise<DiagnosticsTruthOverview> {
   return engineFetch<DiagnosticsTruthOverview>("/diagnostics/overview");
+}
+
+export async function recordPerformanceMetric(
+  metric: "engine_handshake" | "frontend_ready" | "first_home_data" | "first_project_overview_data" | "diagnostics_load",
+  durationMs: number,
+  route?: string,
+  projectId?: string,
+): Promise<void> {
+  await engineFetch("/diagnostics/performance", {
+    method: "POST",
+    body: JSON.stringify({ metric, duration_ms: durationMs, route, project_id: projectId }),
+  }).catch(() => undefined);
+}
+
+export async function getWorkflowStateModel(): Promise<Record<string, Record<string, string[]>>> {
+  return engineFetch<Record<string, Record<string, string[]>>>("/workflow/state-model");
 }
 
 export async function verifyStorageIntegrity(): Promise<Record<string, unknown>> {
@@ -1278,6 +1305,13 @@ export async function submitCaptureReview(
   return engineFetch<BrowserCapture>(`/projects/${encodeURIComponent(projectId)}/captures/${encodeURIComponent(captureId)}/review`, {
     method: "POST",
     body: JSON.stringify({ expected_assertions: expectedAssertions, notes, step_updates: stepUpdates, excluded_observation_ids: excludedObservationIds }),
+  });
+}
+
+export async function validateCapture(projectId: string, captureId: string, runtimeProfileVersionId: string): Promise<ProbeRun> {
+  return engineFetch<ProbeRun>(`/projects/${encodeURIComponent(projectId)}/captures/${encodeURIComponent(captureId)}/validate`, {
+    method: "POST",
+    body: JSON.stringify({ runtime_profile_version_id: runtimeProfileVersionId }),
   });
 }
 
@@ -1597,6 +1631,10 @@ export async function prepareRepairApply(projectId: string, candidateId: string)
 
 export async function confirmRepairApply(projectId: string, candidateId: string, confirmationNonce: string): Promise<ApplyTransaction> {
   return engineFetch<ApplyTransaction>(`/projects/${encodeURIComponent(projectId)}/repair-candidates/${encodeURIComponent(candidateId)}/apply/confirm`, { method: "POST", body: JSON.stringify({ confirmation_nonce: confirmationNonce, deliberate_confirmation: true }) });
+}
+
+export async function getRepairApply(projectId: string, transactionId: string): Promise<ApplyTransaction> {
+  return engineFetch<ApplyTransaction>(`/projects/${encodeURIComponent(projectId)}/apply-transactions/${encodeURIComponent(transactionId)}`);
 }
 
 export async function rollbackRepairApply(projectId: string, transactionId: string): Promise<ApplyTransaction> {

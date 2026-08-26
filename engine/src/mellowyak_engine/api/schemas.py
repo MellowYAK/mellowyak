@@ -465,6 +465,13 @@ class UpdateCheckRecordRequest(BaseModel):
     result: str = Field(default="NO_UPDATE", max_length=40)
 
 
+class PerformanceMetricRequest(BaseModel):
+    metric: str = Field(min_length=1, max_length=80)
+    duration_ms: float = Field(ge=0, le=3_600_000)
+    route: str | None = Field(default=None, max_length=120)
+    project_id: str | None = Field(default=None, max_length=36)
+
+
 class PackageAcceptanceRecordRequest(BaseModel):
     status: str = Field(max_length=20)
     summary: dict[str, object] = Field(default_factory=dict)
@@ -506,6 +513,10 @@ class DiagnosticsResponse(BaseModel):
     notification_permission: str
     updater_state: str
     signing_state: str
+    signing_developer_id: bool
+    signing_notarized: bool
+    signing_gatekeeper_accepted: bool
+    public_distribution_ready: bool
     platform: str
     architecture: str
     recent_engine_starts: list[str]
@@ -895,6 +906,7 @@ class ApplyTransactionResponse(BaseModel):
     files: list[dict[str, object]]
     events: list[dict[str, object]]
     rollbacks: list[dict[str, object]]
+    rollback_evidence: dict[str, object]
     created_at: str
     updated_at: str
     completed_at: str | None
@@ -1112,6 +1124,10 @@ class CaptureReviewRequest(BaseModel):
     excluded_observation_ids: list[str] = Field(default_factory=list, max_length=1000)
     expected_assertions: list[dict[str, object]] = Field(default_factory=list, max_length=50)
     notes: str = Field(default="", max_length=4000)
+
+
+class CaptureValidateRequest(BaseModel):
+    runtime_profile_version_id: str = Field(min_length=1, max_length=64)
 
 
 class BaselineRevokeRequest(BaseModel):

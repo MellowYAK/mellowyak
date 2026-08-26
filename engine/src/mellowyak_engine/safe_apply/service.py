@@ -44,6 +44,12 @@ from mellowyak_engine.safe_apply.preflight import (
 )
 from mellowyak_engine.snapshots.service import SnapshotService
 from mellowyak_engine.snapshots.store import SnapshotStore, canonical_json
+from mellowyak_engine.workflow.states import (
+    APPLY_TRANSITIONS,
+    ApplyState,
+    TransitionError,
+    transition,
+)
 
 
 def _json(value: object) -> str:
@@ -59,10 +65,14 @@ class SafeApplyServiceError(RuntimeError):
 
 class SafeApplyService:
     ACTIVE_STATES = {
+        "AWAITING_CONFIRMATION",
+        "PREFLIGHT",
+        "SAFETY_SNAPSHOT",
+        "JOURNAL_CREATED",
         "PREPARING",
-        "READY_FOR_CONFIRMATION",
-        "APPLYING",
-        "POST_VERIFYING",
+        "WRITING",
+        "CAPTURING_LIVE_SOURCE",
+        "VERIFYING_LIVE",
         "ROLLING_BACK",
     }
 
@@ -230,7 +240,7 @@ class SafeApplyService:
                         stale_candidate.updated_at = datetime.now(UTC)
                 raise SafeApplyServiceError("APPLY_LIVE_SOURCE_CHANGED")
             try:
-                expected_digests = self._preflight_paths(project_root, files)
+                self._preflight_paths(project_root, files)
             except PreflightError as error:
                 raise SafeApplyServiceError(error.code, error.path) from error
             transaction_id = str(uuid.uuid4())
@@ -240,36 +250,7 @@ class SafeApplyService:
                 candidate_id,
                 candidate.base_manifest_digest,
             )
-            journal_path = self._journal_path(project_id, transaction_id)
-            operation_payload = [
-                {
-                    "ordinal": item.ordinal,
-                    "relative_path": item.relative_path,
-                    "operation": item.operation,
-                    "original_digest": item.base_digest,
-                    "candidate_digest": item.candidate_digest,
-                    "rename_source": item.rename_source,
-                }
-                for item in files
-            ]
             expires = datetime.now(UTC) + timedelta(minutes=5)
-        journal = DurableJournal.create(
-            journal_path,
-            {
-                "schema": "mellowyak.apply_journal.v1",
-                "transaction_id": transaction_id,
-                "project_id": project_id,
-                "candidate_id": candidate_id,
-                "safety_snapshot_id": None,
-                "expected_source_snapshot_id": candidate.source_snapshot_id,
-                "expected_source_manifest_digest": candidate.base_manifest_digest,
-                "expected_live_digests": expected_digests,
-                "operations": operation_payload,
-                "state": "PREPARING",
-                "created_at": datetime.now(UTC).isoformat(),
-            },
-        )
-        journal.append("READY_FOR_CONFIRMATION")
         now = datetime.now(UTC)
         with self.sessions.begin() as session:
             candidate, validation, _, _, files = self._candidate_context(
@@ -280,12 +261,12 @@ class SafeApplyService:
                 project_id=project_id,
                 candidate_id=candidate_id,
                 validation_id=validation.id,
-                state="READY_FOR_CONFIRMATION",
+                state="AWAITING_CONFIRMATION",
                 expected_source_snapshot_id=candidate.source_snapshot_id,
                 expected_source_manifest_digest=candidate.base_manifest_digest,
                 confirmation_digest=nonce_digest,
                 confirmation_expires_at=expires,
-                journal_relative_path=journal_path.relative_to(self.data_root).as_posix(),
+                journal_relative_path="",
                 created_at=now,
                 updated_at=now,
             )
@@ -304,7 +285,14 @@ class SafeApplyService:
                         candidate_digest=item.candidate_digest,
                     )
                 )
-        self._journal_event(transaction_id, "APPLY_PREPARED", {"candidate_id": candidate_id})
+        self._journal_event(
+            transaction_id,
+            "STATE_AWAITING_CONFIRMATION",
+            {
+                "reason": "apply.confirmation_required",
+                "evidence": [validation.id, candidate.source_snapshot_id],
+            },
+        )
         self.events.publish(
             "apply_prepared",
             project_id,
@@ -346,6 +334,50 @@ class SafeApplyService:
                 )
             )
 
+    def _transition(
+        self,
+        project_id: str,
+        transaction_id: str,
+        target: ApplyState,
+        *,
+        reason: str,
+        evidence: list[str] | tuple[str, ...] = (),
+    ) -> None:
+        """Persist one fail-closed Apply transition and its evidence-bound event."""
+
+        now = datetime.now(UTC)
+        with self.sessions.begin() as session:
+            row = self._load_transaction(session, project_id, transaction_id)
+            try:
+                record = transition(
+                    APPLY_TRANSITIONS,
+                    ApplyState(row.state),
+                    target,
+                    reason=reason,
+                    evidence=evidence,
+                    timestamp=now,
+                )
+            except (ValueError, TransitionError) as error:
+                code = getattr(error, "code", "WORKFLOW_TRANSITION_INVALID")
+                raise SafeApplyServiceError(str(code)) from error
+            row.state = record.current.value
+            row.updated_at = record.timestamp
+        self._journal_event(
+            transaction_id,
+            f"STATE_{target.value}",
+            {"reason": reason, "evidence": list(evidence)},
+        )
+        self.events.publish(
+            "apply_state_changed",
+            project_id,
+            {
+                "transaction_id": transaction_id,
+                "state": target.value,
+                "reason": reason,
+                "evidence": list(evidence),
+            },
+        )
+
     def _load_transaction(
         self, session: Session, project_id: str, transaction_id: str
     ) -> ApplyTransaction:
@@ -364,7 +396,7 @@ class SafeApplyService:
     ) -> dict[str, Any]:
         with self.sessions() as session:
             transaction = self._load_transaction(session, project_id, transaction_id)
-            if transaction.state != "READY_FOR_CONFIRMATION" or transaction.confirmation_used_at:
+            if transaction.state != "AWAITING_CONFIRMATION" or transaction.confirmation_used_at:
                 raise SafeApplyServiceError("APPLY_CONFIRMATION_ALREADY_USED")
             expires = transaction.confirmation_expires_at
             if expires.tzinfo is None:
@@ -389,13 +421,38 @@ class SafeApplyService:
             workspace_root = (
                 self.data_root / workspace.workspace_relative_path / "current"
             ).resolve(strict=True)
-        if not self._source_matches_snapshot(
-            project_id, project_root, transaction.expected_source_snapshot_id
-        ):
+            source_snapshot_id = transaction.expected_source_snapshot_id
+            source_manifest_digest = transaction.expected_source_manifest_digest
+            operation_payload = [
+                {
+                    "ordinal": item.ordinal,
+                    "relative_path": item.relative_path,
+                    "operation": item.operation,
+                    "original_digest": item.base_digest,
+                    "candidate_digest": item.candidate_digest,
+                    "rename_source": item.rename_source,
+                }
+                for item in files
+            ]
+        confirmed_at = datetime.now(UTC)
+        with self.sessions.begin() as session:
+            confirmed = self._load_transaction(session, project_id, transaction_id)
+            if confirmed.confirmation_used_at is not None:
+                raise SafeApplyServiceError("APPLY_CONFIRMATION_ALREADY_USED")
+            confirmed.confirmation_used_at = confirmed_at
+            confirmed.updated_at = confirmed_at
+        self._transition(
+            project_id,
+            transaction_id,
+            ApplyState.PREFLIGHT,
+            reason="apply.confirmation_consumed",
+            evidence=[validation.id, source_snapshot_id],
+        )
+        if not self._source_matches_snapshot(project_id, project_root, source_snapshot_id):
             self._fail_without_write(transaction_id, candidate.id, "APPLY_LIVE_SOURCE_CHANGED")
             raise SafeApplyServiceError("APPLY_LIVE_SOURCE_CHANGED")
         try:
-            self._preflight_paths(project_root, files)
+            expected_digests = self._preflight_paths(project_root, files)
         except PreflightError as error:
             self._fail_without_write(transaction_id, candidate.id, error.code)
             raise SafeApplyServiceError(error.code, error.path) from error
@@ -405,31 +462,70 @@ class SafeApplyService:
             force_fresh=True,
         )
         self.snapshots.pin(project_id, str(safety["id"]), True)
-        journal_path = self.data_root / transaction.journal_relative_path
-        journal = DurableJournal.load(journal_path)
-        journal.payload["safety_snapshot_id"] = safety["id"]
-        journal.append("SAFETY_SNAPSHOT_CREATED", {"snapshot_id": safety["id"]})
         now = datetime.now(UTC)
         with self.sessions.begin() as session:
             transaction = self._load_transaction(session, project_id, transaction_id)
-            transaction.confirmation_used_at = now
             transaction.safety_snapshot_id = str(safety["id"])
-            transaction.state = "APPLYING"
             transaction.updated_at = now
-            candidate = session.get(RepairCandidate, transaction.candidate_id)
-            if candidate:
-                candidate.state = "APPLYING"
-                candidate.updated_at = now
-        self._journal_event(
-            transaction_id, "SAFETY_SNAPSHOT_CREATED", {"snapshot_id": safety["id"]}
+        self._transition(
+            project_id,
+            transaction_id,
+            ApplyState.SAFETY_SNAPSHOT,
+            reason="apply.safety_snapshot_created",
+            evidence=[str(safety["id"])],
         )
         self.events.publish(
             "safety_snapshot_created",
             project_id,
             {"transaction_id": transaction_id, "snapshot_id": safety["id"]},
         )
-        journal.append("APPLY_STARTED")
-        self._journal_event(transaction_id, "APPLY_STARTED")
+        self._inject_fault(fault_injector, "after_safety_snapshot_before_journal")
+        journal_path = self._journal_path(project_id, transaction_id)
+        journal = DurableJournal.create(
+            journal_path,
+            {
+                "schema": "mellowyak.apply_journal.v1",
+                "transaction_id": transaction_id,
+                "project_id": project_id,
+                "candidate_id": candidate.id,
+                "safety_snapshot_id": safety["id"],
+                "expected_source_snapshot_id": source_snapshot_id,
+                "expected_source_manifest_digest": source_manifest_digest,
+                "expected_live_digests": expected_digests,
+                "operations": operation_payload,
+                "state": "JOURNAL_CREATED",
+                "created_at": datetime.now(UTC).isoformat(),
+            },
+        )
+        relative_journal = journal_path.relative_to(self.data_root).as_posix()
+        with self.sessions.begin() as session:
+            transaction = self._load_transaction(session, project_id, transaction_id)
+            transaction.journal_relative_path = relative_journal
+            transaction.updated_at = datetime.now(UTC)
+        self._transition(
+            project_id,
+            transaction_id,
+            ApplyState.JOURNAL_CREATED,
+            reason="apply.durable_journal_created",
+            evidence=[relative_journal],
+        )
+        journal.append("JOURNAL_CREATED", {"relative_path": relative_journal})
+        self._transition(
+            project_id,
+            transaction_id,
+            ApplyState.PREPARING,
+            reason="apply.preparing_writes",
+            evidence=[str(safety["id"]), relative_journal],
+        )
+        journal.append("PREPARING")
+        self._transition(
+            project_id,
+            transaction_id,
+            ApplyState.WRITING,
+            reason="apply.source_writes_started",
+            evidence=[relative_journal],
+        )
+        journal.append("WRITING")
         self.events.publish("apply_started", project_id, {"transaction_id": transaction_id})
         self._inject_fault(fault_injector, "after_journal_before_first_write")
         try:
@@ -462,7 +558,7 @@ class SafeApplyService:
             transaction = session.get(ApplyTransaction, transaction_id)
             candidate = session.get(RepairCandidate, candidate_id)
             if transaction:
-                transaction.state = "CANCELLED"
+                transaction.state = "BLOCKED"
                 transaction.error_code = code
                 transaction.completed_at = datetime.now(UTC)
                 transaction.updated_at = datetime.now(UTC)
@@ -543,19 +639,28 @@ class SafeApplyService:
         *,
         fault_injector: Callable[[str], None] | None = None,
     ) -> dict[str, Any]:
-        now = datetime.now(UTC)
-        with self.sessions.begin() as session:
-            transaction = self._load_transaction(session, project_id, transaction_id)
-            transaction.state = "POST_VERIFYING"
-            transaction.updated_at = now
-        journal.append("POST_VERIFYING")
-        self._journal_event(transaction_id, "POST_VERIFYING")
+        self._transition(
+            project_id,
+            transaction_id,
+            ApplyState.CAPTURING_LIVE_SOURCE,
+            reason="apply.live_source_capture_started",
+            evidence=[transaction_id],
+        )
+        journal.append("CAPTURING_LIVE_SOURCE")
         self.events.publish(
             "apply_post_verification_started", project_id, {"transaction_id": transaction_id}
         )
         post_snapshot = self.snapshots.create(
             project_id, creation_reason="POST_APPLY_VERIFY", force_fresh=True
         )
+        self._transition(
+            project_id,
+            transaction_id,
+            ApplyState.VERIFYING_LIVE,
+            reason="apply.live_source_captured",
+            evidence=[str(post_snapshot["id"])],
+        )
+        journal.append("VERIFYING_LIVE", {"snapshot_id": post_snapshot["id"]})
         policy = json.loads(workspace.validation_policy_json or "{}")
         results: list[dict[str, Any]] = []
         for ordinal, check in enumerate(checks_from_policy(policy)):
@@ -596,7 +701,6 @@ class SafeApplyService:
         completed = datetime.now(UTC)
         with self.sessions.begin() as session:
             transaction = self._load_transaction(session, project_id, transaction_id)
-            transaction.state = "COMMITTED"
             transaction.post_apply_snapshot_id = str(post_snapshot["id"])
             transaction.completed_at = completed
             transaction.updated_at = completed
@@ -610,6 +714,14 @@ class SafeApplyService:
                     if regression:
                         regression.status = "RESOLVED"
                         regression.resolved_at = completed
+        verification_digest = hashlib.sha256(canonical_json(results)).hexdigest()
+        self._transition(
+            project_id,
+            transaction_id,
+            ApplyState.COMMITTED,
+            reason="apply.live_verification_passed",
+            evidence=[str(post_snapshot["id"]), verification_digest],
+        )
         journal.append("COMMITTED", {"post_apply_snapshot_id": post_snapshot["id"]})
         self._journal_event(transaction_id, "APPLY_COMMITTED")
         self.events.publish("apply_committed", project_id, {"transaction_id": transaction_id})
@@ -650,9 +762,20 @@ class SafeApplyService:
             journal = DurableJournal.load(self.data_root / transaction.journal_relative_path)
         started = datetime.now(UTC)
         rollback_id = str(uuid.uuid4())
+        # A process can terminate after restoring the first file but before the
+        # rollback is complete.  On restart the durable transaction is already
+        # ROLLING_BACK, so resume the idempotent restore instead of attempting
+        # an invalid ROLLING_BACK -> ROLLING_BACK state transition.
+        if transaction.state != ApplyState.ROLLING_BACK:
+            self._transition(
+                project_id,
+                transaction_id,
+                ApplyState.ROLLING_BACK,
+                reason=f"apply.rollback.{reason.lower()}",
+                evidence=[transaction.safety_snapshot_id],
+            )
         with self.sessions.begin() as session:
             transaction = self._load_transaction(session, project_id, transaction_id)
-            transaction.state = "ROLLING_BACK"
             transaction.error_code = reason
             transaction.updated_at = started
             session.add(
@@ -734,12 +857,11 @@ class SafeApplyService:
         completed = datetime.now(UTC)
         with self.sessions.begin() as session:
             transaction = self._load_transaction(session, project_id, transaction_id)
-            transaction.state = "ROLLED_BACK"
             transaction.completed_at = completed
             transaction.updated_at = completed
             candidate = session.get(RepairCandidate, transaction.candidate_id)
             if candidate:
-                candidate.state = "ROLLED_BACK"
+                candidate.state = "RETAINED_AFTER_ROLLBACK"
                 candidate.updated_at = completed
             record = session.get(RollbackRecord, rollback_id)
             if record:
@@ -747,6 +869,13 @@ class SafeApplyService:
                 record.restored_paths_json = _json(restored)
                 record.verification_digest = digest
                 record.completed_at = completed
+        self._transition(
+            project_id,
+            transaction_id,
+            ApplyState.ROLLED_BACK,
+            reason="apply.rollback.byte_identity_verified",
+            evidence=[rollback_id, digest, str(restored_snapshot["id"])],
+        )
         journal.append("ROLLED_BACK", {"snapshot_id": restored_snapshot["id"]})
         self._journal_event(transaction_id, "ROLLBACK_COMPLETED")
         self.events.publish("rollback_completed", project_id, {"transaction_id": transaction_id})
@@ -763,9 +892,15 @@ class SafeApplyService:
         expected: dict[str, str | None],
         rollback_id: str,
     ) -> dict[str, Any]:
+        self._transition(
+            project_id,
+            transaction_id,
+            ApplyState.RECOVERY_REQUIRED,
+            reason="apply.rollback.identity_not_proven",
+            evidence=[rollback_id, *unresolved],
+        )
         with self.sessions.begin() as session:
             transaction = self._load_transaction(session, project_id, transaction_id)
-            transaction.state = "FAILED_RECOVERY_REQUIRED"
             transaction.error_code = "ROLLBACK_IDENTITY_NOT_PROVEN"
             transaction.updated_at = datetime.now(UTC)
             record = session.get(RollbackRecord, rollback_id)
@@ -815,13 +950,16 @@ class SafeApplyService:
     def cancel(self, project_id: str, transaction_id: str) -> dict[str, Any]:
         with self.sessions.begin() as session:
             transaction = self._load_transaction(session, project_id, transaction_id)
-            if transaction.state != "READY_FOR_CONFIRMATION":
+            if transaction.state != "AWAITING_CONFIRMATION":
                 raise SafeApplyServiceError("APPLY_CANCEL_NOT_SAFE")
-            transaction.state = "CANCELLED"
             transaction.completed_at = datetime.now(UTC)
             transaction.updated_at = datetime.now(UTC)
-        journal = DurableJournal.load(self.data_root / transaction.journal_relative_path)
-        journal.append("CANCELLED")
+        self._transition(
+            project_id,
+            transaction_id,
+            ApplyState.CANCELLED,
+            reason="apply.confirmation_cancelled",
+        )
         return self.get(project_id, transaction_id)
 
     def recover_pending(self) -> list[dict[str, Any]]:
@@ -833,20 +971,28 @@ class SafeApplyService:
             )
         results: list[dict[str, Any]] = []
         for row in rows:
-            if row.state in {"PREPARING", "READY_FOR_CONFIRMATION"}:
+            if row.state == "AWAITING_CONFIRMATION":
                 try:
                     results.append(self.cancel(row.project_id, row.id))
                 except SafeApplyServiceError:
                     continue
-            elif row.state in {"APPLYING", "ROLLING_BACK"}:
+            elif row.state in {"PREFLIGHT", "SAFETY_SNAPSHOT", "JOURNAL_CREATED", "PREPARING"}:
+                with self.sessions.begin() as session:
+                    current = self._load_transaction(session, row.project_id, row.id)
+                    current.state = "CANCELLED"
+                    current.error_code = "ENGINE_RESTARTED_BEFORE_WRITE"
+                    current.completed_at = datetime.now(UTC)
+                    current.updated_at = datetime.now(UTC)
+                results.append(self.get(row.project_id, row.id))
+            elif row.state in {"WRITING", "CAPTURING_LIVE_SOURCE", "ROLLING_BACK"}:
                 try:
                     results.append(self.rollback(row.project_id, row.id, reason="CRASH_RECOVERY"))
                 except SafeApplyServiceError:
                     continue
-            elif row.state == "POST_VERIFYING":
+            elif row.state == "VERIFYING_LIVE":
                 with self.sessions.begin() as session:
                     current = self._load_transaction(session, row.project_id, row.id)
-                    current.state = "FAILED_RECOVERY_REQUIRED"
+                    current.state = "RECOVERY_REQUIRED"
                     current.error_code = "POST_VERIFY_INTERRUPTED"
                     current.updated_at = datetime.now(UTC)
                 results.append(self.get(row.project_id, row.id))
@@ -856,9 +1002,7 @@ class SafeApplyService:
         with self.sessions() as session:
             rows = session.scalars(
                 select(ApplyTransaction)
-                .where(
-                    ApplyTransaction.state.in_([*self.ACTIVE_STATES, "FAILED_RECOVERY_REQUIRED"])
-                )
+                .where(ApplyTransaction.state.in_([*self.ACTIVE_STATES, "RECOVERY_REQUIRED"]))
                 .order_by(ApplyTransaction.created_at)
             ).all()
             identities = [(row.project_id, row.id) for row in rows]
@@ -890,7 +1034,7 @@ class SafeApplyService:
     def resume_verification(self, project_id: str, transaction_id: str) -> dict[str, Any]:
         with self.sessions() as session:
             transaction = self._load_transaction(session, project_id, transaction_id)
-            if transaction.state not in {"POST_VERIFYING", "FAILED_RECOVERY_REQUIRED"}:
+            if transaction.state not in {"VERIFYING_LIVE", "RECOVERY_REQUIRED"}:
                 raise SafeApplyServiceError("APPLY_RESUME_STATE_INVALID")
             candidate = session.get(RepairCandidate, transaction.candidate_id)
             project = session.get(Project, project_id)
@@ -921,6 +1065,43 @@ class SafeApplyService:
                 .where(RollbackRecord.transaction_id == transaction_id)
                 .order_by(RollbackRecord.started_at)
             ).all()
+            candidate = session.get(RepairCandidate, row.candidate_id)
+            workspace = session.get(RepairWorkspace, candidate.workspace_id) if candidate else None
+            regression = (
+                session.get(RegressionFinding, workspace.regression_id)
+                if workspace and workspace.regression_id
+                else None
+            )
+            latest_rollback = rollbacks[-1] if rollbacks else None
+            restored_paths = (
+                json.loads(latest_rollback.restored_paths_json) if latest_rollback else []
+            )
+            unresolved_paths = (
+                json.loads(latest_rollback.unresolved_paths_json) if latest_rollback else []
+            )
+            rollback_evidence = {
+                "transaction_id": row.id,
+                "reason": row.error_code,
+                "paths_written": [
+                    item.relative_path for item in files if item.operation_state == "COMPLETED"
+                ],
+                "paths_restored": restored_paths,
+                "byte_identity_result": (
+                    "VERIFIED"
+                    if latest_rollback
+                    and latest_rollback.status == "COMPLETED"
+                    and latest_rollback.verification_digest
+                    and not unresolved_paths
+                    else "NOT_VERIFIED"
+                ),
+                "unrelated_path_result": "OUTSIDE_TRANSACTION_SCOPE_UNTOUCHED_BY_ENGINE",
+                "candidate_state": candidate.state if candidate else "UNKNOWN",
+                "regression_state": regression.status if regression else "NOT_LINKED",
+                "live_source_identity_after_restore": (
+                    {"snapshot_id": row.safety_snapshot_id} if row.state == "ROLLED_BACK" else None
+                ),
+                "pending_recovery": row.state == "RECOVERY_REQUIRED",
+            }
             return {
                 "id": row.id,
                 "project_id": row.project_id,
@@ -965,6 +1146,7 @@ class SafeApplyService:
                     }
                     for item in rollbacks
                 ],
+                "rollback_evidence": rollback_evidence,
                 "created_at": row.created_at.isoformat(),
                 "updated_at": row.updated_at.isoformat(),
                 "completed_at": row.completed_at.isoformat() if row.completed_at else None,

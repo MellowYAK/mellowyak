@@ -306,6 +306,11 @@
             "title": "Project Id",
             "type": "string"
           },
+          "rollback_evidence": {
+            "additionalProperties": true,
+            "title": "Rollback Evidence",
+            "type": "object"
+          },
           "rollbacks": {
             "items": {
               "additionalProperties": true,
@@ -355,6 +360,7 @@
           "files",
           "events",
           "rollbacks",
+          "rollback_evidence",
           "created_at",
           "updated_at",
           "completed_at"
@@ -1197,6 +1203,21 @@
         "title": "CaptureReviewRequest",
         "type": "object"
       },
+      "CaptureValidateRequest": {
+        "properties": {
+          "runtime_profile_version_id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Runtime Profile Version Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "runtime_profile_version_id"
+        ],
+        "title": "CaptureValidateRequest",
+        "type": "object"
+      },
       "ChangeImpactResponse": {
         "properties": {
           "analysis": {
@@ -1729,6 +1750,10 @@
             "title": "Projects",
             "type": "integer"
           },
+          "public_distribution_ready": {
+            "title": "Public Distribution Ready",
+            "type": "boolean"
+          },
           "recent_engine_starts": {
             "items": {
               "type": "string"
@@ -1755,6 +1780,18 @@
           "self_test_last_result": {
             "title": "Self Test Last Result",
             "type": "string"
+          },
+          "signing_developer_id": {
+            "title": "Signing Developer Id",
+            "type": "boolean"
+          },
+          "signing_gatekeeper_accepted": {
+            "title": "Signing Gatekeeper Accepted",
+            "type": "boolean"
+          },
+          "signing_notarized": {
+            "title": "Signing Notarized",
+            "type": "boolean"
           },
           "signing_state": {
             "title": "Signing State",
@@ -1796,6 +1833,10 @@
           "notification_permission",
           "updater_state",
           "signing_state",
+          "signing_developer_id",
+          "signing_notarized",
+          "signing_gatekeeper_accepted",
+          "public_distribution_ready",
           "platform",
           "architecture",
           "recent_engine_starts",
@@ -3365,6 +3406,52 @@
           "method"
         ],
         "title": "OpenDataFolderResponse",
+        "type": "object"
+      },
+      "PerformanceMetricRequest": {
+        "properties": {
+          "duration_ms": {
+            "maximum": 3600000.0,
+            "minimum": 0.0,
+            "title": "Duration Ms",
+            "type": "number"
+          },
+          "metric": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Metric",
+            "type": "string"
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "maxLength": 36,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Id"
+          },
+          "route": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route"
+          }
+        },
+        "required": [
+          "metric",
+          "duration_ms"
+        ],
+        "title": "PerformanceMetricRequest",
         "type": "object"
       },
       "PortableRepairRequest": {
@@ -8974,6 +9061,64 @@
         "summary": "Diagnostics Overview"
       }
     },
+    "/diagnostics/performance": {
+      "post": {
+        "operationId": "record_performance_metric_diagnostics_performance_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PerformanceMetricRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Record Performance Metric Diagnostics Performance Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Record Performance Metric"
+      }
+    },
     "/diagnostics/self-test": {
       "post": {
         "operationId": "run_diagnostic_product_self_test_diagnostics_self_test_post",
@@ -11429,6 +11574,80 @@
           }
         },
         "summary": "Stop Capture"
+      }
+    },
+    "/projects/{project_id}/captures/{capture_id}/validate": {
+      "post": {
+        "operationId": "validate_capture_projects__project_id__captures__capture_id__validate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "capture_id",
+            "required": true,
+            "schema": {
+              "title": "Capture Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaptureValidateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProbeRunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Validate Capture"
       }
     },
     "/projects/{project_id}/changes": {
@@ -18563,6 +18782,62 @@
           }
         },
         "summary": "Updater Status"
+      }
+    },
+    "/workflow/state-model": {
+      "get": {
+        "operationId": "workflow_state_model_workflow_state_model_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "additionalProperties": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "type": "object"
+                  },
+                  "title": "Response Workflow State Model Workflow State Model Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Workflow State Model"
       }
     }
   }

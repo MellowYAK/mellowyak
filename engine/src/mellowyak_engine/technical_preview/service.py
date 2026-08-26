@@ -74,6 +74,60 @@ def _safe_alias(path: Path, kind: str) -> str:
     return f"<{kind}>/{path.name}" if path.name else f"<{kind}>"
 
 
+def _package_signing_truth() -> dict[str, Any]:
+    """Inspect only the explicitly supplied packaged app path; source runs remain unknown."""
+    app_value = os.environ.get("MELLOWYAK_APP_BUNDLE_PATH", "").strip()
+    app = Path(app_value).resolve() if app_value else None
+    result: dict[str, Any] = {
+        "state": "UNKNOWN",
+        "developer_id": False,
+        "notarized": False,
+        "gatekeeper_accepted": False,
+        "public_distribution_ready": False,
+    }
+    if platform.system() != "Darwin" or app is None or not app.is_dir() or app.suffix != ".app":
+        return result
+    try:
+        details = subprocess.run(
+            ["/usr/bin/codesign", "-dv", "--verbose=4", str(app)],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+        output = f"{details.stdout}\n{details.stderr}"
+        if details.returncode != 0:
+            result["state"] = "UNSIGNED"
+            return result
+        developer_id = "Authority=Developer ID Application:" in output
+        result["developer_id"] = developer_id
+        result["state"] = "DEVELOPER_ID_SIGNED" if developer_id else "AD_HOC_SIGNED"
+        stapled = subprocess.run(
+            ["/usr/bin/xcrun", "stapler", "validate", str(app)],
+            capture_output=True,
+            timeout=8,
+            check=False,
+        )
+        result["notarized"] = stapled.returncode == 0
+        gatekeeper = subprocess.run(
+            ["/usr/sbin/spctl", "--assess", "--type", "execute", str(app)],
+            capture_output=True,
+            timeout=8,
+            check=False,
+        )
+        result["gatekeeper_accepted"] = gatekeeper.returncode == 0
+        if result["notarized"]:
+            result["state"] = "NOTARIZED"
+        elif result["gatekeeper_accepted"]:
+            result["state"] = "GATEKEEPER_ACCEPTED"
+        result["public_distribution_ready"] = bool(
+            developer_id and result["notarized"] and result["gatekeeper_accepted"]
+        )
+    except (OSError, subprocess.SubprocessError):
+        result["state"] = "UNKNOWN"
+    return result
+
+
 class TechnicalPreviewService:
     """Local-only product completion with privacy-safe diagnostics and route validation."""
 
@@ -391,7 +445,16 @@ class TechnicalPreviewService:
                 session.scalar(
                     select(func.count(ApplyTransaction.id)).where(
                         ApplyTransaction.state.in_(
-                            ["PREPARED", "APPLYING", "VERIFYING", "ROLLING_BACK"]
+                            [
+                                "PREFLIGHT",
+                                "SAFETY_SNAPSHOT",
+                                "JOURNAL_CREATED",
+                                "PREPARING",
+                                "WRITING",
+                                "CAPTURING_LIVE_SOURCE",
+                                "VERIFYING_LIVE",
+                                "ROLLING_BACK",
+                            ]
                         )
                     )
                 )
@@ -526,6 +589,7 @@ class TechnicalPreviewService:
         return result
 
     def diagnostics(self) -> dict[str, Any]:
+        signing = _package_signing_truth()
         with self.sessions.begin() as session:
             counts = {
                 "projects": int(session.scalar(select(func.count(Project.id))) or 0),
@@ -534,7 +598,16 @@ class TechnicalPreviewService:
                     session.scalar(
                         select(func.count(ApplyTransaction.id)).where(
                             ApplyTransaction.state.in_(
-                                ["PREPARED", "APPLYING", "VERIFYING", "ROLLING_BACK"]
+                                [
+                                    "PREFLIGHT",
+                                    "SAFETY_SNAPSHOT",
+                                    "JOURNAL_CREATED",
+                                    "PREPARING",
+                                    "WRITING",
+                                    "CAPTURING_LIVE_SOURCE",
+                                    "VERIFYING_LIVE",
+                                    "ROLLING_BACK",
+                                ]
                             )
                         )
                     )
@@ -572,8 +645,12 @@ class TechnicalPreviewService:
                 "runtime_adapter_available": True,
                 "tray": self.tray_state(),
                 "notification_permission": preferences.notification_permission,
-                "updater_state": preferences.updater_state,
-                "signing_state": "UNSIGNED_NOT_NOTARIZED",
+                "updater_state": preferences.updater_state.upper(),
+                "signing_state": signing["state"],
+                "signing_developer_id": signing["developer_id"],
+                "signing_notarized": signing["notarized"],
+                "signing_gatekeeper_accepted": signing["gatekeeper_accepted"],
+                "public_distribution_ready": signing["public_distribution_ready"],
                 "platform": platform.system(),
                 "architecture": platform.machine(),
                 "recent_engine_starts": [row.started_at.isoformat() for row in recent_starts],
@@ -613,6 +690,49 @@ class TechnicalPreviewService:
             "issues": issues,
             "source_modified": False,
         }
+
+    def record_performance_metric(
+        self,
+        metric: str,
+        duration_ms: float,
+        *,
+        route: str | None = None,
+        project_id: str | None = None,
+    ) -> dict[str, Any]:
+        allowed = {
+            "engine_handshake",
+            "frontend_ready",
+            "first_home_data",
+            "first_project_overview_data",
+            "diagnostics_load",
+        }
+        if metric not in allowed:
+            raise TechnicalPreviewError("PERFORMANCE_METRIC_INVALID")
+        if duration_ms < 0 or duration_ms > 3_600_000:
+            raise TechnicalPreviewError("PERFORMANCE_DURATION_INVALID")
+        metric_id = str(uuid.uuid4())
+        summary = {
+            "schema": "mellowyak.performance.v1",
+            "metric": metric,
+            "duration_ms": round(float(duration_ms), 3),
+            "route": route,
+            "project_id": project_id,
+            "platform": platform.system(),
+            "architecture": platform.machine(),
+        }
+        with self.sessions.begin() as session:
+            session.add(
+                DiagnosticRun(
+                    id=metric_id,
+                    status="PERFORMANCE",
+                    summary_json=_json(summary),
+                    created_at=_now(),
+                )
+            )
+        self.events.publish(
+            "performance_metric_recorded", project_id, {"metric_id": metric_id, **summary}
+        )
+        return {"id": metric_id, "status": "RECORDED", **summary}
 
     @staticmethod
     def _redact_text(text: str, aliases: list[tuple[str, str]]) -> str:
@@ -797,15 +917,34 @@ class TechnicalPreviewService:
     def updater_status(self) -> dict[str, Any]:
         with self.sessions() as session:
             row = session.get(TechnicalPreviewPreference, 1)
+            fixture = session.scalar(
+                select(UpdateValidationRun).order_by(UpdateValidationRun.created_at.desc())
+            )
+            fixture_details = json.loads(fixture.details_json) if fixture else {}
             return {
-                "state": row.updater_state,
+                "state": row.updater_state.upper(),
+                "current_version": APP_VERSION,
+                "candidate_version": None,
                 "last_checked_at": row.last_update_check_at.isoformat()
                 if row.last_update_check_at
                 else None,
                 "production_endpoint": "HTTPS_CONFIGURED",
+                "production_update_published": False,
+                "production_channel_state": "PRODUCTION_CHANNEL_UNPUBLISHED",
                 "signature_required": True,
                 "production_public_key_preserved": True,
                 "production_update_runtime_verified": False,
+                "local_cryptographic_fixture": fixture.status if fixture else "NOT_RUN",
+                "two_app_e2e_fixture": "PASS"
+                if fixture and fixture.status in {"ACCEPTED", "NO_UPDATE"}
+                else "NOT_RUN",
+                "last_fixture": fixture.fixture if fixture else None,
+                "last_fixture_at": fixture.created_at.isoformat() if fixture else None,
+                "artifact_platform": f"{platform.system()}-{platform.machine()}",
+                "last_result": fixture.status if fixture else row.updater_state.upper(),
+                "application_data_preserved": fixture_details.get(
+                    "application_data_preserved", True
+                ),
             }
 
     def record_update_check(self, result: str = "NO_UPDATE") -> dict[str, Any]:
@@ -813,7 +952,7 @@ class TechnicalPreviewService:
             raise TechnicalPreviewError("UPDATE_RESULT_INVALID")
         with self.sessions.begin() as session:
             row = session.get(TechnicalPreviewPreference, 1)
-            row.updater_state = result.lower()
+            row.updater_state = result
             row.last_update_check_at = _now()
             row.updated_at = _now()
         self.events.publish("update_check_completed", None, {"result": result})

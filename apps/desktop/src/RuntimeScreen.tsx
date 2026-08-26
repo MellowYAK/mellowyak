@@ -137,12 +137,33 @@ export function RuntimeScreen({ project, t, onError, completeSetup }: {
     setCreating(false); setName(""); setExecutable(""); setArgumentsText(""); setPortsText(""); setHealthUrl("");
   });
 
+  const approveDetected = (candidate: RuntimeCandidate, index: number) => void run(`detected-${index}`, async () => {
+    await createRuntimeProfile(project.id, {
+      display_name: candidate.display_name || candidateLabel(candidate, t),
+      runtime_type: String(candidate.runtime_type),
+      primary: profiles.length === 0,
+      execution_mode: candidate.execution_mode || "MANAGED",
+      executable_reference: candidate.executable_reference || null,
+      argv: candidate.argv || [],
+      relative_working_directory: candidate.relative_working_directory || ".",
+      runtime_version: candidate.runtime_version || null,
+      dependency_fingerprint: candidate.dependency_fingerprint || null,
+      health_definition: candidate.health_definition || {},
+      expected_ports: candidate.expected_ports || [],
+      test_definitions: candidate.test_definitions || [],
+      environment_schema: candidate.environment_schema || [],
+      network_policy: candidate.network_policy || "LOOPBACK_ONLY",
+      limitations: candidate.limitations || [],
+      approved: true,
+    });
+  });
+
   return <div className="phase7-page">
     <section className="page-head"><div><div className="eyebrow">{t("runtimeProfile.eyebrow")}</div><h1>{t("runtimeProfile.title")}</h1><p>{t("runtimeProfile.subtitle")}</p></div><ReadyWithLimitsDetails limitations={limitations} t={t} /></section>
     {!profiles.length && <section className="analysis-banner setup-incomplete"><div><strong>{t("runtimeProfile.setupIncomplete")}</strong><span>{t("runtimeProfile.setupIncompleteBody")}</span></div><button className="primary" onClick={completeSetup}>{t("runtimeProfile.completeSetup")}</button></section>}
     <section className="panel runtime-detection-panel">
       <div className="section-head"><div><h2>{t("runtimeProfile.detected")}</h2><p className="muted">{t("runtimeProfile.detectedBody")}</p></div><button className="secondary" disabled={busyId === "detect"} onClick={detect}>{detecting ? t("runtimeProfile.detecting") : t("runtimeProfile.detect")}</button></div>
-      {candidates.length ? <div className="runtime-candidates">{candidates.map((candidate, index) => <article key={`${candidate.runtime_type}-${index}`}><strong>{candidateLabel(candidate, t)}</strong><span>{candidate.runtime_version || t("common.versionUnknown")}</span><small>{candidate.dependency_manifests?.length ? t("runtimeProfile.manifests", { count: candidate.dependency_manifests.length }) : t("runtimeProfile.noManifest")}</small></article>)}</div> : <p className="muted">{t("runtimeProfile.detectPrompt")}</p>}
+      {candidates.length ? <div className="runtime-candidates">{candidates.map((candidate, index) => <article key={`${candidate.runtime_type}-${index}`}><strong>{candidateLabel(candidate, t)}</strong><span>{candidate.runtime_version || t("common.versionUnknown")}</span><small>{candidate.dependency_manifests?.length ? t("runtimeProfile.manifests", { count: candidate.dependency_manifests.length }) : t("runtimeProfile.noManifest")}</small>{candidate.detected && <button className="secondary" disabled={busyId === `detected-${index}`} onClick={() => approveDetected(candidate, index)}>{t("runtimeProfile.approveDetected")}</button>}</article>)}</div> : <p className="muted">{t("runtimeProfile.detectPrompt")}</p>}
     </section>
     <section className="panel">
       <div className="section-head"><div><h2>{t("runtimeProfile.profiles")}</h2><p className="muted">{t("runtimeProfile.profilesBody")}</p></div><button className="primary" onClick={() => setCreating((value) => !value)}>{creating ? t("common.cancel") : t("runtimeProfile.addProfile")}</button></div>

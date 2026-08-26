@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   cancelProductSelfTest,
   exportProductSelfTest,
@@ -14,6 +14,7 @@ import {
   getSupportBundle,
   getUpdaterStatus,
   runProductSelfTest,
+  recordPerformanceMetric,
   setActivityMode,
   type ActivityPreferences,
   type DiagnosticsTruthOverview,
@@ -120,6 +121,28 @@ const stateKeys: Record<string, string> = {
   POST_VERIFYING: "phase10.state.verifyingLive",
   ACTIVE: "phase10.state.active",
   active: "phase10.state.active",
+  AUTHENTICATED_LOOPBACK: "phase12.state.AUTHENTICATED_LOOPBACK",
+  YES: "phase12.state.YES",
+  NO: "phase12.state.NO",
+  NOT_READY: "phase12.state.NOT_READY",
+  UNSIGNED: "phase12.state.UNSIGNED",
+  AD_HOC_SIGNED: "phase12.state.AD_HOC_SIGNED",
+  DEVELOPER_ID_SIGNED: "phase12.state.DEVELOPER_ID_SIGNED",
+  NOTARIZED: "phase12.state.NOTARIZED",
+  GATEKEEPER_ACCEPTED: "phase12.state.GATEKEEPER_ACCEPTED",
+  NOT_CHECKED: "phase12.state.NOT_CHECKED",
+  CHECKING: "phase12.state.CHECKING",
+  UP_TO_DATE: "phase12.state.UP_TO_DATE",
+  UPDATE_AVAILABLE: "phase12.state.UPDATE_AVAILABLE",
+  DOWNLOADING: "phase12.state.DOWNLOADING",
+  VERIFYING_SIGNATURE: "phase12.state.VERIFYING_SIGNATURE",
+  INSTALLING: "phase12.state.INSTALLING",
+  RESTART_REQUIRED: "phase12.state.RESTART_REQUIRED",
+  UPDATED: "phase12.state.UPDATED",
+  NO_UPDATE: "phase12.state.NO_UPDATE",
+  INVALID_SIGNATURE: "phase12.state.INVALID_SIGNATURE",
+  INCOMPLETE_DOWNLOAD: "phase12.state.INCOMPLETE_DOWNLOAD",
+  PRODUCTION_CHANNEL_UNPUBLISHED: "phase12.state.PRODUCTION_CHANNEL_UNPUBLISHED",
 };
 
 const activityEventKeys: Record<string, string> = {
@@ -134,6 +157,22 @@ const activityEventKeys: Record<string, string> = {
 
 function humanState(t: T, state: string | null | undefined): string {
   return t(stateKeys[state ?? ""] ?? "phase10.state.unknown");
+}
+
+const technicalCodeKeys: Record<string, string> = {
+  ROOT_CAUSE_NOT_PROVEN: "phase12.code.rootCauseNotProven",
+  BLAST_RADIUS_MAY_BE_INCOMPLETE: "phase12.code.coverageIncomplete",
+  NOT_RELATED_TO_CHANGE: "phase12.code.notSelectedByChange",
+  NO_KNOWN_GOOD_BEHAVIORS: "phase12.code.noKnownGoodBehaviors",
+  RUNTIME_NOT_CONFIGURED: "phase12.code.runtimeNotConfigured",
+  NO_CHECK_RESULT: "phase12.code.noCheckResult",
+  ONE_UNKNOWN_BOUNDARY: "phase12.code.unknownBoundary",
+  PUBLIC_DISTRIBUTION_NOT_READY: "phase12.code.publicDistributionNotReady",
+  WINDOWS_LINUX_ARM_RUNTIME_NOT_VERIFIED: "phase12.code.otherPlatformsNotVerified",
+};
+
+function humanCode(t: T, code: string): string {
+  return t(technicalCodeKeys[code] ?? "phase12.code.other");
 }
 
 function tone(state: string): "good" | "warn" | "bad" | "neutral" {
@@ -157,7 +196,7 @@ function LoadState({ t, error, retry }: { t: T; error?: string; retry?: () => vo
 
 function LimitationList({ t, values }: { t: T; values: string[] }) {
   if (!values.length) return null;
-  return <div className="truth-limitations"><strong>{t("phase10.knownLimits")}</strong><ul>{values.map((value) => <li key={value}><code dir="ltr">{value}</code></li>)}</ul></div>;
+  return <div className="truth-limitations"><strong>{t("phase10.knownLimits")}</strong><ul>{values.map((value) => <li key={value}><span>{humanCode(t, value)}</span><details><summary>{t("common.technicalDetails")}</summary><code dir="ltr">{value}</code></details></li>)}</ul></div>;
 }
 
 function SummaryMetric({ label, value, state }: { label: string; value: string | number; state?: string }) {
@@ -187,9 +226,18 @@ export function OperationalHome({ t, openProject, openActivity, addProject, data
 }) {
   const [summary, setSummary] = useState<HomeSummary | null>(data ?? null);
   const [error, setError] = useState("");
+  const firstLoad = useRef(true);
   const refresh = useCallback(async () => {
     if (data) return;
-    try { setSummary(await getHomeSummary()); setError(""); }
+    const started = performance.now();
+    try {
+      setSummary(await getHomeSummary());
+      setError("");
+      if (firstLoad.current) {
+        firstLoad.current = false;
+        void recordPerformanceMetric("first_home_data", performance.now() - started, "home");
+      }
+    }
     catch (reason) { setError(String(reason)); }
   }, [data]);
   useEffect(() => { void refresh(); }, [refresh]);
@@ -236,9 +284,18 @@ export function OperationalProjectOverview({ t, projectId, data, openActivity, o
 }) {
   const [overview, setOverview] = useState<ProjectTruthOverview | null>(data ?? null);
   const [error, setError] = useState("");
+  const firstLoad = useRef(true);
   const refresh = useCallback(async () => {
     if (data) return;
-    try { setOverview(await getProjectTruthOverview(projectId)); setError(""); }
+    const started = performance.now();
+    try {
+      setOverview(await getProjectTruthOverview(projectId));
+      setError("");
+      if (firstLoad.current) {
+        firstLoad.current = false;
+        void recordPerformanceMetric("first_project_overview_data", performance.now() - started, "project_overview", projectId);
+      }
+    }
     catch (reason) { setError(String(reason)); }
   }, [data, projectId]);
   useEffect(() => { void refresh(); }, [refresh]);
@@ -274,7 +331,7 @@ export function EpisodeDetail({ t, detail }: { t: T; detail: EpisodeTruthDetail 
     <section className="panel truth-section"><h2>{t("phase10.episode.changed")}</h2><div className="truth-change-groups">{changedEntries.map(([kind, paths]) => paths.length ? <div key={kind}><strong>{t(`phase10.change.${kind}`)}</strong><ul>{paths.map((path, index) => <li key={`${kind}-${index}`}><code dir="ltr">{typeof path === "string" ? path : JSON.stringify(path)}</code></li>)}</ul></div> : null)}</div></section>
     <section className="panel truth-section"><h2>{t("phase10.episode.mayAffected")}</h2><p>{t("phase10.episode.mayAffectedCaution")}</p><div className="truth-affect-list">{detail.may_be_affected.map((item) => <article key={String(item.behavior_id)}><strong>{String(item.behavior_name)}</strong><small>{t("phase10.episode.provenance", { value: (item.provenance as string[]).join(" · ") })}</small></article>)}</div></section>
     <section className="panel truth-section"><h2>{t("phase10.episode.checked")}</h2>{detail.checks.length ? detail.checks.map((check) => <CheckRow t={t} check={check} key={check.id} />) : <p className="muted">{t("phase10.project.noChecks")}</p>}</section>
-    <section className="panel truth-section"><h2>{t("phase10.episode.notChecked")}</h2>{detail.not_checked.length ? <ul>{detail.not_checked.map((item) => <li key={String(item.behavior_id)}><strong>{String(item.behavior_name)}</strong><code dir="ltr">{String(item.reason_code)}</code></li>)}</ul> : <p className="muted">{t("phase10.episode.everyRelevantChecked")}</p>}</section>
+    <section className="panel truth-section"><h2>{t("phase10.episode.notChecked")}</h2>{detail.not_checked.length ? <ul>{detail.not_checked.map((item) => <li key={String(item.behavior_id)}><strong>{String(item.behavior_name)}</strong><span>{humanCode(t, String(item.reason_code))}</span><details><summary>{t("common.technicalDetails")}</summary><code dir="ltr">{String(item.reason_code)}</code></details></li>)}</ul> : <p className="muted">{t("phase10.episode.everyRelevantChecked")}</p>}</section>
     <section className="panel truth-result"><div><h2>{t("phase10.episode.result")}</h2><TruthPill t={t} state={String(detail.result.signal)} /></div><p>{t(String(detail.result.signal) === "WATCH" ? "phase10.episode.watchExplanation" : "phase10.episode.signalExplanation")}</p><LimitationList t={t} values={detail.unknowns} /></section>
     <details className="panel truth-technical"><summary>{t("phase10.technicalDetails")}</summary><pre dir="ltr">{JSON.stringify(detail.technical, null, 2)}</pre></details>
   </div>;
@@ -331,8 +388,8 @@ export function OperationalRegression({ t, projectId, regressionId, data, techni
   useEffect(() => { void refresh(); }, [refresh]);
   useLocalEvents(projectId, () => { void refresh(); });
   if (!detail) return <div className="truth-page"><LoadState t={t} error={error} retry={() => void refresh()} /></div>;
-  return <div className="truth-page truth-detail"><header className="truth-heading"><div><span className="eyebrow">{t("phase10.regression.eyebrow")}</span><h1>{t("phase10.regression.title")}</h1><p>{String(detail.behavior.name)}</p></div><TruthPill t={t} state="CONFIRMED" /></header>
-    <section className="truth-regression-summary"><div><span>{t("phase10.regression.lastKnownGood")}</span><strong>{String(detail.last_known_good.save_point_name ?? t("phase10.common.noneRecorded"))}</strong><small>{t("phase10.regression.priorResult", { state: humanState(t, String(detail.last_known_good.status)) })}</small></div><span className="truth-arrow" aria-hidden="true">→</span><div><span>{t("phase10.regression.current")}</span><strong>{humanState(t, detail.current.result)}</strong><small>{t("phase10.check.attempts", { count: detail.current.attempt_count })}</small></div></section>
+  return <div className="truth-page truth-detail"><header className="truth-heading"><div><span className="eyebrow">{t("phase10.regression.eyebrow")}</span><h1>{t("phase10.regression.title")}</h1><p>{String(detail.behavior.name)}</p></div><TruthPill t={t} state={detail.status} /></header>
+    <section className="truth-regression-summary"><div><span>{t("phase10.regression.lastKnownGood")}</span><strong>{String(detail.last_known_good.save_point_name ?? t("phase10.common.noneRecorded"))}</strong><small>{t("phase10.regression.priorResult", { state: humanState(t, String(detail.last_known_good.result ?? "PASS")) })}</small></div><span className="truth-arrow" aria-hidden="true">→</span><div><span>{t("phase10.regression.current")}</span><strong>{humanState(t, detail.current.result)}</strong><small>{t("phase10.check.attempts", { count: detail.current.attempt_count })}</small></div></section>
     <div className="truth-columns"><section className="panel truth-section"><h2>{t("phase10.regression.expected")}</h2><p>{String(detail.behavior.expected_outcome)}</p><h2>{t("phase10.regression.observed")}</h2><pre className="truth-observed" dir="ltr">{JSON.stringify(detail.current.observed, null, 2)}</pre></section><section className="panel truth-section"><h2>{t("phase10.regression.changed")}</h2><ul>{(detail.changed.paths as string[]).map((path) => <li key={path}><code dir="ltr">{path}</code></li>)}</ul><h2>{t("phase10.regression.whySelected")}</h2><p>{String(detail.selection.reason)}</p></section></div>
     <section className="panel truth-section"><div className="section-head"><div><h2>{t("phase10.regression.evidence")}</h2><p>{t("phase10.regression.evidenceBody")}</p></div></div>{detail.evidence_timeline.map((item) => <ActivityRow key={item.id} t={t} item={item} />)}</section>
     <LimitationList t={t} values={detail.unknowns} />
@@ -345,9 +402,18 @@ export function OperationalDiagnostics({ t, data, openSelfTest }: { t: T; data?:
   const [overview, setOverview] = useState<DiagnosticsTruthOverview | null>(data ?? null);
   const [result, setResult] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState("");
+  const firstLoad = useRef(true);
   const refresh = useCallback(async () => {
     if (data) return;
-    try { setOverview(await getDiagnosticsTruthOverview()); setError(""); }
+    const started = performance.now();
+    try {
+      setOverview(await getDiagnosticsTruthOverview());
+      setError("");
+      if (firstLoad.current) {
+        firstLoad.current = false;
+        void recordPerformanceMetric("diagnostics_load", performance.now() - started, "diagnostics");
+      }
+    }
     catch (reason) { setError(String(reason)); }
   }, [data]);
   useEffect(() => { void refresh(); }, [refresh]);
@@ -424,7 +490,7 @@ function LocationSurface({ t, state }: { t: T; state: Phase10CaptureState }) {
 }
 
 function UpdateStatusSurface({ t, capture = true }: { t: T; capture?: boolean }) {
-  const [status, setStatus] = useState<Record<string, unknown> | null>(capture ? { state: "NO_UPDATE", current_version: "0.2.0-preview.1", last_check_at: "2026-08-25T08:45:00Z", signature_required: true } : null);
+  const [status, setStatus] = useState<Record<string, unknown> | null>(capture ? { state: "NO_UPDATE", current_version: "0.3.0-preview.1", last_check_at: "2026-08-25T08:45:00Z", signature_required: true } : null);
   const [acceptance, setAcceptance] = useState<Record<string, unknown> | null>(capture ? { status: "VERIFIED_WORKING", platform: "macOS x86_64" } : null);
   useEffect(() => { if (!capture) void Promise.all([getUpdaterStatus(), getPackageAcceptance()]).then(([next, packageResult]) => { setStatus(next); setAcceptance(packageResult); }); }, [capture]);
   return <div className="truth-page"><header className="truth-heading"><div><span className="eyebrow">{t("phase10.update.eyebrow")}</span><h1>{t("phase10.update.title")}</h1><p>{t("phase10.update.subtitle")}</p></div><TruthPill t={t} state={String(status?.state ?? "NOT_RUN")} /></header><section className="panel truth-section"><dl className="truth-dl"><div><dt>{t("phase10.update.current")}</dt><dd dir="ltr">{String(status?.current_version ?? "—")}</dd></div><div><dt>{t("phase10.update.lastCheck")}</dt><dd>{dateTime(String(status?.last_check_at ?? ""))}</dd></div><div><dt>{t("phase10.update.signature")}</dt><dd>{String(status?.signature_required ?? true)}</dd></div><div><dt>{t("phase10.update.package")}</dt><dd>{String(acceptance?.status ?? "—")}</dd></div></dl><button className="secondary">{t("phase10.update.check")}</button></section></div>;
@@ -487,7 +553,7 @@ function syntheticRegression(): RegressionTruthDetail {
 }
 
 function syntheticDiagnostics(): DiagnosticsTruthOverview {
-  return { facts: [{ key: "local_api", state: "READY", value: "127.0.0.1:<ephemeral>" }, { key: "database", state: "READY", value: "0009_technical_preview_readiness" }, { key: "storage", state: "READY", value: 1482752 }, { key: "browser_runtime", state: "AVAILABLE", value: true }, { key: "runtime_adapter", state: "AVAILABLE", value: true }, { key: "updater", state: "NOT_RUN", value: "NOT_RUN" }, { key: "signing", state: "NOT_RUN", value: "NOT_SIGNED" }], counts: { projects: 2, snapshot_objects: 48, incomplete_transactions: 0, recovery_required: 0 }, privacy: { bearer_token_exposed: false, outbound_product_network: false, cloud_connected: false, copy_redacted: true }, platform: { name: "Darwin", architecture: "x86_64", signing: "NOT_SIGNED" }, last_self_test: "PASS", limitations: ["SIGNING_NOT_VERIFIED", "WINDOWS_LINUX_ARM_RUNTIME_NOT_VERIFIED"] };
+  return { facts: [{ key: "local_api", state: "AUTHENTICATED_LOOPBACK", value: "127.0.0.1:<ephemeral>" }, { key: "database", state: "READY", value: "0009_technical_preview_readiness" }, { key: "storage", state: "READY", value: 1482752 }, { key: "browser_runtime", state: "AVAILABLE", value: true }, { key: "runtime_adapter", state: "AVAILABLE", value: true }, { key: "updater", state: "PRODUCTION_CHANNEL_UNPUBLISHED", value: "LOCAL_E2E_PASS" }, { key: "signing", state: "AD_HOC_SIGNED", value: "AD_HOC_SIGNED" }, { key: "developer_id", state: "NO", value: false }, { key: "notarized", state: "NO", value: false }, { key: "public_distribution", state: "NOT_READY", value: false }, { key: "updater_fixture", state: "PASS", value: "PASS" }, { key: "production_updater", state: "PRODUCTION_CHANNEL_UNPUBLISHED", value: false }], counts: { projects: 1, snapshot_objects: 48, incomplete_transactions: 0, recovery_required: 0 }, privacy: { bearer_token_exposed: false, outbound_product_network: false, cloud_connected: false, copy_redacted: true }, platform: { name: "Darwin", architecture: "x86_64", signing: "AD_HOC_SIGNED" }, last_self_test: "PASS", limitations: ["PUBLIC_DISTRIBUTION_NOT_READY"] };
 }
 
 function syntheticSelfTest(state: "running" | "passed"): ProductSelfTestRun {

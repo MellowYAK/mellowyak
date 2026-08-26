@@ -11,6 +11,11 @@ class ValidationCheck:
     requirement: str
     path: str | None = None
     expected: str | None = None
+    executable: str | None = None
+    argv: tuple[str, ...] = ()
+    cwd: str = "."
+    expected_exit_code: int = 0
+    stdout_contains: str | None = None
 
 
 def checks_from_policy(value: dict[str, Any]) -> tuple[ValidationCheck, ...]:
@@ -25,6 +30,13 @@ def checks_from_policy(value: dict[str, Any]) -> tuple[ValidationCheck, ...]:
                 requirement=str(item.get("requirement") or "REQUIRED"),
                 path=None if item.get("path") is None else str(item["path"]),
                 expected=None if item.get("expected") is None else str(item["expected"]),
+                executable=(None if item.get("executable") is None else str(item["executable"])),
+                argv=tuple(str(value) for value in item.get("argv", []) if isinstance(value, str)),
+                cwd=str(item.get("cwd") or "."),
+                expected_exit_code=int(item.get("expected_exit_code", 0)),
+                stdout_contains=(
+                    None if item.get("stdout_contains") is None else str(item["stdout_contains"])
+                ),
             )
         )
     if not checks:

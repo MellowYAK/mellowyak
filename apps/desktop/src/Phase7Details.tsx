@@ -5,6 +5,7 @@ import {
   deleteRepairWorkspace,
   exportPortableRepair,
   getRepairCandidateDiff,
+  getRepairApply,
   openRepairWorkspace,
   prepareRepairApply,
   refreshRepairCandidate,
@@ -95,6 +96,9 @@ export function RepairWorkspacePanel({ projectId, regressionId, initial, t, onEr
   const [diff, setDiff] = useState<string[]>([]);
   const [confirmed, setConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
+  const awaitingConfirmation = transaction?.state === "AWAITING_CONFIRMATION";
+  const committed = transaction?.state === "COMMITTED";
+  const rolledBack = transaction?.state === "ROLLED_BACK";
   const run = async (operation: () => Promise<void>) => {
     setBusy(true);
     try { await operation(); }
@@ -119,8 +123,23 @@ export function RepairWorkspacePanel({ projectId, regressionId, initial, t, onEr
             <div className="phase8-files">{candidate.files.map((file) => <article key={`${file.ordinal}-${file.relative_path}`}><code dir="ltr">{file.relative_path}</code><span className={`operation ${file.operation.toLowerCase()}`}>{t(`phase8.operation.${file.operation}` as TranslationKey)}</span><small>{t("phase8.bytes", { count: file.byte_size })}</small><button className="secondary" disabled={file.classification.toLowerCase() !== "text"} onClick={() => void run(async () => setDiff((await getRepairCandidateDiff(projectId, candidate.id, file.relative_path)).lines))}>{t("phase8.viewDiff")}</button></article>)}</div>
             {diff.length > 0 && <pre className="phase8-diff" dir="ltr"><code>{diff.join("\n")}</code></pre>}
             {validation && <div className="analysis-banner"><strong>{t("phase8.validationResult")}</strong><span>{validation.status}</span><span>{t("phase8.validationChecks", { count: validation.items.length })}</span></div>}
-            {transaction && <div className="phase8-confirmation"><h3>{t("phase8.confirm.title")}</h3><p>{t("phase8.confirm.onlyCandidate")}</p><p>{t("phase8.confirm.safetySnapshot")}</p><p>{t("phase8.confirm.rollback")}</p><p>{t("phase8.confirm.unrelated")}</p><label><input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} /> <span>{t("phase8.confirm.deliberate")}</span></label></div>}
-            <div className="button-row"><button className="secondary" disabled={busy} onClick={() => void run(async () => { setValidation(null); setTransaction(null); setCandidate(await refreshRepairCandidate(projectId, candidate.id)); })}>{t("phase8.refreshCandidate")}</button><button className="secondary" disabled={busy} onClick={() => void run(async () => { await exportPortableRepair(projectId, workspace.id, candidate.files.filter((file) => !file.excluded).map((file) => file.relative_path)); })}>{t("phase8.portableExport")}</button>{candidate.state !== "VALIDATED" && <button className="primary" disabled={busy} onClick={() => void run(async () => { const result = await validateRepairCandidate(projectId, candidate.id); setValidation(result); setCandidate({ ...candidate, state: result.status === "PASSED" ? "VALIDATED" : "VALIDATION_FAILED" }); })}>{t("phase8.validateCandidate")}</button>}{candidate.state === "VALIDATED" && !transaction && <button className="primary" disabled={busy} onClick={() => void run(async () => setTransaction(await prepareRepairApply(projectId, candidate.id)))}>{t("phase8.prepareApply")}</button>}{transaction?.confirmation_nonce && <button className="primary" disabled={busy || !confirmed} onClick={() => void run(async () => setTransaction(await confirmRepairApply(projectId, candidate.id, transaction.confirmation_nonce ?? "")))}>{t("phase8.applyRepair")}</button>}</div>
+            {transaction && <section className="phase8-confirmation" aria-live="polite">
+              <div className="section-head"><h3>{awaitingConfirmation ? t("phase8.confirm.title") : t("phase12.apply.transactionTitle")}</h3><span className={`readiness ${committed ? "good" : rolledBack ? "warn" : "neutral"}`}>{t(`phase12.state.${transaction.state}` as TranslationKey)}</span></div>
+              {awaitingConfirmation && <><p>{t("phase8.confirm.onlyCandidate")}</p><p>{t("phase8.confirm.safetySnapshot")}</p><p>{t("phase8.confirm.rollback")}</p><p>{t("phase8.confirm.unrelated")}</p></>}
+              <dl className="truth-dl">
+                <div><dt>{t("phase12.apply.candidateValidation")}</dt><dd>{t("phase12.value.passed")}</dd></div>
+                <div><dt>{t("phase12.apply.liveFreshness")}</dt><dd>{t("phase12.value.passed")}</dd></div>
+                <div><dt>{t("phase12.apply.safetySnapshot")}</dt><dd>{transaction.safety_snapshot_id ? t("phase12.value.created") : t("phase12.value.notCreated")}</dd></div>
+                <div><dt>{t("phase12.apply.journal")}</dt><dd>{transaction.journal_relative_path ? t("phase12.value.created") : t("phase12.value.notCreated")}</dd></div>
+                <div><dt>{t("phase12.apply.apply")}</dt><dd>{["WRITING", "CAPTURING_LIVE_SOURCE", "VERIFYING_LIVE", "COMMITTED", "ROLLING_BACK", "ROLLED_BACK"].includes(transaction.state) ? t("phase12.value.complete") : t("phase12.value.notStarted")}</dd></div>
+                <div><dt>{t("phase12.apply.liveVerification")}</dt><dd>{["COMMITTED", "ROLLING_BACK", "ROLLED_BACK"].includes(transaction.state) ? t("phase12.value.complete") : t("phase12.value.notStarted")}</dd></div>
+                <div><dt>{t("phase12.apply.commit")}</dt><dd>{committed ? t("phase12.value.complete") : t("phase12.value.notStarted")}</dd></div>
+              </dl>
+              {awaitingConfirmation && <label><input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} /> <span>{t("phase8.confirm.deliberate")}</span></label>}
+              {rolledBack && <section className="truth-limitations"><strong>{t("phase12.rollback.title")}</strong><dl className="truth-dl">{Object.entries(transaction.rollback_evidence).map(([key, value]) => <div key={key}><dt>{t(`phase12.rollback.${key}` as TranslationKey)}</dt><dd dir={key.includes("path") ? "ltr" : undefined}>{Array.isArray(value) ? value.join(", ") : String(value)}</dd></div>)}</dl></section>}
+              <details><summary>{t("common.technicalDetails")}</summary><pre dir="ltr">{JSON.stringify({ id: transaction.id, state: transaction.state, events: transaction.events }, null, 2)}</pre></details>
+            </section>}
+            <div className="button-row"><button className="secondary" disabled={busy} onClick={() => void run(async () => { setValidation(null); setTransaction(null); setConfirmed(false); setCandidate(await refreshRepairCandidate(projectId, candidate.id)); })}>{t("phase8.refreshCandidate")}</button><button className="secondary" disabled={busy} onClick={() => void run(async () => { await exportPortableRepair(projectId, workspace.id, candidate.files.filter((file) => !file.excluded).map((file) => file.relative_path)); })}>{t("phase8.portableExport")}</button>{candidate.state !== "VALIDATED" && <button className="primary" disabled={busy} onClick={() => void run(async () => { const result = await validateRepairCandidate(projectId, candidate.id); setValidation(result); setCandidate({ ...candidate, state: result.status === "PASSED" ? "VALIDATED" : "VALIDATION_FAILED" }); })}>{t("phase8.validateCandidate")}</button>}{candidate.state === "VALIDATED" && !transaction && <button className="primary" disabled={busy} onClick={() => void run(async () => setTransaction(await prepareRepairApply(projectId, candidate.id)))}>{t("phase8.prepareApply")}</button>}{awaitingConfirmation && transaction.confirmation_nonce && <button className="primary" disabled={busy || !confirmed} onClick={() => void run(async () => { setTransaction(await confirmRepairApply(projectId, candidate.id, transaction.confirmation_nonce ?? "")); setConfirmed(false); })}>{t("phase8.applyRepair")}</button>}{transaction && !awaitingConfirmation && !committed && !rolledBack && <button className="secondary" disabled={busy} onClick={() => void run(async () => setTransaction(await getRepairApply(projectId, transaction.id)))}>{t("phase10.action.refresh")}</button>}{committed && <><button className="primary">{t("phase12.action.returnProject")}</button><button className="secondary">{t("phase12.action.viewEvidence")}</button><button className="secondary">{t("phase12.action.viewTransaction")}</button></>}</div>
           </>}
         </section>
         <details><summary>{t("common.technicalDetails")}</summary><pre dir="ltr">{JSON.stringify({ manifest_digest: workspace.manifest_digest, items: workspace.items }, null, 2)}</pre></details>

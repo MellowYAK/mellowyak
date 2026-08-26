@@ -71,6 +71,7 @@ import {
   phase10CaptureStates,
   type Phase10CaptureState,
 } from "./Phase10Experience";
+import { Phase12Capture, phase12CaptureStates, type Phase12CaptureState } from "./Phase12Experience";
 
 type ProjectScreen = "project" | "activity" | "regression" | "change" | "impact" | "behaviors" | "runtime" | "memory";
 type Screen = "home" | "projects" | "disconnected" | "alerts" | "settings" | "diagnostics" | "lab" | "add" | "runtimeSetup" | ProjectScreen;
@@ -205,6 +206,9 @@ export function App() {
   const phase9CaptureState = phase9CaptureStates.includes(phase9StateValue as Phase9CaptureState) ? phase9StateValue as Phase9CaptureState : null;
   const phase10StateValue = new URLSearchParams(window.location.search).get("phase10State");
   const phase10CaptureState = phase10CaptureStates.includes(phase10StateValue as Phase10CaptureState) ? phase10StateValue as Phase10CaptureState : null;
+  const phase12StateValue = new URLSearchParams(window.location.search).get("phase12State");
+  const phase12Marker = new URLSearchParams(window.location.search).get("phase12Fixture");
+  const phase12CaptureState = phase12Marker === "mellowyak.phase12.screenshots.v1" && phase12CaptureStates.includes(phase12StateValue as Phase12CaptureState) ? phase12StateValue as Phase12CaptureState : null;
 
   const productT = useCallback((key: string, parameters: Record<string, string | number> = {}) => t(key as TranslationKey, parameters), [t]);
 
@@ -250,8 +254,8 @@ export function App() {
   }, [projects]);
 
   useEffect(() => {
-    if ((captureState?.startsWith("hebrew-") || phase9CaptureState?.startsWith("hebrew-") || phase10CaptureState?.startsWith("hebrew-")) && locale !== "he") setLocale("he");
-  }, [captureState, locale, phase9CaptureState, phase10CaptureState, setLocale]);
+    if ((captureState?.startsWith("hebrew-") || phase9CaptureState?.startsWith("hebrew-") || phase10CaptureState?.startsWith("hebrew-") || /^3[3-7]-hebrew-/.test(phase12CaptureState ?? "")) && locale !== "he") setLocale("he");
+  }, [captureState, locale, phase9CaptureState, phase10CaptureState, phase12CaptureState, setLocale]);
 
   useEffect(() => {
     let active = true;
@@ -441,6 +445,8 @@ export function App() {
     catch (reason) { setError(reason instanceof Error ? reason.message : "IMPACT_SEARCH_FAILED"); }
     finally { setBusy(false); }
   };
+
+  if (phase12CaptureState) return <main className="app-shell" dir={direction} data-phase12-state={phase12CaptureState}><Header home={() => undefined} locale={locale} setLocale={setLocale} t={t} updater={updater} /><Phase12Capture t={productT} state={phase12CaptureState} /></main>;
 
   if (phase10CaptureState) return <main className="app-shell" dir={direction} data-phase10-state={phase10CaptureState}><Header home={() => undefined} locale={locale} setLocale={setLocale} t={t} updater={updater} /><Phase10Capture t={productT} state={phase10CaptureState} /></main>;
 

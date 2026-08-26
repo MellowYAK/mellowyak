@@ -261,8 +261,8 @@ class BehaviorService:
         with self.sessions.begin() as session:
             project = self._project(session, project_id)
             behavior = self._behavior(session, project_id, behavior_id)
-            if behavior.lifecycle_state == "ARCHIVED":
-                raise BehaviorServiceError("BEHAVIOR_ARCHIVED")
+            if behavior.lifecycle_state == "DISABLED":
+                raise BehaviorServiceError("BEHAVIOR_DISABLED")
             next_version = (
                 int(
                     session.scalar(
@@ -311,7 +311,7 @@ class BehaviorService:
             behavior.current_version_id = version_id
             behavior.display_name = title
             behavior.always_recheck = always_recheck
-            if behavior.lifecycle_state == "PROTECTED":
+            if behavior.lifecycle_state == "KNOWN_GOOD":
                 behavior.lifecycle_state = "DRAFT"
                 if behavior.last_accepted_baseline_id:
                     previous_baseline = session.get(
@@ -331,7 +331,7 @@ class BehaviorService:
         now = _now()
         with self.sessions.begin() as session:
             behavior = self._behavior(session, project_id, behavior_id)
-            behavior.lifecycle_state = "ARCHIVED"
+            behavior.lifecycle_state = "DISABLED"
             behavior.archived_at = now
             behavior.updated_at = now
         self.events.publish("behavior_archived", project_id, {"behavior_id": behavior_id})

@@ -203,6 +203,17 @@ def test_pulseplan_regression_repair_and_reverification(
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     root = repository(tmp_path)
+    (root / ".mellowyak-reference-project.json").write_text(
+        json.dumps(
+            {
+                "schema": "mellowyak.phase12.reference.v1",
+                "synthetic": True,
+                "product": "PulsePlan Reference",
+                "fixture_scenario": "pulseplan",
+            }
+        ),
+        encoding="utf-8",
+    )
     try:
         app = create_app(EngineSettings(data_root=tmp_path / "data", session_token=TOKEN))
         if not app.state.runtime.verification.adapter.availability()[0]:
@@ -285,6 +296,28 @@ def test_pulseplan_regression_repair_and_reverification(
                 },
             )
             assert reviewed.status_code == 200, reviewed.text
+            profile = client.post(
+                f"/projects/{project_id}/runtime-profiles",
+                headers=headers(),
+                json={
+                    "display_name": "PulsePlan browser replay",
+                    "runtime_type": "GENERIC_PROCESS",
+                    "execution_mode": "MANUAL",
+                    "executable_reference": "python3",
+                    "argv": ["-c", "print('browser replay profile')"],
+                    "relative_working_directory": ".",
+                    "network_policy": "LOOPBACK_ONLY",
+                    "approved": True,
+                },
+            )
+            assert profile.status_code == 200, profile.text
+            validated = client.post(
+                f"/projects/{project_id}/captures/{capture_id}/validate",
+                headers=headers(),
+                json={"runtime_profile_version_id": profile.json()["current_version_id"]},
+            )
+            assert validated.status_code == 200, validated.text
+            assert validated.json()["result"] == "PASS"
             accepted = client.post(
                 f"/projects/{project_id}/captures/{capture_id}/accept-baseline",
                 headers=headers(),

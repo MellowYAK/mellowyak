@@ -52,7 +52,7 @@ class RegressionService:
                 and item.result == "FAIL"
                 and behavior
                 and behavior.project_id == project_id
-                and behavior.lifecycle_state == "PROTECTED"
+                and behavior.lifecycle_state == "KNOWN_GOOD"
                 and baseline
                 and baseline.status == "ACCEPTED"
                 and baseline.behavior_version_id == item.behavior_version_id

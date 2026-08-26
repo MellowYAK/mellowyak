@@ -33,6 +33,7 @@ from mellowyak_engine.api.schemas import (
     CandidateExcludeRequest,
     CandidateRestoreRequest,
     CaptureReviewRequest,
+    CaptureValidateRequest,
     ChangeImpactResponse,
     ChangeIntentRequest,
     ChangeListResponse,
@@ -69,6 +70,7 @@ from mellowyak_engine.api.schemas import (
     OnboardingUpdateRequest,
     OpenDataFolderResponse,
     PackageAcceptanceRecordRequest,
+    PerformanceMetricRequest,
     PortableRepairRequest,
     PortableRepairResponse,
     PrivacySettingsResponse,
@@ -181,6 +183,7 @@ from mellowyak_engine.technical_preview.service import (
     TechnicalPreviewService,
 )
 from mellowyak_engine.verification.service import VerificationError, VerificationService
+from mellowyak_engine.workflow import state_model
 
 
 @dataclass
@@ -260,7 +263,6 @@ def create_app(settings: EngineSettings) -> FastAPI:
     impact = ImpactService(database.sessions, events)
     behaviors = BehaviorService(database.sessions, events)
     evidence = EvidenceService(database.sessions, EvidenceStore(paths.evidence), events)
-    browser = BrowserCaptureService(database.sessions, evidence, events)
     protection = ProtectionPlanService(database.sessions, events)
     gate = GateService(database.sessions, events, evidence)
     regressions = RegressionService(database.sessions, events)
@@ -275,6 +277,7 @@ def create_app(settings: EngineSettings) -> FastAPI:
     )
     product_truth = ProductTruthService(database.sessions, technical_preview)
     probes = ProbeService(database.sessions, events, snapshots, productization)
+    browser = BrowserCaptureService(database.sessions, evidence, events, probes)
     episodes.bind_selection_callback(probes.select_impacted)
     repair_workspaces = RepairWorkspaceService(database.sessions, paths.root, events, _open_folder)
     repair_candidates = RepairCandidateService(database.sessions, paths.root, events)
@@ -1105,6 +1108,21 @@ def create_app(settings: EngineSettings) -> FastAPI:
             raise phase4_error(error) from error
 
     @app.post(
+        "/projects/{project_id}/captures/{capture_id}/validate",
+        response_model=ProbeRunResponse,
+        dependencies=[Depends(guard)],
+    )
+    def validate_capture(
+        project_id: str, capture_id: str, request: CaptureValidateRequest
+    ) -> ProbeRunResponse:
+        try:
+            return ProbeRunResponse(
+                **browser.validate(project_id, capture_id, request.runtime_profile_version_id)
+            )
+        except (BrowserCaptureError, ProbeServiceError, EvidenceServiceError) as error:
+            raise phase4_error(error) from error
+
+    @app.post(
         "/projects/{project_id}/captures/{capture_id}/validation-fixture-flow",
         response_model=ActionResponse,
         include_in_schema=False,
@@ -1125,10 +1143,23 @@ def create_app(settings: EngineSettings) -> FastAPI:
         project_id: str, capture_id: str, request: BaselineAcceptRequest
     ) -> BehaviorBaselineResponse:
         try:
-            return BehaviorBaselineResponse(
-                **evidence.accept_baseline(project_id, capture_id, request.reviewer, request.notes)
+            baseline = evidence.accept_baseline(
+                project_id, capture_id, request.reviewer, request.notes
             )
-        except EvidenceServiceError as error:
+            bundle = evidence.get_bundle(project_id, str(baseline["evidence_bundle_id"]))
+            run = probes.get_run(project_id, str(bundle["verification_run_id"]))
+            behavior = behaviors.get(project_id, str(baseline["behavior_id"]))
+            probes.create_milestone(
+                project_id,
+                str(run["snapshot_id"]),
+                f"{behavior['display_name']} known good",
+                str(baseline["behavior_id"]),
+                str(baseline["behavior_version_id"]),
+                str(run["probe_version_id"]),
+                False,
+            )
+            return BehaviorBaselineResponse(**baseline)
+        except (EvidenceServiceError, ProbeServiceError, BehaviorServiceError) as error:
             raise phase4_error(error) from error
 
     @app.get(
@@ -2137,7 +2168,7 @@ def create_app(settings: EngineSettings) -> FastAPI:
                 for item in safe_apply.pending()
                 if item["project_id"] == project_id
                 and item["candidate_id"] == candidate_id
-                and item["state"] == "READY_FOR_CONFIRMATION"
+                and item["state"] == "AWAITING_CONFIRMATION"
             ]
             if len(pending) != 1:
                 raise SafeApplyServiceError("APPLY_TRANSACTION_NOT_FOUND")
@@ -2502,9 +2533,25 @@ def create_app(settings: EngineSettings) -> FastAPI:
     def diagnostics_overview() -> DiagnosticsOverviewAggregateResponse:
         return DiagnosticsOverviewAggregateResponse(**product_truth.diagnostics_overview())
 
+    @app.get("/workflow/state-model", dependencies=[Depends(guard)])
+    def workflow_state_model() -> dict[str, dict[str, list[str]]]:
+        return state_model()
+
     @app.post("/diagnostics/storage-integrity", dependencies=[Depends(guard)])
     def storage_integrity() -> dict[str, object]:
         return technical_preview.storage_integrity()
+
+    @app.post("/diagnostics/performance", dependencies=[Depends(guard)])
+    def record_performance_metric(request: PerformanceMetricRequest) -> dict[str, object]:
+        try:
+            return technical_preview.record_performance_metric(
+                request.metric,
+                request.duration_ms,
+                route=request.route,
+                project_id=request.project_id,
+            )
+        except TechnicalPreviewError as error:
+            raise technical_preview_error(error) from error
 
     @app.post("/diagnostics/support-bundle", dependencies=[Depends(guard)])
     def export_support_bundle() -> dict[str, object]:

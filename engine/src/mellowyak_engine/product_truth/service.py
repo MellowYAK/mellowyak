@@ -107,7 +107,7 @@ class ProductTruthService:
             session,
             ProtectedBehavior,
             ProtectedBehavior.project_id == project_id,
-            ProtectedBehavior.lifecycle_state == "PROTECTED",
+            ProtectedBehavior.lifecycle_state == "KNOWN_GOOD",
             ProtectedBehavior.archived_at.is_(None),
         )
         regression_count = self._count(
@@ -120,12 +120,12 @@ class ProductTruthService:
             session,
             ApplyTransaction,
             ApplyTransaction.project_id == project_id,
-            ApplyTransaction.state == "FAILED_RECOVERY_REQUIRED",
+            ApplyTransaction.state == "RECOVERY_REQUIRED",
         )
         storage_issue = bool(snapshot and snapshot.integrity_status != "VERIFIED")
         limitations: list[str] = []
         if protected_count == 0:
-            limitations.append("NO_PROTECTED_BEHAVIORS")
+            limitations.append("NO_KNOWN_GOOD_BEHAVIORS")
         if project.runtime_setup_status != "READY":
             limitations.append(project.runtime_setup_status or "RUNTIME_NOT_CONFIGURED")
         if check is None:
@@ -646,6 +646,12 @@ class ProductTruthService:
                 .order_by(SnapshotMilestone.created_at.desc())
                 .limit(1)
             ).first()
+            baseline_source = _load(baseline.source_revision_json, {}) if baseline else {}
+            if not baseline_source and milestone:
+                milestone_snapshot = session.get(SourceSnapshot, milestone.snapshot_id)
+                baseline_source = (
+                    _load(milestone_snapshot.source_identity_json, {}) if milestone_snapshot else {}
+                )
             return {
                 "id": regression.id,
                 "project_id": project_id,
@@ -656,12 +662,25 @@ class ProductTruthService:
                     "expected_outcome": version.expected_outcome if version else "",
                 },
                 "last_known_good": {
-                    "baseline_id": baseline.id if baseline else None,
-                    "status": baseline.status if baseline else "UNKNOWN",
+                    "baseline_id": baseline.id if baseline else milestone.id if milestone else None,
+                    "status": (
+                        baseline.status
+                        if baseline
+                        else milestone.status
+                        if milestone
+                        else "INVALID"
+                    ),
+                    "result": "PASS" if baseline or milestone else "INCONCLUSIVE",
                     "snapshot_id": milestone.snapshot_id if milestone else None,
                     "save_point_name": milestone.display_name if milestone else None,
-                    "source_identity": _load(baseline.source_revision_json, {}) if baseline else {},
-                    "created_at": _iso(baseline.created_at) if baseline else None,
+                    "source_identity": baseline_source,
+                    "created_at": _iso(
+                        baseline.created_at
+                        if baseline
+                        else milestone.created_at
+                        if milestone
+                        else None
+                    ),
                 },
                 "current": (
                     self._check_public(session, run)
@@ -721,6 +740,7 @@ class ProductTruthService:
 
     def diagnostics_overview(self) -> dict[str, Any]:
         diagnostics = self.technical_preview.diagnostics()
+        updater = self.technical_preview.updater_status()
         facts = [
             {
                 "key": "local_api",
@@ -753,18 +773,43 @@ class ProductTruthService:
             },
             {
                 "key": "updater",
-                "state": diagnostics["updater_state"],
-                "value": diagnostics["updater_state"],
+                "state": updater["state"],
+                "value": updater["last_result"],
             },
             {
                 "key": "signing",
                 "state": diagnostics["signing_state"],
                 "value": diagnostics["signing_state"],
             },
+            {
+                "key": "developer_id",
+                "state": "YES" if diagnostics["signing_developer_id"] else "NO",
+                "value": diagnostics["signing_developer_id"],
+            },
+            {
+                "key": "notarized",
+                "state": "YES" if diagnostics["signing_notarized"] else "NO",
+                "value": diagnostics["signing_notarized"],
+            },
+            {
+                "key": "public_distribution",
+                "state": "READY" if diagnostics["public_distribution_ready"] else "NOT_READY",
+                "value": diagnostics["public_distribution_ready"],
+            },
+            {
+                "key": "updater_fixture",
+                "state": updater["local_cryptographic_fixture"],
+                "value": updater["two_app_e2e_fixture"],
+            },
+            {
+                "key": "production_updater",
+                "state": updater["production_channel_state"],
+                "value": updater["production_update_published"],
+            },
         ]
         limitations = []
-        if diagnostics["signing_state"] != "VERIFIED":
-            limitations.append("SIGNING_NOT_VERIFIED")
+        if not diagnostics["public_distribution_ready"]:
+            limitations.append("PUBLIC_DISTRIBUTION_NOT_READY")
         if diagnostics["platform"] != "Darwin" or diagnostics["architecture"] != "x86_64":
             limitations.append("PLATFORM_NOT_RUNTIME_VERIFIED")
         return {

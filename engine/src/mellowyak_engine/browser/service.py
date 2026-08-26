@@ -26,6 +26,7 @@ from mellowyak_engine.db.models import (
     ProtectedBehavior,
     RuntimeConfiguration,
     RuntimeObservation,
+    RuntimeProfileVersion,
 )
 from mellowyak_engine.evidence.service import EvidenceService, EvidenceServiceError
 
@@ -73,6 +74,19 @@ def _browser_executable() -> str | None:
     candidates: list[Path] = []
     if override:
         candidates.append(Path(override))
+    app_bundle = os.environ.get("MELLOWYAK_APP_BUNDLE_PATH", "").strip()
+    if app_bundle:
+        resources = Path(app_bundle).resolve() / "Contents" / "Resources" / "browser"
+        manifest_path = resources / "manifest.json"
+        if manifest_path.is_file():
+            try:
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                relative = Path(str(manifest.get("executable_relative", "")))
+                candidate = (resources / relative).resolve()
+                if candidate.is_relative_to(resources.resolve()):
+                    candidates.append(candidate)
+            except (OSError, ValueError, json.JSONDecodeError):
+                pass
     executable = Path(sys.executable).resolve()
     if getattr(sys, "frozen", False):
         resources = executable.parent.parent / "Resources" / "browser"
@@ -184,7 +198,7 @@ class _BrowserWorker:
                     elif request.action == "resume":
                         value = self._pause(sessions, request.capture_id, False)
                     elif request.action == "fixture":
-                        value = self._fixture(sessions, request.capture_id)
+                        value = self._fixture(sessions, request.capture_id, request.payload)
                     else:
                         raise BrowserCaptureError("BROWSER_ACTION_INVALID")
                     request.result.put((True, value))
@@ -280,6 +294,21 @@ class _BrowserWorker:
                 )
 
         page.on("request", observe_request)
+
+        def observe_response(response: Any) -> None:
+            if state["capture_network"] and len(state["observations"]) < MAX_RUNTIME_OBSERVATIONS:
+                state["observations"].append(
+                    {
+                        "observation_type": "network_response",
+                        "metadata": {
+                            "method": response.request.method,
+                            "status": int(response.status),
+                            "url": _safe_url(response.url),
+                        },
+                    }
+                )
+
+        page.on("response", observe_response)
         page.on(
             "pageerror",
             lambda error: (
@@ -287,6 +316,19 @@ class _BrowserWorker:
                     {"observation_type": "page_error", "metadata": {"name": type(error).__name__}}
                 )
                 if len(state["observations"]) < MAX_RUNTIME_OBSERVATIONS
+                else None
+            ),
+        )
+        page.on(
+            "console",
+            lambda message: (
+                state["observations"].append(
+                    {
+                        "observation_type": "console_error",
+                        "metadata": {"type": "error", "summary": "BROWSER_CONSOLE_ERROR"},
+                    }
+                )
+                if message.type == "error" and len(state["observations"]) < MAX_RUNTIME_OBSERVATIONS
                 else None
             ),
         )
@@ -324,13 +366,20 @@ class _BrowserWorker:
                             if isinstance(event.get("selectedIndex"), int)
                             else None
                         ),
+                        "field_type": str(event.get("fieldType", ""))[:40] or None,
+                        "value": (
+                            str(event.get("value", ""))[:1000]
+                            if not bool(event.get("valueRedacted"))
+                            else None
+                        ),
+                        "value_redacted": bool(event.get("valueRedacted")),
                     },
                 }
             )
 
         page.expose_binding("__mellowyakCapture", capture_event)
         page.add_init_script(
-            """
+            r"""
             (() => {
               const selectorFor = (el) => {
                 if (!el || !el.tagName) return '';
@@ -357,14 +406,27 @@ class _BrowserWorker:
               };
               for (const type of ['click', 'change', 'submit']) {
                 document.addEventListener(type, (event) => {
+                  const target = event.target;
+                  const descriptor = `${target?.type || ''} ${target?.name || ''} ` +
+                    `${target?.id || ''} ${target?.autocomplete || ''}`;
+                  const rawValue = target?.tagName === 'SELECT' ? '' :
+                    String(target?.value ?? target?.textContent ?? '');
+                  const secretField = target?.type === 'password' ||
+                    /password|passwd|secret|token|one-time-code|credit|card|cvv|cvc/i.test(
+                      descriptor) || target?.dataset?.mellowyakSecret === 'true';
+                  const creditCardLike = /^\s*(?:\d[ -]?){13,19}\s*$/.test(rawValue);
+                  const valueRedacted = secretField || creditCardLike;
                   window.__mellowyakCapture({
                     type,
-                    selector: selectorFor(event.target),
-                    tag: event.target?.tagName || '',
-                    role: event.target?.getAttribute?.('role') || '',
-                    accessibleName: event.target?.getAttribute?.('aria-label') || '',
-                    selectedIndex: event.target?.tagName === 'SELECT'
-                      ? event.target.selectedIndex : null
+                    selector: selectorFor(target),
+                    tag: target?.tagName || '',
+                    role: target?.getAttribute?.('role') || '',
+                    accessibleName: target?.getAttribute?.('aria-label') || '',
+                    selectedIndex: target?.tagName === 'SELECT'
+                      ? target.selectedIndex : null,
+                    fieldType: target?.type || '',
+                    value: valueRedacted ? '' : rawValue.slice(0, 1000),
+                    valueRedacted
                   });
                 }, true);
               }
@@ -415,6 +477,7 @@ class _BrowserWorker:
             "final_screenshot": screenshot,
             "final_url": final_url,
             "page_title": title,
+            "elapsed_ms": round((time.monotonic() - state["started_monotonic"]) * 1000, 3),
         }
 
     @staticmethod
@@ -435,11 +498,21 @@ class _BrowserWorker:
         return {"status": "paused" if paused else "recording"}
 
     @staticmethod
-    def _fixture(sessions: dict[str, dict[str, Any]], capture_id: str) -> dict[str, Any]:
+    def _fixture(
+        sessions: dict[str, dict[str, Any]], capture_id: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
         state = sessions.get(capture_id)
         if state is None:
             raise BrowserCaptureError("CAPTURE_RUNTIME_NOT_ACTIVE")
         page = state["page"]
+        if payload.get("scenario") == "rideflow":
+            page.get_by_test_id("pickup").fill("0,0")
+            page.get_by_test_id("destination").fill("8,8")
+            page.get_by_test_id("request-ride").click()
+            page.get_by_test_id("ride-status").wait_for()
+            if "Driver is on the way" not in page.get_by_test_id("ride-status").inner_text():
+                raise BrowserCaptureError("FIXTURE_EXPECTED_RESULT_MISSING")
+            return {"status": "fixture_completed"}
         page.get_by_test_id("open-event").click()
         page.get_by_test_id("reschedule-event").click()
         page.get_by_test_id("time-select").select_option("14:00")
@@ -456,10 +529,12 @@ class BrowserCaptureService:
         sessions: sessionmaker,
         evidence: EvidenceService,
         events: LocalEventBus,
+        probes: Any | None = None,
     ) -> None:
         self.sessions = sessions
         self.evidence = evidence
         self.events = events
+        self.probes = probes
         self.worker = _BrowserWorker()
         self.recover_interrupted()
 
@@ -495,8 +570,8 @@ class BrowserCaptureService:
                 raise BrowserCaptureError("PROJECT_NOT_FOUND")
             if behavior is None or behavior.project_id != project_id:
                 raise BrowserCaptureError("BEHAVIOR_NOT_FOUND")
-            if behavior.lifecycle_state == "ARCHIVED":
-                raise BrowserCaptureError("BEHAVIOR_ARCHIVED")
+            if behavior.lifecycle_state == "DISABLED":
+                raise BrowserCaptureError("BEHAVIOR_DISABLED")
             if runtime is None or runtime.project_id != project_id:
                 raise BrowserCaptureError("RUNTIME_NOT_FOUND")
             target = entry_url.strip() if entry_url else runtime.base_url
@@ -527,6 +602,8 @@ class BrowserCaptureService:
                 updated_at=now,
             )
             session.add(row)
+            behavior.lifecycle_state = "CAPTURING"
+            behavior.updated_at = now
             runtime_options = {
                 "allowed_origin": runtime.allowed_origin,
                 "viewport_width": runtime.viewport_width,
@@ -584,7 +661,26 @@ class BrowserCaptureService:
         row = self._capture(project_id, capture_id)
         if row.status != "RECORDING":
             raise BrowserCaptureError("CAPTURE_NOT_RECORDING")
-        return self.worker.call("fixture", capture_id, {})
+        with self.sessions() as session:
+            project = session.get(Project, project_id)
+            if project is None or project.archived_at is not None:
+                raise BrowserCaptureError("PROJECT_NOT_FOUND")
+            root = Path(project.canonical_root_path or project.root_path).resolve(strict=True)
+        marker = root / ".mellowyak-reference-project.json"
+        try:
+            marker_payload = json.loads(marker.read_text(encoding="utf-8"))
+        except (OSError, ValueError, json.JSONDecodeError) as error:
+            raise BrowserCaptureError("REFERENCE_PROJECT_MARKER_REQUIRED") from error
+        if (
+            marker_payload.get("schema") != "mellowyak.phase12.reference.v1"
+            or marker_payload.get("synthetic") is not True
+            or not isinstance(marker_payload.get("product"), str)
+            or marker_payload.get("fixture_scenario") not in {"rideflow", "pulseplan"}
+        ):
+            raise BrowserCaptureError("REFERENCE_PROJECT_MARKER_INVALID")
+        return self.worker.call(
+            "fixture", capture_id, {"scenario": marker_payload["fixture_scenario"]}
+        )
 
     def stop(self, project_id: str, capture_id: str) -> dict[str, Any]:
         row = self._capture(project_id, capture_id)
@@ -774,6 +870,23 @@ class BrowserCaptureService:
     def _persist_result(self, capture: BrowserCaptureSession, result: dict[str, Any]) -> None:
         source_identity = json.loads(capture.source_revision_json)
         runtime_identity = json.loads(capture.runtime_identity_json)
+        result["observations"].append(
+            {
+                "observation_type": "capture_summary",
+                "metadata": {
+                    "elapsed_ms": result["elapsed_ms"],
+                    "final_url": result["final_url"],
+                    "page_title": result["page_title"],
+                    "page_error_count": sum(
+                        item["observation_type"] == "page_error" for item in result["observations"]
+                    ),
+                    "console_error_count": sum(
+                        item["observation_type"] == "console_error"
+                        for item in result["observations"]
+                    ),
+                },
+            }
+        )
         artifact_context = {
             "capture_id": capture.id,
             "behavior_id": capture.behavior_id,
@@ -833,6 +946,10 @@ class BrowserCaptureService:
             row.status = "REVIEW_REQUIRED"
             row.stopped_at = now
             row.updated_at = now
+            behavior = session.get(ProtectedBehavior, capture.behavior_id)
+            if behavior is not None:
+                behavior.lifecycle_state = "CAPTURED"
+                behavior.updated_at = now
             observed_links = [("RUNTIME_ROUTE", urlsplit(result["final_url"]).path or "/")]
             observed_links.extend(
                 ("API_ENDPOINT", urlsplit(item["metadata"].get("url", "")).path or "/")
@@ -871,6 +988,131 @@ class BrowserCaptureService:
                 ("runtime_observations", observations_artifact["id"]),
             ],
         )
+
+    def validate(
+        self, project_id: str, capture_id: str, runtime_profile_version_id: str
+    ) -> dict[str, Any]:
+        if self.probes is None:
+            raise BrowserCaptureError("PROBE_SERVICE_UNAVAILABLE")
+        with self.sessions.begin() as session:
+            capture = session.get(BrowserCaptureSession, capture_id)
+            project = session.get(Project, project_id)
+            runtime = (
+                session.get(RuntimeConfiguration, capture.runtime_configuration_id)
+                if capture is not None
+                else None
+            )
+            profile_version = session.get(RuntimeProfileVersion, runtime_profile_version_id)
+            if capture is None or capture.project_id != project_id:
+                raise BrowserCaptureError("CAPTURE_NOT_FOUND")
+            if capture.status not in {"REVIEW_REQUIRED", "VALIDATED"}:
+                raise BrowserCaptureError("CAPTURE_REVIEW_REQUIRED")
+            if project is None or project.archived_at is not None or runtime is None:
+                raise BrowserCaptureError("PROJECT_NOT_FOUND")
+            if (
+                profile_version is None
+                or profile_version.project_id != project_id
+                or profile_version.approved_at is None
+            ):
+                raise BrowserCaptureError("APPROVED_RUNTIME_PROFILE_REQUIRED")
+            source = json.loads(capture.source_revision_json)
+            current = _source_revision(project)
+            if any(source.get(key) != current.get(key) for key in source):
+                capture.status = "STALE_SOURCE"
+                capture.error_code = "SOURCE_IDENTITY_CHANGED"
+                capture.updated_at = _now()
+                raise BrowserCaptureError("CAPTURE_SOURCE_STALE")
+            steps = session.scalars(
+                select(BrowserCaptureStep)
+                .where(BrowserCaptureStep.capture_id == capture_id)
+                .order_by(BrowserCaptureStep.ordinal)
+            ).all()
+            assertions = json.loads(capture.expected_assertions_json or "[]")
+            included_steps = [
+                {
+                    "event_type": step.event_type,
+                    "page_url": step.page_url,
+                    "selector": step.selector,
+                    "metadata": json.loads(step.metadata_json),
+                    "included": True,
+                }
+                for step in steps
+                if step.included
+            ]
+            if not included_steps or not assertions:
+                raise BrowserCaptureError("CAPTURE_REPLAY_DEFINITION_INCOMPLETE")
+            if any(
+                step["event_type"] == "change" and bool(step["metadata"].get("value_redacted"))
+                for step in included_steps
+            ):
+                raise BrowserCaptureError("CAPTURE_REPLAY_SECRET_REQUIRED")
+            definition = {
+                "capture_id": capture_id,
+                "entry_url": capture.entry_url,
+                "allowed_origin": runtime.allowed_origin,
+                "viewport": {
+                    "width": runtime.viewport_width,
+                    "height": runtime.viewport_height,
+                },
+                "locale": runtime.locale,
+                "timezone": runtime.timezone,
+                "steps": included_steps,
+                "assertions": assertions,
+                "behavior_version_id": capture.behavior_version_id,
+                "baseline_id": f"capture:{capture_id}",
+            }
+            behavior_id = capture.behavior_id
+            behavior_name = session.get(ProtectedBehavior, behavior_id).display_name
+            capture.status = "VALIDATING"
+            capture.updated_at = _now()
+            behavior = session.get(ProtectedBehavior, behavior_id)
+            if behavior is not None:
+                behavior.lifecycle_state = "VALIDATING"
+                behavior.updated_at = _now()
+        probe = self.probes.create(
+            project_id,
+            f"{behavior_name} browser replay",
+            "BROWSER",
+            behavior_id,
+            runtime_profile_version_id,
+            definition,
+            120,
+            {"max_attempts": 2},
+            {"result": "PASS"},
+            {"compact": True, "screenshots": True, "response_bodies": False},
+            [],
+            [{"runtime_profile_version_id": runtime_profile_version_id}],
+            True,
+        )
+        try:
+            run = self.probes.run(project_id, str(probe["id"]))
+        except Exception:
+            with self.sessions.begin() as session:
+                failed = session.get(BrowserCaptureSession, capture_id)
+                if failed is not None:
+                    failed.status = "REVIEW_REQUIRED"
+                    failed.error_code = "CAPTURE_REPLAY_FAILED"
+                    failed.updated_at = _now()
+            raise
+        with self.sessions.begin() as session:
+            validated = session.get(BrowserCaptureSession, capture_id)
+            if validated is not None:
+                validated.status = "VALIDATED" if run["result"] == "PASS" else "REVIEW_REQUIRED"
+                validated.error_code = None if run["result"] == "PASS" else "CAPTURE_REPLAY_FAILED"
+                validated.updated_at = _now()
+            behavior = session.get(ProtectedBehavior, behavior_id)
+            if behavior is not None and run["result"] != "PASS":
+                behavior.lifecycle_state = "NEEDS_REVIEW"
+                behavior.updated_at = _now()
+        if run["result"] != "PASS":
+            raise BrowserCaptureError("COMPARABLE_REPLAY_PASS_REQUIRED")
+        self.evidence.bind_verification_run(project_id, capture_id, str(run["id"]))
+        self.events.publish(
+            "browser_capture_validated",
+            project_id,
+            {"capture_id": capture_id, "probe_run_id": run["id"]},
+        )
+        return run
 
     def _mark_failed(self, capture_id: str, code: str) -> None:
         now = _now()

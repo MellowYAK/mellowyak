@@ -139,23 +139,23 @@ def test_behavior_draft_and_edits_create_immutable_versions(tmp_path: Path) -> N
         assert updated["versions"][1]["title"] == "Task can be completed"
 
 
-def test_archived_behavior_cannot_be_edited(tmp_path: Path) -> None:
+def test_disabled_behavior_cannot_be_edited(tmp_path: Path) -> None:
     with TestClient(
         create_app(EngineSettings(data_root=tmp_path / "data", session_token=TOKEN))
     ) as client:
         project_id = connect(client, repository(tmp_path))
         behavior = create_behavior(client, project_id)
-        archived = client.post(
+        disabled = client.post(
             f"/projects/{project_id}/behaviors/{behavior['id']}/archive", headers=headers()
         )
-        assert archived.json()["lifecycle_state"] == "ARCHIVED"
+        assert disabled.json()["lifecycle_state"] == "DISABLED"
         edited = client.post(
             f"/projects/{project_id}/behaviors/{behavior['id']}/versions",
             headers=headers(),
             json={"title": "No", "description": "", "expected_outcome": ""},
         )
         assert edited.status_code == 409
-        assert edited.json()["detail"] == "BEHAVIOR_ARCHIVED"
+        assert edited.json()["detail"] == "BEHAVIOR_DISABLED"
 
 
 def test_runtime_configuration_is_project_scoped_and_idempotent(tmp_path: Path) -> None:
@@ -295,7 +295,19 @@ def test_real_playwright_pulseplan_capture_and_baseline(tmp_path: Path, monkeypa
         app = create_app(EngineSettings(data_root=tmp_path / "data", session_token=TOKEN))
         monkeypatch.setenv("MELLOWYAK_PHASE4_VALIDATION", "1")
         with TestClient(app) as client:
-            project_id = connect(client, repository(tmp_path))
+            root = repository(tmp_path)
+            (root / ".mellowyak-reference-project.json").write_text(
+                json.dumps(
+                    {
+                        "schema": "mellowyak.phase12.reference.v1",
+                        "synthetic": True,
+                        "product": "RideFlow Reference",
+                        "fixture_scenario": "pulseplan",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            project_id = connect(client, root)
             behavior = create_behavior(client, project_id)
             base_url = f"http://127.0.0.1:{server.server_port}/"
             runtime = client.post(
@@ -350,6 +362,28 @@ def test_real_playwright_pulseplan_capture_and_baseline(tmp_path: Path, monkeypa
             assert reviewed.status_code == 200, reviewed.text
             assert reviewed.json()["steps"][0]["label"] == "Open event"
             assert reviewed.json()["observations"][0]["included"] is False
+            profile = client.post(
+                f"/projects/{project_id}/runtime-profiles",
+                headers=headers(),
+                json={
+                    "display_name": "PulsePlan browser replay",
+                    "runtime_type": "GENERIC_PROCESS",
+                    "execution_mode": "MANUAL",
+                    "executable_reference": "python3",
+                    "argv": ["-c", "print('browser replay profile')"],
+                    "relative_working_directory": ".",
+                    "network_policy": "LOOPBACK_ONLY",
+                    "approved": True,
+                },
+            )
+            assert profile.status_code == 200, profile.text
+            validated = client.post(
+                f"/projects/{project_id}/captures/{capture_id}/validate",
+                headers=headers(),
+                json={"runtime_profile_version_id": profile.json()["current_version_id"]},
+            )
+            assert validated.status_code == 200, validated.text
+            assert validated.json()["result"] == "PASS"
             accepted = client.post(
                 f"/projects/{project_id}/captures/{capture_id}/accept-baseline",
                 headers=headers(),
@@ -361,7 +395,7 @@ def test_real_playwright_pulseplan_capture_and_baseline(tmp_path: Path, monkeypa
             protected = client.get(
                 f"/projects/{project_id}/behaviors/{behavior['id']}", headers=headers()
             ).json()
-            assert protected["lifecycle_state"] == "PROTECTED"
+            assert protected["lifecycle_state"] == "KNOWN_GOOD"
             bundle = client.get(
                 f"/projects/{project_id}/evidence/bundles/{baseline['evidence_bundle_id']}",
                 headers=headers(),

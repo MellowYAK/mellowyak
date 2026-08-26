@@ -20,8 +20,12 @@ from mellowyak_engine.verification.adapters.base import ReplayInput
 from mellowyak_engine.verification.adapters.browser_replay import BrowserReplayAdapter
 
 MAX_CAPTURE_BYTES = 32_768
+MAX_REQUEST_BYTES = 32_768
 MAX_TIMEOUT_SECONDS = 300
 FORBIDDEN_HEADERS = frozenset({"authorization", "cookie", "proxy-authorization", "x-api-key"})
+SECRET_FIELD = re.compile(
+    r"token|secret|password|passwd|cookie|authorization|credential|api[_-]?key", re.I
+)
 DENIED_SHELL_EXECUTABLES = frozenset(
     {
         "bash",
@@ -207,6 +211,22 @@ def _json_value(payload: Any, path: str) -> Any:
     return current
 
 
+def _contains_secret_field(value: Any) -> bool:
+    if isinstance(value, dict):
+        return any(
+            SECRET_FIELD.search(str(key)) or _contains_secret_field(item)
+            for key, item in value.items()
+        )
+    if isinstance(value, list):
+        return any(_contains_secret_field(item) for item in value)
+    return False
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # type: ignore[no-untyped-def]
+        return None
+
+
 class HttpProbeAdapter:
     probe_type = "HTTP"
 
@@ -222,7 +242,7 @@ class HttpProbeAdapter:
         if parsed.username or parsed.password or parsed.query:
             raise ValueError("PROBE_HTTP_SECRET_BEARING_URL_DENIED")
         method = str(request.definition.get("method", "GET")).upper()
-        if method not in {"GET", "HEAD"}:
+        if method not in {"GET", "HEAD", "POST"}:
             raise ValueError("PROBE_HTTP_METHOD_DENIED")
         raw_headers = request.definition.get("headers", {})
         if not isinstance(raw_headers, dict) or any(
@@ -230,11 +250,25 @@ class HttpProbeAdapter:
         ):
             raise ValueError("PROBE_HTTP_SECRET_HEADER_DENIED")
         headers = {str(name): str(value) for name, value in raw_headers.items()}
+        body: bytes | None = None
+        if method == "POST":
+            payload = request.definition.get("json_body")
+            if payload is None or _contains_secret_field(payload):
+                raise ValueError("PROBE_HTTP_BODY_INVALID")
+            try:
+                body = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+            except (TypeError, ValueError) as error:
+                raise ValueError("PROBE_HTTP_BODY_INVALID") from error
+            if len(body) > MAX_REQUEST_BYTES:
+                raise ValueError("PROBE_HTTP_BODY_TOO_LARGE")
+            headers.setdefault("Content-Type", "application/json")
         timeout = max(1, min(int(request.timeout_seconds), MAX_TIMEOUT_SECONDS))
         started = time.monotonic()
         try:
-            with urllib.request.urlopen(
-                urllib.request.Request(raw_url, method=method, headers=headers), timeout=timeout
+            opener = urllib.request.build_opener(_NoRedirect)
+            with opener.open(
+                urllib.request.Request(raw_url, data=body, method=method, headers=headers),
+                timeout=timeout,
             ) as response:
                 status = int(response.status)
                 body_raw = response.read(MAX_CAPTURE_BYTES + 1)

@@ -1,8 +1,10 @@
 import { cleanup, configure, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { App } from "./App";
-import { resetBootstrapForTests } from "./api";
+import { resetBootstrapForTests, type Project } from "./api";
 import { phase10CaptureStates } from "./Phase10Experience";
+import { phase12CaptureStates } from "./Phase12Experience";
+import { ProjectsScreen } from "./ProductScreens";
 
 const dialogOpen = vi.fn();
 const tauriInvoke = vi.hoisted(() => vi.fn());
@@ -29,7 +31,22 @@ const responses: Record<string, unknown> = {
     selected_path: "/work/demo", repository_path: "/work/demo", suggested_name: "demo",
     git: { available: true, branch: "main", head_sha: "1234567890abcdef", is_detached: false, is_dirty: true, staged: ["src/a.ts"], unstaged: [], untracked: ["notes.txt"], ignored_count: 2, worktree_fingerprint: "fp", error: null },
     languages: ["TypeScript"], language_counts: { TypeScript: 4 }, frameworks: ["React"], tests: ["Vitest"], runtime_hints: ["Node.js application hint"], candidate_files: 8, ignored_paths: 2, relationship_coverage: "bounded deterministic adapters", unsupported_coverage: "reported during initial scan", source_remains_local: true
-  }
+  },
+  "/workflow/state-model": {
+    behavior: { KNOWN_GOOD: ["CAPTURING", "NEEDS_REVIEW", "DISABLED"] },
+    regression: { CONFIRMED: ["REVIEWED", "DISMISSED", "RESOLVED"] },
+    apply: {
+      AWAITING_CONFIRMATION: ["BLOCKED", "CANCELLED", "PREFLIGHT"],
+      COMMITTED: [],
+      ROLLED_BACK: [],
+    },
+    updater: {
+      NOT_CHECKED: ["CHECKING", "PRODUCTION_CHANNEL_UNPUBLISHED"],
+      INVALID_SIGNATURE: ["CHECKING"],
+      UPDATED: [],
+      PRODUCTION_CHANNEL_UNPUBLISHED: ["CHECKING"],
+    },
+  },
 };
 
 const git = { available: true, branch: "main", head_sha: "1234567890abcdef", is_detached: false, is_dirty: true, staged: ["src/a.ts"], unstaged: [], untracked: [], ignored_count: 2, worktree_fingerprint: "fp", error: null };
@@ -164,6 +181,90 @@ test("renders the Phase 10 Hebrew Home as an RTL operational surface", async () 
   render(<App />);
   await waitFor(() => expect(document.documentElement).toHaveAttribute("dir", "rtl"));
   expect(screen.getByRole("heading", { name: "מה קורה עכשיו?" })).toBeInTheDocument();
+  expect(document.querySelector("main")).toHaveAttribute("dir", "rtl");
+});
+
+test("registers the exact Phase 12M delivery states behind the explicit fixture marker", () => {
+  expect(phase12CaptureStates).toHaveLength(38);
+  expect(new Set(phase12CaptureStates).size).toBe(38);
+  expect(phase12CaptureStates[0]).toBe("00-reference-project-created");
+  expect(phase12CaptureStates.at(-1)).toBe("37-hebrew-diagnostics");
+});
+
+test("traps modal focus, closes with Escape, and restores the project action trigger", async () => {
+  const translations: Record<string, string> = {
+    "projects.actions": "Project actions",
+    "projects.action.disconnect": "Disconnect",
+    "projects.disconnectTitle": "Disconnect project",
+    "projects.disconnectBody": "Disconnect body",
+    "projects.sourceSafe": "Source stays safe",
+    "projects.disconnectConfirm": "Confirm disconnect",
+    "common.cancel": "Cancel",
+  };
+  const t = (key: string) => translations[key] ?? key;
+  render(<ProjectsScreen
+    projects={[{ ...project, source_available: true, notifications_muted: false } as unknown as Project]}
+    t={t}
+    openProject={vi.fn()}
+    reload={async () => undefined}
+    add={vi.fn()}
+  />);
+  const trigger = screen.getByRole("button", { name: "Project actions" });
+  fireEvent.click(trigger);
+  fireEvent.click(screen.getByRole("button", { name: "Disconnect" }));
+  expect(await screen.findByRole("dialog", { name: "Disconnect project" })).toBeInTheDocument();
+  const cancel = screen.getByRole("button", { name: "Cancel" });
+  const confirm = screen.getByRole("button", { name: "Confirm disconnect" });
+  await waitFor(() => expect(cancel).toHaveFocus());
+  fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
+  expect(confirm).toHaveFocus();
+  fireEvent.keyDown(document, { key: "Tab" });
+  expect(cancel).toHaveFocus();
+  fireEvent.keyDown(document, { key: "Escape" });
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  expect(trigger).toHaveFocus();
+});
+
+test("shows a real accepted PASS without a contradictory prior Unknown result", async () => {
+  window.history.replaceState({}, "", "/?phase12Fixture=mellowyak.phase12.screenshots.v1&phase12State=06-known-good-accepted-pass");
+  render(<App />);
+  expect(await screen.findByRole("heading", { name: "Known Good accepted with PASS" })).toBeInTheDocument();
+  expect(screen.getAllByText("PASS").length).toBeGreaterThan(0);
+  expect(document.body).not.toHaveTextContent("Prior result: Unknown");
+});
+
+test("keeps Apply incomplete before confirmation and removes confirmation after commit", async () => {
+  window.history.replaceState({}, "", "/?phase12Fixture=mellowyak.phase12.screenshots.v1&phase12State=16-apply-awaiting-confirmation");
+  render(<App />);
+  expect(await screen.findByRole("heading", { name: "Apply awaits explicit confirmation" })).toBeInTheDocument();
+  expect(screen.getAllByText("Not started").length).toBeGreaterThanOrEqual(3);
+  expect(screen.getAllByText("Not created yet")).toHaveLength(2);
+  cleanup();
+  window.history.replaceState({}, "", "/?phase12Fixture=mellowyak.phase12.screenshots.v1&phase12State=20-applied-and-verified");
+  render(<App />);
+  expect(await screen.findByRole("heading", { name: "Applied and verified" })).toBeInTheDocument();
+  expect(screen.queryByText("Continue with explicit confirmation")).not.toBeInTheDocument();
+});
+
+test("renders transaction rollback evidence and distinct updater truth", async () => {
+  window.history.replaceState({}, "", "/?phase12Fixture=mellowyak.phase12.screenshots.v1&phase12State=23-rolled-back-byte-identical");
+  render(<App />);
+  expect(await screen.findByRole("heading", { name: "Rolled back byte-identically" })).toBeInTheDocument();
+  expect(screen.getByText("api/selection_mode.txt")).toBeInTheDocument();
+  expect(screen.getByText("VERIFIED")).toBeInTheDocument();
+  expect(screen.getByText("UNCHANGED")).toBeInTheDocument();
+  cleanup();
+  window.history.replaceState({}, "", "/?phase12Fixture=mellowyak.phase12.screenshots.v1&phase12State=30-updater-invalid-signature");
+  render(<App />);
+  expect(await screen.findByRole("heading", { name: "Update signature rejected" })).toBeInTheDocument();
+  expect(screen.getAllByText("Invalid signature").length).toBeGreaterThan(0);
+});
+
+test("renders the Phase 12M diagnostics surface in Hebrew RTL", async () => {
+  window.history.replaceState({}, "", "/?phase12Fixture=mellowyak.phase12.screenshots.v1&phase12State=37-hebrew-diagnostics");
+  render(<App />);
+  expect(await screen.findByRole("heading", { name: "אבחון אמיתי בעברית" })).toBeInTheDocument();
+  await waitFor(() => expect(document.documentElement).toHaveAttribute("dir", "rtl"));
   expect(document.querySelector("main")).toHaveAttribute("dir", "rtl");
 });
 

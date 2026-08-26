@@ -39,6 +39,14 @@ def release_environment() -> dict[str, str]:
         ]
     )
     environment["CARGO_ENCODED_RUSTFLAGS"] = "\x1f".join(existing)
+    if (
+        sys.platform == "darwin"
+        and not environment.get("APPLE_SIGNING_IDENTITY", "").strip()
+    ):
+        # Keep local packages structurally verifiable without pretending they
+        # are Developer ID signed or notarized. Release jobs provide the real
+        # identity explicitly and therefore never take this fallback.
+        environment["APPLE_SIGNING_IDENTITY"] = "-"
     return environment
 
 
@@ -97,14 +105,27 @@ def desktop_build() -> None:
 
 def package() -> None:
     engine_build()
+    environment = release_environment()
     run(
         "npm",
         "run",
         "tauri",
         "build",
         cwd=DESKTOP,
-        environment=release_environment(),
+        environment=environment,
     )
+    if sys.platform == "darwin":
+        identity = environment.get("APPLE_SIGNING_IDENTITY", "-")
+        for disk_image in sorted(
+            (DESKTOP / "src-tauri" / "target" / "release" / "bundle" / "dmg").glob(
+                "*.dmg"
+            )
+        ):
+            command = ["codesign", "--force", "--sign", identity]
+            if identity != "-":
+                command.append("--timestamp")
+            command.append(str(disk_image))
+            run(*command)
 
 
 def install_macos() -> None:

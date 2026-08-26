@@ -24,6 +24,7 @@ from mellowyak_engine.repair_candidates.manifest import (
     scan_workspace,
 )
 from mellowyak_engine.repair_validation.policy import ValidationCheck, checks_from_policy
+from mellowyak_engine.runtime_adapters import SafeProcessRunner
 from mellowyak_engine.snapshots.store import canonical_json
 
 
@@ -68,6 +69,44 @@ class RepairValidationService:
 
     @staticmethod
     def _run_check(root: Path, check: ValidationCheck) -> tuple[str, str | None, dict[str, Any]]:
+        if check.check_type == "PROCESS" and check.executable:
+            try:
+                execution = SafeProcessRunner().run(
+                    executable=check.executable,
+                    argv=list(check.argv),
+                    project_root=root,
+                    relative_working_directory=check.cwd,
+                    environment_names=[],
+                    timeout_seconds=120,
+                    output_limit_bytes=32_768,
+                )
+            except (OSError, ValueError) as error:
+                return (
+                    "FAIL",
+                    "VALIDATION_PROCESS_UNAVAILABLE",
+                    {"check_id": check.check_id, "error_type": type(error).__name__},
+                )
+            stdout_matches = (
+                check.stdout_contains is None or check.stdout_contains in execution.stdout
+            )
+            passed = (
+                not execution.cancelled
+                and not execution.timed_out
+                and execution.exit_code == check.expected_exit_code
+                and stdout_matches
+            )
+            return (
+                "PASS" if passed else "FAIL",
+                None if passed else "VALIDATION_PROCESS_EXPECTATION_NOT_MET",
+                {
+                    "check_id": check.check_id,
+                    "exit_code": execution.exit_code,
+                    "duration_ms": round(execution.duration_seconds * 1000, 3),
+                    "timed_out": execution.timed_out,
+                    "stdout_bytes": len(execution.stdout.encode("utf-8", errors="replace")),
+                    "stderr_bytes": len(execution.stderr.encode("utf-8", errors="replace")),
+                },
+            )
         if check.check_type == "FILE_CONTAINS" and check.path and check.expected is not None:
             try:
                 path = safe_join(root, check.path, allow_missing=False)

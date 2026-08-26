@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mellowyak-engine"
-version = "0.2.0-preview.1"
+version = "0.3.0-preview.1"
 description = "Local-only engine for the MellowYak desktop application"
 requires-python = ">=3.11"
 dependencies = [

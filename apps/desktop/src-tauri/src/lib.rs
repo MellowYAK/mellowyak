@@ -409,14 +409,22 @@ fn spawn_macos_engine(
     token: &str,
     parent_pid: &str,
 ) -> Result<(Child, ChildStdout), String> {
-    let mut child = Command::new(path)
+    let mut command = Command::new(path);
+    command
         .env("MELLOWYAK_SESSION_TOKEN", token)
         .env("MELLOWYAK_PARENT_PID", parent_pid)
         .env("MELLOWYAK_BIND_HOST", "127.0.0.1")
         .env(
             "MELLOWYAK_ALLOWED_ORIGINS",
             "tauri://localhost,http://tauri.localhost,http://localhost:1420,http://127.0.0.1:1420",
-        )
+        );
+    if let Some(app_bundle) = path
+        .ancestors()
+        .find(|candidate| candidate.extension().and_then(|value| value.to_str()) == Some("app"))
+    {
+        command.env("MELLOWYAK_APP_BUNDLE_PATH", app_bundle);
+    }
+    let mut child = command
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
         .spawn()

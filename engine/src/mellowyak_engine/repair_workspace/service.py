@@ -118,6 +118,14 @@ class RepairWorkspaceService:
                     .where(RuntimeProfile.project_id == project_id)
                 ).all()
             ]
+            runtime_versions = session.scalars(
+                select(RuntimeProfileVersion)
+                .join(
+                    RuntimeProfile,
+                    RuntimeProfile.current_version_id == RuntimeProfileVersion.id,
+                )
+                .where(RuntimeProfile.project_id == project_id)
+            ).all()
             changed_paths = sorted(
                 set(
                     (json.loads(episode.modified_paths_json) if episode else [])
@@ -154,9 +162,27 @@ class RepairWorkspaceService:
             "logical_bytes": snapshot.logical_bytes,
             "entries": [entry.to_dict() for entry in manifest.entries],
         }
+        executable_checks: list[dict[str, Any]] = []
+        for version in runtime_versions:
+            for definition in json.loads(version.test_definitions_json or "[]"):
+                if not isinstance(definition, dict) or definition.get("type") != "TEST":
+                    continue
+                executable_checks.append(
+                    {
+                        "id": f"runtime-test-{version.id}",
+                        "type": "PROCESS",
+                        "requirement": "REQUIRED",
+                        "executable": version.executable_reference,
+                        "argv": json.loads(version.argv_json or "[]"),
+                        "cwd": version.relative_working_directory,
+                        "expected_exit_code": int(definition.get("expected_exit_code", 0)),
+                        "stdout_contains": definition.get("stdout_contains"),
+                    }
+                )
         validation = {
             "schema": "mellowyak.validation_plan.v1",
             "required_rechecks": ["ORIGINAL_FAILED_CHECK", "IMPACT_SELECTED_CHECKS"],
+            "checks": executable_checks,
             "automatic_apply": False,
             "live_project_write_allowed": False,
         }
@@ -218,6 +244,7 @@ This workspace never applies changes back to the live project.
                     {
                         "required": ["ORIGINAL_FAILED_CHECK", "IMPACT_SELECTED_CHECKS"],
                         "network": "NO_EXTERNAL_EGRESS",
+                        "checks": executable_checks,
                     },
                     sort_keys=True,
                 ),

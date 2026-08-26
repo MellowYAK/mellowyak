@@ -38,6 +38,7 @@ class BrowserReplayAdapter:
         started = time.monotonic()
         observations: list[dict[str, object]] = []
         action_log: list[dict[str, object]] = []
+        browser_errors: list[dict[str, str]] = []
         browser = context = None
         try:
             runtime = sync_playwright().start()
@@ -83,6 +84,22 @@ class BrowserReplayAdapter:
                     {"kind": "response", "status": item.status, "url": _safe_url(item.url)}
                 ),
             )
+            page.on(
+                "pageerror",
+                lambda item: browser_errors.append(
+                    {"kind": "page_error", "summary": type(item).__name__}
+                ),
+            )
+            page.on(
+                "console",
+                lambda item: (
+                    browser_errors.append(
+                        {"kind": "console_error", "summary": "BROWSER_CONSOLE_ERROR"}
+                    )
+                    if item.type == "error"
+                    else None
+                ),
+            )
             page.goto(normalized, wait_until="domcontentloaded", timeout=30_000)
             for step in request.steps:
                 if cancel.is_set():
@@ -100,6 +117,12 @@ class BrowserReplayAdapter:
                     selected_index = metadata.get("selected_index")
                     if metadata.get("tag") == "SELECT" and isinstance(selected_index, int):
                         page.locator(selector).select_option(index=selected_index, timeout=20_000)
+                    elif metadata.get("value_redacted"):
+                        return AdapterExecution(
+                            result="INCONCLUSIVE", failure_reason="REPLAY_SECRET_VALUE_REQUIRED"
+                        )
+                    elif isinstance(metadata.get("value"), str):
+                        page.locator(selector).fill(str(metadata["value"]), timeout=20_000)
                     else:
                         return AdapterExecution(
                             result="INCONCLUSIVE", failure_reason="REPLAY_VALUE_NOT_RECORDED"
@@ -119,6 +142,13 @@ class BrowserReplayAdapter:
                         "page_url": _safe_url(page.url),
                     }
                 )
+            try:
+                page.wait_for_load_state("networkidle", timeout=5_000)
+            except Exception:
+                # A bounded settle attempt is sufficient. Assertions below retain
+                # their own timeouts and remain authoritative when an application
+                # intentionally keeps a loopback request open.
+                pass
             assertion_results = [
                 evaluate_assertion(page, assertion, observations, self.version)
                 for assertion in request.assertions[:100]
@@ -129,7 +159,7 @@ class BrowserReplayAdapter:
                   .forEach(el => el.style.filter='blur(10px)')"""
             )
             screenshot = page.screenshot(type="png", full_page=False)
-            if any(item["result"] == "FAIL" for item in assertion_results):
+            if browser_errors or any(item["result"] == "FAIL" for item in assertion_results):
                 result = "FAIL"
             elif any(
                 item["result"] in {"INCONCLUSIVE", "NEEDS_REVIEW"} for item in assertion_results
@@ -155,6 +185,11 @@ class BrowserReplayAdapter:
                         "application/json",
                     ),
                     (
+                        "BROWSER_ERRORS",
+                        json.dumps(browser_errors[:100], sort_keys=True).encode(),
+                        "application/json",
+                    ),
+                    (
                         "ASSERTION_RESULTS",
                         json.dumps(assertion_results, sort_keys=True).encode(),
                         "application/json",
@@ -164,6 +199,7 @@ class BrowserReplayAdapter:
                     "origin": request.allowed_origin,
                     "browser_version": browser.version,
                     "adapter": self.version,
+                    "elapsed_ms": round((time.monotonic() - started) * 1000, 3),
                 },
                 limitations=["Ephemeral context; no baseline cookies or browser storage reused."],
                 failure_reason="DETERMINISTIC_ASSERTION_FAILED" if result == "FAIL" else None,

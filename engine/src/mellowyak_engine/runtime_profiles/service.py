@@ -150,6 +150,12 @@ class RuntimeProfileService:
                 candidate["reasons"] = list(item.reasons)
                 candidate["limitations"] = list(item.limitations)
                 candidate["metadata"] = dict(item.metadata)
+                candidate["runtime_version"] = item.version
+                candidate["executable_reference"] = item.executable
+                declared_profile = item.metadata.get("profile")
+                if isinstance(declared_profile, dict):
+                    candidate.update(declared_profile)
+                    candidate["detected"] = True
                 candidates.append(candidate)
             for failure in report.failures:
                 candidates.append(

@@ -17,8 +17,12 @@ from mellowyak_engine.db.models import (
     EvidenceAuditEvent,
     EvidenceBundle,
     EvidenceBundleItem,
+    ProbeDefinition,
+    ProbeRun,
+    ProbeVersion,
     Project,
     ProtectedBehavior,
+    RuntimeProfileVersion,
 )
 from mellowyak_engine.evidence.store import EvidenceStore, EvidenceStoreError
 
@@ -202,7 +206,7 @@ class EvidenceService:
             capture = session.get(BrowserCaptureSession, capture_id)
             if capture is None or capture.project_id != project_id:
                 raise EvidenceServiceError("CAPTURE_NOT_FOUND")
-            if capture.status != "REVIEW_REQUIRED":
+            if capture.status != "VALIDATED":
                 raise EvidenceServiceError("CAPTURE_REVIEW_REQUIRED")
             project = session.get(Project, project_id)
             if project is None or project.archived_at is not None:
@@ -227,6 +231,37 @@ class EvidenceService:
             ).first()
             if bundle is None:
                 raise EvidenceServiceError("EVIDENCE_BUNDLE_NOT_FOUND")
+            if not bundle.verification_run_id:
+                raise EvidenceServiceError("COMPARABLE_REPLAY_PASS_REQUIRED")
+            verification_run = session.get(ProbeRun, bundle.verification_run_id)
+            if (
+                verification_run is None
+                or verification_run.project_id != project_id
+                or verification_run.status != "COMPLETED"
+                or verification_run.result != "PASS"
+            ):
+                raise EvidenceServiceError("COMPARABLE_REPLAY_PASS_REQUIRED")
+            probe_version = session.get(ProbeVersion, verification_run.probe_version_id)
+            probe = session.get(ProbeDefinition, verification_run.probe_id)
+            if (
+                probe_version is None
+                or probe is None
+                or probe.project_id != project_id
+                or probe.behavior_id != capture.behavior_id
+                or probe_version.runtime_profile_version_id is None
+            ):
+                raise EvidenceServiceError("COMPARABLE_REPLAY_BINDING_INVALID")
+            replay_definition = json.loads(probe_version.definition_json)
+            runtime_version = session.get(
+                RuntimeProfileVersion, probe_version.runtime_profile_version_id
+            )
+            if (
+                replay_definition.get("capture_id") != capture_id
+                or runtime_version is None
+                or runtime_version.project_id != project_id
+                or runtime_version.approved_at is None
+            ):
+                raise EvidenceServiceError("COMPARABLE_REPLAY_BINDING_INVALID")
             bundle_items = int(
                 session.scalar(
                     select(func.count())
@@ -269,7 +304,7 @@ class EvidenceService:
             capture.status = "ACCEPTED"
             capture.updated_at = now
             bundle.status = "ACCEPTED"
-            behavior.lifecycle_state = "PROTECTED"
+            behavior.lifecycle_state = "KNOWN_GOOD"
             behavior.last_accepted_baseline_id = baseline_id
             behavior.updated_at = now
             self._audit(
@@ -286,6 +321,67 @@ class EvidenceService:
             {"behavior_id": capture.behavior_id, "baseline_id": baseline_id},
         )
         return self.baseline(project_id, baseline_id)
+
+    def bind_verification_run(
+        self, project_id: str, capture_id: str, verification_run_id: str
+    ) -> dict[str, Any]:
+        """Bind a successful comparable replay to the immutable capture manifest."""
+
+        with self.sessions.begin() as session:
+            capture = session.get(BrowserCaptureSession, capture_id)
+            run = session.get(ProbeRun, verification_run_id)
+            bundle = session.scalars(
+                select(EvidenceBundle).where(EvidenceBundle.capture_id == capture_id)
+            ).first()
+            if (
+                capture is None
+                or capture.project_id != project_id
+                or run is None
+                or run.project_id != project_id
+                or run.status != "COMPLETED"
+                or run.result != "PASS"
+                or bundle is None
+            ):
+                raise EvidenceServiceError("COMPARABLE_REPLAY_PASS_REQUIRED")
+            items = session.execute(
+                select(EvidenceBundleItem, EvidenceArtifact)
+                .join(EvidenceArtifact, EvidenceArtifact.id == EvidenceBundleItem.artifact_id)
+                .where(EvidenceBundleItem.bundle_id == bundle.id)
+                .order_by(EvidenceBundleItem.ordinal)
+            ).all()
+            manifest = {
+                "schema": "mellowyak.evidence_bundle.v1",
+                "bundle_id": bundle.id,
+                "project_id": project_id,
+                "capture_id": capture_id,
+                "bundle_type": bundle.bundle_type,
+                "verification_run_id": verification_run_id,
+                "source_revision": json.loads(capture.source_revision_json),
+                "items": [
+                    {
+                        "ordinal": item.ordinal,
+                        "item_type": item.item_type,
+                        "artifact_id": artifact.id,
+                        "sha256": artifact.sha256,
+                        "size_bytes": artifact.size_bytes,
+                        "media_type": artifact.media_type,
+                    }
+                    for item, artifact in items
+                ],
+            }
+            payload = json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode()
+            bundle.manifest_sha256 = self.store.write_manifest(project_id, bundle.id, payload)
+            bundle.verification_run_id = verification_run_id
+            self._audit(
+                session,
+                project_id,
+                "bundle_verification_bound",
+                "bundle",
+                bundle.id,
+                {"verification_run_id": verification_run_id},
+            )
+            bundle_id = bundle.id
+        return self.get_bundle(project_id, bundle_id)
 
     def revoke_baseline(
         self, project_id: str, behavior_id: str, delete_evidence: bool, confirmation: bool

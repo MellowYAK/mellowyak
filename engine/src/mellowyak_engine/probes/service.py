@@ -647,7 +647,7 @@ class ProbeService:
                             verification_run_item_id=None,
                             probe_run_id=run_id,
                             signal_classification_id=signal_id,
-                            status="DETECTED",
+                            status="CONFIRMED",
                             decision_reason=(
                                 "A previously accepted probe passed at Last Known Good and "
                                 "failed reproducibly for the current exact source identity."
