@@ -35,6 +35,7 @@
   "tray.alertSeverity.high": "High",
   "tray.alertSeverity.warning": "Warning",
   "tray.alertSeverity.info": "Information",
+  "notificationLab.trigger": "Show acceptance notification",
   "notificationLab.information.title": "MellowYak information",
   "notificationLab.information.body": "Local monitoring is active. No protected behavior regression is currently confirmed.",
   "notificationLab.warning.title": "MellowYak warning",

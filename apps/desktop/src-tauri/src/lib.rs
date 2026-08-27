@@ -187,6 +187,10 @@ fn acceptance_notification_lab_payload(
     ))
 }
 
+fn native_notification_lab_enabled() -> bool {
+    std::env::var("MELLOWYAK_ACCEPTANCE_LAB").ok().as_deref() == Some("native-notifications")
+}
+
 fn build_tray_menu(
     app: &tauri::AppHandle,
     strings: &HashMap<String, String>,
@@ -294,6 +298,15 @@ fn build_tray_menu(
                 .build(app)?,
             );
         }
+    }
+    if native_notification_lab_enabled() {
+        menu = menu.item(
+            &MenuItemBuilder::with_id(
+                "notification-lab-trigger",
+                &strings["notificationLab.trigger"],
+            )
+            .build(app)?,
+        );
     }
     menu.separator()
         .item(&MenuItemBuilder::with_id("alerts", &strings["tray.alerts"]).build(app)?)
@@ -678,6 +691,22 @@ pub fn run() {
                     "open" => navigate(app, "home"),
                     "alerts" => navigate(app, "alerts"),
                     "settings" => navigate(app, "settings"),
+                    "notification-lab-trigger" => {
+                        let strings = translations();
+                        if let Some((title, body)) = acceptance_notification_lab_payload(&strings) {
+                            if let Err(error) =
+                                show_native_notification(app.clone(), title, body, "alerts".into())
+                            {
+                                eprintln!(
+                                    "{}",
+                                    serde_json::json!({
+                                        "event": "notification_lab_delivery_failed",
+                                        "error": error
+                                    })
+                                );
+                            }
+                        }
+                    }
                     "pause-all" => {
                         let _ = app.emit("mellowyak:monitoring", "pause-all");
                     }
@@ -728,14 +757,6 @@ pub fn run() {
                 tray = tray.icon(icon);
             }
             tray.build(app)?;
-
-            if let Some((title, body)) = acceptance_notification_lab_payload(&strings) {
-                let app_handle = app.handle().clone();
-                std::thread::spawn(move || {
-                    std::thread::sleep(std::time::Duration::from_secs(2));
-                    let _ = show_native_notification(app_handle, title, body, "alerts".into());
-                });
-            }
 
             let token = random_session_token();
             let parent_pid = std::process::id().to_string();

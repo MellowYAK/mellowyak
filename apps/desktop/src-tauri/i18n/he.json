@@ -35,6 +35,7 @@
   "tray.alertSeverity.high": "גבוהה",
   "tray.alertSeverity.warning": "אזהרה",
   "tray.alertSeverity.info": "מידע",
+  "notificationLab.trigger": "הצגת התראת קבלה",
   "notificationLab.information.title": "מידע מ־MellowYak",
   "notificationLab.information.body": "המעקב המקומי פעיל. כרגע לא אומתה רגרסיה בהתנהגות מוגנת.",
   "notificationLab.warning.title": "אזהרה מ־MellowYak",
