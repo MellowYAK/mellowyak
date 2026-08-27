@@ -441,6 +441,12 @@ fn show_native_notification(
                 *pending = Some(route.clone());
             }
         }
+        let activation_app = app.clone();
+        let activation_route = route.clone();
+        let was_focused = app
+            .get_webview_window("main")
+            .and_then(|window| window.is_focused().ok())
+            .unwrap_or(false);
         std::thread::spawn(move || {
             handle.wait_for_action(|action| {
                 let route_app = app.clone();
@@ -458,6 +464,37 @@ fn show_native_notification(
                 });
             });
         });
+        if !was_focused {
+            std::thread::spawn(move || {
+                for _ in 0..100 {
+                    std::thread::sleep(Duration::from_millis(100));
+                    let focused = activation_app
+                        .get_webview_window("main")
+                        .and_then(|window| window.is_focused().ok())
+                        .unwrap_or(false);
+                    if !focused {
+                        continue;
+                    }
+                    let pending = activation_app
+                        .try_state::<EngineState>()
+                        .and_then(|state| take_notification_route(&state));
+                    if pending.as_deref() == Some(activation_route.as_str()) {
+                        let route_app = activation_app.clone();
+                        let target_route = activation_route.clone();
+                        let _ = activation_app
+                            .run_on_main_thread(move || navigate(&route_app, &target_route));
+                    }
+                    return;
+                }
+                if let Some(state) = activation_app.try_state::<EngineState>() {
+                    if let Ok(mut pending) = state.notification_route.lock() {
+                        if pending.as_deref() == Some(activation_route.as_str()) {
+                            *pending = None;
+                        }
+                    }
+                }
+            });
+        }
         return Ok(());
     }
     #[cfg(not(target_os = "macos"))]
