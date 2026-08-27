@@ -1,97 +1,114 @@
-# MellowYak Phase 16M Master Report
+# MellowYak Phase 16M-C Closure Report
 
 ## Current verdict
 
-- Product: `INTEL_MAC_PHYSICAL_ACCEPTANCE_BLOCKED`
-- Distribution: physical acceptance pending; `PUBLIC_MAC_DISTRIBUTION_BLOCKED`
-- Reason: the automated preparation is complete, but no physical operator action has been recorded yet.
-- No verified Phase 16 tag exists and nothing was pushed.
+- Product verdict: `INTEL_MAC_TECHNICAL_PREVIEW_ACCEPTED_WITH_LIMITS`.
+- Human physical verdict: `HUMAN_PHYSICAL_ACCEPTANCE_PENDING`.
+- Distribution verdict: `PUBLIC_MAC_DISTRIBUTION_BLOCKED`.
+- Phase 17: not started and not authorized by this report.
+- Local verified tag: not created because human-only boundaries remain pending and P15-PHYS-112/P15-PHYS-127 do not have complete physical activation evidence.
+- Repository push: not performed.
 
-## Git provenance
+## Exact candidate identity
 
-- Repository: `https://github.com/MellowYAK/mellowyak.git`
-- Branch: `product/intel-mac-product-lock`
-- Phase 14 starting tag and commit: `phase-14m-real-world-compatibility-verified-2026-08-26` / `b978b021a80af3410ef97cf2cf7d0e93dc697597`
-- Phase 15 implementation checkpoint: `e137000800e19416131248b06b39d709c0f4191f`
-- Build commit: `e0110dc53f83c8a0dfb3135de0bbf44c68f6bffb`
-- Final build commit: pending physical acceptance.
-- Evidence commit: pending physical acceptance.
-- Final verified tag: not created.
-- Unrelated Finder Alias files under the Phase 5 screenshot directory were preserved untracked and excluded.
+- Version: `0.5.0-preview.3`.
+- Branch: `product/intel-mac-product-lock`.
+- Final build commit: `71e3955d8a62e546b4a0ac8c34a2fe46f72053b7`.
+- Database head: `0011_baseline_lock_and_local_proof`.
+- Application: `apps/desktop/src-tauri/target/release/bundle/macos/MellowYak.app`.
+- DMG: `apps/desktop/src-tauri/target/release/bundle/dmg/MellowYak_0.5.0-preview.3_x64.dmg`.
+- Installed application: `/Applications/MellowYak.app`.
+- Desktop executable SHA-256: `7d21d73deee3c8606e3cdd0aadbee1512bd07ecf6710e5561c9ccbf476aeb0a5`.
+- Engine SHA-256: `ea492adad0b4239b6e4ba5c7ed998d55c4e0dd883d484511202b0b1f49cb8e2e`.
+- Browser launcher SHA-256: `97136324f0a487d9fef8eee50341a1b433a05bc4228daae5b1ac19d18ff068fb`.
+- Final signed DMG SHA-256: `39a4720dcb43ac95eb6ec892f2d4edb169a69c894ff8b516e503ecdd7ae30f73`.
+- Deterministic OpenAPI SHA-256: `608ced66dbc65676ab44abae5ed97f070b1ee41af7fc7db127fa35623a66949f`.
 
-## Product identity
+## What changed in Phase 16M-C
 
-- Version: `0.5.0-preview.2`
-- Database head: `0011_baseline_lock_and_local_proof`
-- Host: macOS `26.5.2` build `25F84`, Intel `x86_64`
-- Node: `v26.7.0`; npm: `11.19.0`; Python: `3.11.5`; Rust/Cargo: `1.98.0`
-- The actual Node/npm toolchain differs from the Phase 15 expectation and is recorded rather than hidden.
+1. Notification activation now revalidates its destination at click time. A stale or rejected route safely opens Alerts instead of navigating to invalid project context.
+2. A React regression test covers the stale-notification fallback.
+3. Finder Alias relocation and reconnection were completed against the installed application. The original project ID and history were retained, and a mismatched directory was rejected without changing the stored source.
+4. Quiet Mode was exercised against a real alert in the isolated acceptance database. The in-app alert remained available while native delivery was suppressed; Quiet Mode was then ended and restored to off.
+5. The default product window remains the user-approved `1220 × 820` size.
+6. The Intel application and DMG were rebuilt at `0.5.0-preview.3`, ad-hoc signed, installed, and hash-matched.
+7. Privacy-exposing Settings captures were removed from the delivery directory. Canonical crops contain only the MellowYak notification pane.
+8. Documentation now uses the multi-axis evidence model instead of conflating automation, visual evidence, and human physical actions.
 
-## Automated regression and package gate
+## Source and package verification
 
-- Python: 210 passed, one third-party deprecation warning.
-- React/Vitest: 29 passed.
-- TypeScript, Vite, translation-key-only, English/Hebrew parity, Hebrew RTL, Ruff, Cargo format/check: PASS.
-- OpenAPI was exported twice byte-identically: `d1a6a3deb87c5ab1c900dfaf3a5e52446bc1d738fc0bc39d2ee5e7fee3d6eedc`.
-- Migration matrix: empty and every 0001–0010 input reached 0011 with data preserved.
-- Phase 8–15 packaged validators: `VERIFIED_WORKING`.
-- Product Self-Test: PASS.
-- Updater E2E: `VERIFIED_WORKING`; production updater remains not configured.
-- Automated installed lifecycle: `VERIFIED_WORKING`.
-- External product network: false.
-- Owned MellowYak processes after automated validation: zero.
-- One validator-only defect was closed before the checkpoint: the Phase 14 public-source validator now expects schema 0011.
+- Python: `210 passed`; one benign third-party Starlette deprecation warning.
+- React/Vitest: `30 passed`.
+- TypeScript, Vite, translation-key-only UI check, English/Hebrew parity, Hebrew RTL, Ruff, Cargo format, and Cargo check: PASS.
+- Migrations: empty database plus every 0001–0010 input migrated to 0011 with preserved data.
+- OpenAPI: two byte-identical exports.
+- Phase 10, 11M, 12, 13, 15, lifecycle, and updater packaged validators: `VERIFIED_WORKING`.
+- Phase 11M initially exposed an unsigned outer DMG. The DMG was signed and the validator was rerun successfully; the hash above is the corrected final artifact.
+- Native lifecycle: clean launch, single instance, one engine, supervised engine restart, explicit exit, and owned-child cleanup passed.
+- Updater E2E: success path and tamper/wrong-key/incomplete rejection passed using ephemeral acceptance keys. Production update signing remains unconfigured.
+- No external product network was observed during the packaged verification.
 
-## Final Gate A artifacts
+## P15-PHYS closure highlights
 
-| Artifact | Identity |
-|---|---|
-| Application | `apps/desktop/src-tauri/target/release/bundle/macos/MellowYak.app`; 869,120 KiB |
-| Desktop executable | 23,023,088 bytes; `b16b911f39787b57fc051b467fe503cbd9273f2c3031e79051187b1037dfdc2f`; x86_64 |
-| Engine | 15,812,960 bytes; `8f5f2b3e5cb4928cb1882904406360fc54bef7734777f7eb3fa214bc6b6f438b`; x86_64 |
-| Browser | Google Chrome for Testing 151.0.7922.34; 623,316 KiB app bundle; x86_64; launcher `97136324f0a487d9fef8eee50341a1b433a05bc4228daae5b1ac19d18ff068fb` |
-| DMG | `apps/desktop/src-tauri/target/release/bundle/dmg/MellowYak_0.5.0-preview.2_x64.dmg`; 398,650,246 bytes; `37c6962e2fa8869ed91cd7b93eceee746d8a7968d70c7ed88f68d804c0da9cb8` |
-| Installed app | `/Applications/MellowYak.app`; desktop and engine hashes exactly match the build |
+- P15-PHYS-120: installed-app positive Finder Alias reconnect PASS; foreign-source mismatch rejection PASS; one project record and the same project ID remained.
+- P15-PHYS-112: source implementation and automated regression PASS; a complete human click of a delivered notification after making its destination stale remains `HUMAN_PHYSICAL_NOT_RUN`.
+- P15-PHYS-127: installed-app Quiet Mode state, in-app alert persistence, and restoration PASS; a human-observed before/after native banner sequence remains `HUMAN_PHYSICAL_NOT_RUN`.
+- Logout/login, lock/unlock, sleep/wake, restart, and real battery transition remain honestly pending.
 
-The previous installed application was retained as a recoverable timestamped backup. The DMG is ad-hoc signed, structurally valid, mounts read-only, contains the exact app, and detaches cleanly.
+## Localization contract
 
-## Native notification acceptance lab
+All GUI copy must be referenced through translation keys. English is the base catalog, Hebrew has matching keys and renders RTL. The source checks and React tests passed for this candidate. Additional languages can be added as new catalogs without changing component copy.
 
-- An opt-in, local-only lab was added for macOS native banner evidence. It is disabled unless `MELLOWYAK_ACCEPTANCE_LAB=native-notifications` is present.
-- The tray exposes a translated `Show acceptance notification` action only in that lab. Triggering it after the app is in the background avoids macOS suppressing a foreground application's own banner.
-- English and Hebrew contain exact key parity for the trigger and all seven scenarios; no GUI text is hardcoded.
-- Seven genuine Notification Center banners were generated and visually inspected: information, warning, high priority, critical regression, critical recovery, engine error, and regression resolved.
-- Privacy-preserving banner-only crops are in `images/native-notifications/`. Full-desktop captures were moved to Trash and are not delivery evidence.
-- These images are supporting acceptance evidence. They do not convert the operator-only physical matrix to PASS.
+## Security and privacy
 
-## Physical environment and preservation
+- The public repository receives no user database, project source, browser profile, credential, token, private support bundle, or acceptance data root.
+- All acceptance work used a disposable project and an isolated `/private/tmp` data root.
+- Normal user data was not used as test data and was not modified.
+- Deterministic screenshots are explicitly labeled as product-view evidence, not human physical evidence.
+- Ad-hoc signing is suitable only for local technical-preview acceptance. It is not a substitute for Developer ID signing and notarization.
 
-- Physical evidence directory: `images/physical/`.
-- Screen Recording permission: unavailable; the operator must use a real macOS screenshot shortcut.
-- Accessibility permission: available, but automation is not accepted as a physical click.
-- Original Start at Login: disabled.
-- Original close-to-tray: enabled.
-- Original Quiet Mode: disabled.
-- Original Activity Mode: normal.
-- Original power: AC, internal battery present and fully charged.
-- Original retained product data: present; one project record; no private data is copied into this report.
-- An isolated acceptance data root and disposable marked fixture are prepared outside the repository.
+## Reports
 
-## Physical acceptance
+- `PHASE_16M_EXECUTION_AND_EVIDENCE_REPORT.md` and `.pdf`: complete technical execution, provenance, verification, evidence axes, cleanup, and verdicts.
+- `PHASE_16M_VISUAL_MANUAL_AND_CHECKLIST.md` and `.pdf`: English operator manual containing the canonical screenshots and an explanation of every represented page.
+- `PHASE_16M_PHYSICAL_ACCEPTANCE.md`: per-test multi-axis matrix for P15-PHYS-101 through P15-PHYS-128.
+- `PHASE_16M_EVIDENCE_MANIFEST.json`: machine-readable evidence schema `mellowyak.phase16m.acceptance-evidence.v2`.
 
-Every physical result is recorded in `PHASE_16M_PHYSICAL_ACCEPTANCE.md` and `PHASE_16M_EVIDENCE_MANIFEST.json`. At this checkpoint every physical item is `NOT_RUN`; no deterministic image or Accessibility event is counted as physical evidence.
+## Exact next authorized action
 
-## Security, privacy, and data retention
+Perform only the remaining human physical tests against this exact installed candidate, record evidence without exposing private desktop content, and then decide whether Phase 16M may receive a local verified tag. Do not begin Phase 17 from this report.
 
-- The committed checkpoint was scanned for credentials, keys, databases, user source, browser profiles, generated apps/DMGs, runtime data, private absolute user paths, and APC data; none were included.
-- MellowYak remains loopback-only, local-first, account-free, prompt-blind, Git-optional, and explicit before Apply.
-- The acceptance fixture is disposable and contains no customer source or credential.
-- Original application preferences and data-retention state are recorded locally for restoration.
 
-## Distribution boundary
+## Complete acceptance-axis cross-reference
 
-Developer ID is `NOT_CONFIGURED`; notarization is `NOT_RUN`; stapling is `NOT_RUN`; production updater signing is `NOT_CONFIGURED`; trusted public download is `NOT_VERIFIED`. See `PHASE_16M_DISTRIBUTION_BOUNDARY.md`.
-
-## Next authorized action
-
-Complete the physical matrix one operator action at a time. Do not create the verified tag until every mandatory applicable physical test passes against these exact installed hashes.
+| Test ID | Native automation | Human physical | Visual | Functional | Cleanup |
+|---|---|---|---|---|---|
+| P15-PHYS-101 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | VISUAL_PASS | PASS | PASS |
+| P15-PHYS-102 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | PASS | PASS |
+| P15-PHYS-103 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | NO_VISUAL_EVIDENCE_REQUIRED | PASS | PASS |
+| P15-PHYS-104 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | PASS | PASS |
+| P15-PHYS-105 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | PASS | PASS |
+| P15-PHYS-106 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | PASS | PASS |
+| P15-PHYS-107 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | PASS | PASS |
+| P15-PHYS-108 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | VISUAL_PASS | PASS | PASS |
+| P15-PHYS-109 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | VISUAL_PASS | PASS | PASS |
+| P15-PHYS-110 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | VISUAL_PASS | PASS | PASS |
+| P15-PHYS-111 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | VISUAL_PASS | PASS | PASS |
+| P15-PHYS-112 | BLOCKED | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | PASS | PASS |
+| P15-PHYS-113 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | PASS | PASS |
+| P15-PHYS-114 | NOT_RUN | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | NOT_RUN | PASS |
+| P15-PHYS-115 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | PASS | PASS |
+| P15-PHYS-115B | NOT_RUN | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | NOT_RUN | PASS |
+| P15-PHYS-116 | NOT_RUN | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | NOT_RUN | PASS |
+| P15-PHYS-117 | NOT_RUN | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | NOT_RUN | PASS |
+| P15-PHYS-118 | NOT_RUN | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | NOT_RUN | PASS |
+| P15-PHYS-119 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | VISUAL_PASS | PASS | PASS |
+| P15-PHYS-120 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | VISUAL_PASS | PASS | PASS |
+| P15-PHYS-121 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | PASS | PASS |
+| P15-PHYS-122 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | PASS | PASS |
+| P15-PHYS-123 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | PASS | PASS |
+| P15-PHYS-124 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | PASS | PASS |
+| P15-PHYS-125 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | PASS | PASS |
+| P15-PHYS-126 | NOT_RUN | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | NOT_RUN | PASS |
+| P15-PHYS-127 | BLOCKED | HUMAN_PHYSICAL_NOT_RUN | VISUAL_PASS | PASS | PASS |
+| P15-PHYS-128 | NOT_RUN | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | NOT_RUN | PASS |
