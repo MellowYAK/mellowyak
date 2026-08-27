@@ -675,7 +675,7 @@ The intended principle is:
 
 ## Project status
 
-MellowYak `0.5.0-preview.2` is the active Phase 16M Intel macOS physical-acceptance candidate. It
+MellowYak `0.5.0-preview.3` is the active Phase 16M Intel macOS physical-acceptance candidate. It
 preserves the Phase 15M product lock, adds opt-in synthetic tray-menu and native-notification labs
 for physical menu-bar and banner evidence, completes the missing English/Hebrew alert translations, and renders `HIGH`
 tray alerts distinctly instead of falling back to `INFO`. The lab is disabled by default, contains

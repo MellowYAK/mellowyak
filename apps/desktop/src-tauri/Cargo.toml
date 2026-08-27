@@ -1,6 +1,6 @@
 [package]
 name = "mellowyak-desktop"
-version = "0.5.0-preview.2"
+version = "0.5.0-preview.3"
 description = "MellowYak local-first desktop shell"
 authors = ["MellowYak contributors"]
 edition = "2021"

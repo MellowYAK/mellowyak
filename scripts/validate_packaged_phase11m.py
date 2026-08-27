@@ -64,7 +64,7 @@ def main() -> int:
         "engine_resource_present": engine.is_file() and os.access(engine, os.X_OK),
         "browser_manifest_present": browser_manifest.is_file(),
         "version_preserved": info.get("CFBundleShortVersionString")
-        == "0.5.0-preview.2",
+        == "0.5.0-preview.3",
         "bundle_identifier": info.get("CFBundleIdentifier") == "com.mellowyak.desktop",
         "codesign_structure_valid": run(
             "codesign", "--verify", "--deep", "--strict", str(app)

@@ -150,6 +150,23 @@ test("keeps the translated alert poll stable between scheduled refreshes", async
   expect(alertCalls()).toBe(initialCalls);
 });
 
+test("revalidates a delivered notification route and falls back to Alerts when it becomes stale", async () => {
+  responses["/projects"] = { projects: [project] };
+  responses["/notifications/activate"] = {
+    status: "STALE",
+    reason_code: "ALERT_NOT_FOUND",
+    route: { screen: "alerts" },
+  };
+  render(<App />);
+  await screen.findByRole("heading", { name: "What is happening now?" });
+  window.dispatchEvent(new CustomEvent("mellowyak:navigate", {
+    detail: JSON.stringify({ screen: "project", project_id: "project-1", alert_id: "deleted-alert" }),
+  }));
+  expect(await screen.findByRole("heading", { name: "Alerts" })).toBeInTheDocument();
+  const fetchMock = vi.mocked(fetch);
+  expect(fetchMock.mock.calls.some(([input]) => new URL(String(input)).pathname === "/notifications/activate")).toBe(true);
+});
+
 test("renders deterministic Phase 9 diagnostics and Hebrew RTL capture states", async () => {
   window.history.replaceState({}, "", "/?phase9State=diagnostics");
   render(<App />);

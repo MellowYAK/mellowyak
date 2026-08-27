@@ -1,7 +1,7 @@
 {
   "name": "mellowyak-desktop",
   "private": true,
-  "version": "0.5.0-preview.2",
+  "version": "0.5.0-preview.3",
   "type": "module",
   "scripts": {
     "dev": "vite --port 1420 --strictPort",

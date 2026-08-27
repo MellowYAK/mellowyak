@@ -228,10 +228,7 @@ export function App() {
   const reloadProjects = useCallback(async () => setProjects(await listProjects()), []);
 
   useEffect(() => {
-    const navigate = (event: Event) => {
-      const rawValue = (event as CustomEvent<unknown>).detail;
-      if (typeof rawValue !== "string") return;
-      const raw = rawValue;
+    const applyNavigation = (raw: string) => {
       let destination = raw as Screen;
       if (raw.startsWith("{")) {
         try {
@@ -260,6 +257,28 @@ export function App() {
           setError("");
           setScreen("project");
         }
+      }
+    };
+    const navigate = (event: Event) => {
+      const rawValue = (event as CustomEvent<unknown>).detail;
+      if (typeof rawValue !== "string") return;
+      if (!rawValue.startsWith("{")) {
+        applyNavigation(rawValue);
+        return;
+      }
+      try {
+        const route = JSON.parse(rawValue) as Record<string, string>;
+        void validateNotificationRoute(route)
+          .then((result) => {
+            const status = typeof result.status === "string" ? result.status : "REJECTED";
+            const validatedRoute = result.route && typeof result.route === "object"
+              ? result.route as Record<string, string>
+              : { screen: "alerts" };
+            applyNavigation(status === "ACCEPTED" ? JSON.stringify(validatedRoute) : "alerts");
+          })
+          .catch(() => applyNavigation("alerts"));
+      } catch {
+        applyNavigation("alerts");
       }
     };
     window.addEventListener("mellowyak:navigate", navigate);
