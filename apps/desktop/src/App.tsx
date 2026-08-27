@@ -74,6 +74,7 @@ import {
 import { Phase12Capture, phase12CaptureStates, type Phase12CaptureState } from "./Phase12Experience";
 import { Phase13Capture, phase13CaptureStates, type Phase13CaptureState } from "./Phase13Experience";
 import { Phase14Capture, phase14CaptureStates, type Phase14CaptureState } from "./Phase14Experience";
+import { Phase15Capture, phase15CaptureStates, type Phase15CaptureState } from "./Phase15Experience";
 import { MonitoringSettingsPanel } from "./MonitoringSettingsPanel";
 
 type ProjectScreen = "project" | "activity" | "regression" | "change" | "impact" | "behaviors" | "runtime" | "memory";
@@ -218,6 +219,9 @@ export function App() {
   const phase14StateValue = new URLSearchParams(window.location.search).get("phase14State");
   const phase14Marker = new URLSearchParams(window.location.search).get("phase14Fixture");
   const phase14CaptureState = phase14Marker === "mellowyak.phase14.screenshots.v1" && phase14CaptureStates.includes(phase14StateValue as Phase14CaptureState) ? phase14StateValue as Phase14CaptureState : null;
+  const phase15StateValue = new URLSearchParams(window.location.search).get("phase15State");
+  const phase15Marker = new URLSearchParams(window.location.search).get("phase15Fixture");
+  const phase15CaptureState = phase15Marker === "mellowyak.phase15.screenshots.v1" && phase15CaptureStates.includes(phase15StateValue as Phase15CaptureState) ? phase15StateValue as Phase15CaptureState : null;
 
   const productT = useCallback((key: string, parameters: Record<string, string | number> = {}) => t(key as TranslationKey, parameters), [t]);
 
@@ -454,6 +458,8 @@ export function App() {
     catch (reason) { setError(reason instanceof Error ? reason.message : "IMPACT_SEARCH_FAILED"); }
     finally { setBusy(false); }
   };
+
+  if (phase15CaptureState) return <main className="app-shell" dir={direction} data-phase15-state={phase15CaptureState}><Header home={() => undefined} locale={locale} setLocale={setLocale} t={t} updater={updater} /><Phase15Capture t={productT} state={phase15CaptureState} /></main>;
 
   if (phase14CaptureState) return <main className="app-shell" dir={direction} data-phase14-state={phase14CaptureState}><Header home={() => undefined} locale={locale} setLocale={setLocale} t={t} updater={updater} /><Phase14Capture t={productT} state={phase14CaptureState} /></main>;
 

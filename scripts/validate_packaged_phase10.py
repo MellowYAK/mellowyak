@@ -21,7 +21,7 @@ from validate_packaged_phase7 import (
 )
 
 TOKEN = "packaged-phase-ten-validation-token-2026"
-SCHEMA = "0010_passive_sentinel_orchestration"
+SCHEMA = "0011_baseline_lock_and_local_proof"
 
 
 def parse_args() -> argparse.Namespace:
@@ -70,9 +70,7 @@ def validate(engine: Path, root: Path) -> dict[str, Any]:
         assert_authentication_required(handle.base_url)
         health = api(handle.base_url, "/health")
         if health["database_schema_version"] != SCHEMA:
-            raise AssertionError(
-                "packaged engine schema differs from Phase 10 contract"
-            )
+            raise AssertionError("packaged engine schema differs from the current head")
 
         empty_home = api(handle.base_url, "/home/summary")
         if empty_home["state"] != "NO_PROJECTS" or empty_home["projects"]:

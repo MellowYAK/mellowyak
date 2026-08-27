@@ -4,6 +4,7 @@ import { App } from "./App";
 import { resetBootstrapForTests, type Project } from "./api";
 import { phase10CaptureStates } from "./Phase10Experience";
 import { phase12CaptureStates } from "./Phase12Experience";
+import { phase15CaptureStates } from "./Phase15Experience";
 import { ProjectsScreen } from "./ProductScreens";
 
 const dialogOpen = vi.fn();
@@ -189,6 +190,16 @@ test("registers the exact Phase 12M delivery states behind the explicit fixture 
   expect(new Set(phase12CaptureStates).size).toBe(38);
   expect(phase12CaptureStates[0]).toBe("00-reference-project-created");
   expect(phase12CaptureStates.at(-1)).toBe("37-hebrew-diagnostics");
+});
+
+test("registers and renders every Phase 15M product-lock delivery state", () => {
+  expect(phase15CaptureStates).toHaveLength(12);
+  expect(new Set(phase15CaptureStates).size).toBe(12);
+  window.history.replaceState({}, "", "/?phase15Fixture=mellowyak.phase15.screenshots.v1&phase15State=04-promotion-confirmation");
+  render(<App />);
+  expect(screen.getByRole("heading", { name: "Promotion requires deliberate confirmation." })).toBeInTheDocument();
+  expect(screen.getByText("PROMOTION_AWAITING_CONFIRMATION")).toBeInTheDocument();
+  expect(document.body.textContent).not.toMatch(/phase15\.(?:screen|state|fixture|package)/);
 });
 
 test("traps modal focus, closes with Escape, and restores the project action trigger", async () => {

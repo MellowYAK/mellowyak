@@ -20,7 +20,7 @@ from validate_packaged_phase7 import (
 )
 
 TOKEN = "packaged-phase-thirteen-validation-token-2026"
-SCHEMA = "0010_passive_sentinel_orchestration"
+SCHEMA = "0011_baseline_lock_and_local_proof"
 
 
 def parse_args() -> argparse.Namespace:
@@ -64,7 +64,7 @@ def validate(engine: Path, root: Path) -> dict[str, Any]:
         assert_authentication_required(first.base_url)
         first_health = api(first.base_url, "/health")
         if first_health["database_schema_version"] != SCHEMA:
-            raise AssertionError("packaged engine schema differs from Phase 13M")
+            raise AssertionError("packaged engine schema differs from the current head")
         demo = api(
             first.base_url,
             "/demo-lab/create",
@@ -140,7 +140,7 @@ def validate(engine: Path, root: Path) -> dict[str, Any]:
 
     checks = {
         "authentication_required": True,
-        "schema_0010": second_health.get("database_schema_version") == SCHEMA,
+        "schema_0011": second_health.get("database_schema_version") == SCHEMA,
         "global_budget_persisted": persisted_global.get("daily_runtime_budget_seconds")
         == 600,
         "project_budget_persisted": persisted_project.get("resource_budget", {}).get(

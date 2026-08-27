@@ -778,7 +778,7 @@ export interface ProtectedBehavior {
   links: Array<{ id: string; link_type: string; link_key: string; provenance: string }>;
   baselines: Array<{
     id: string;
-    status: "CAPTURED" | "REVIEWED" | "ACCEPTED" | "REVOKED" | "STALE";
+    status: "CAPTURED" | "REVIEWED" | "ACCEPTED" | "REVOKED" | "STALE" | "SUPERSEDED";
     behavior_version_id: string;
     evidence_bundle_id: string;
     created_at: string;
@@ -786,6 +786,90 @@ export interface ProtectedBehavior {
   created_at: string;
   updated_at: string;
   archived_at: string | null;
+}
+
+export interface KnownGoodLineageItem {
+  id: string;
+  order: number;
+  current: boolean;
+  status: string;
+  behavior_version_id: string;
+  evidence_bundle_id: string;
+  source_identity: Record<string, unknown>;
+  source_identity_alias: string;
+  runtime_identity: Record<string, unknown>;
+  verification_run_id: string | null;
+  verification_result: string;
+  supersedes_baseline_id: string | null;
+  promotion_reason: string | null;
+  actor: string;
+  accepted_at: string;
+  promotion_confirmed_at: string | null;
+  limitations: string[];
+}
+
+export interface BehaviorChangeDecision {
+  id: string;
+  project_id: string;
+  behavior_id: string;
+  previous_baseline_id: string;
+  decision: "EXPECTED" | "REGRESSION" | "UNSURE";
+  state: string;
+  reason: string;
+  source_identity: Record<string, unknown>;
+  runtime_identity: Record<string, unknown>;
+  capture_id: string | null;
+  verification_run_id: string | null;
+  promoted_baseline_id: string | null;
+  confirmation_expires_at: string | null;
+  confirmation_used: boolean;
+  confirmation_nonce?: string | null;
+  actor: string;
+  created_at: string;
+  updated_at: string;
+  known_facts: string[];
+  unknowns: string[];
+  limitations: string[];
+}
+
+export interface KnownGoodLineage {
+  project_id: string;
+  behavior_id: string;
+  state: string;
+  current_baseline_id: string | null;
+  baselines: KnownGoodLineageItem[];
+  active_decision: BehaviorChangeDecision | null;
+  known_facts: string[];
+  unknowns: string[];
+  limitations: string[];
+}
+
+export interface YakReceipt {
+  id: string;
+  project_id: string;
+  episode_id: string;
+  snapshot_id: string | null;
+  source_identity: Record<string, unknown>;
+  payload: {
+    settled_at: string;
+    protected_behaviors_considered: number;
+    checked: number;
+    passed: number;
+    failed: number;
+    confirmed_regressions: number;
+    deferred: number;
+    runtime_unavailable: number;
+    omitted: number;
+    unknown: number;
+    source_modified_by_yak: boolean;
+    evidence: Array<Record<string, unknown>>;
+    omitted_behaviors: Array<Record<string, unknown>>;
+  };
+  digest: string;
+  created_at: string;
+  known_facts: string[];
+  unknowns: string[];
+  limitations: string[];
 }
 
 export interface RuntimeConfiguration {
@@ -1393,6 +1477,22 @@ export async function acceptBaseline(projectId: string, captureId: string, revie
   });
 }
 
+export async function getKnownGoodLineage(projectId: string, behaviorId: string): Promise<KnownGoodLineage> {
+  return engineFetch<KnownGoodLineage>(`/projects/${encodeURIComponent(projectId)}/behaviors/${encodeURIComponent(behaviorId)}/known-good-lineage`);
+}
+
+export async function decideBehaviorChange(projectId: string, behaviorId: string, decision: "EXPECTED" | "REGRESSION" | "UNSURE", reason: string): Promise<BehaviorChangeDecision> {
+  return engineFetch<BehaviorChangeDecision>(`/projects/${encodeURIComponent(projectId)}/behaviors/${encodeURIComponent(behaviorId)}/change-decision`, { method: "POST", body: JSON.stringify({ decision, reason }) });
+}
+
+export async function reverifyExpectedChange(projectId: string, behaviorId: string, decisionId: string, captureId: string): Promise<BehaviorChangeDecision> {
+  return engineFetch<BehaviorChangeDecision>(`/projects/${encodeURIComponent(projectId)}/behaviors/${encodeURIComponent(behaviorId)}/expected-change/reverify`, { method: "POST", body: JSON.stringify({ decision_id: decisionId, capture_id: captureId }) });
+}
+
+export async function promoteKnownGood(projectId: string, behaviorId: string, decisionId: string, confirmationNonce: string, reviewer: string, notes: string): Promise<KnownGoodLineage> {
+  return engineFetch<KnownGoodLineage>(`/projects/${encodeURIComponent(projectId)}/behaviors/${encodeURIComponent(behaviorId)}/known-good/promote`, { method: "POST", body: JSON.stringify({ decision_id: decisionId, confirmation_nonce: confirmationNonce, deliberate_confirmation: true, reviewer, notes }) });
+}
+
 export async function getEvidenceBundle(projectId: string, bundleId: string): Promise<EvidenceBundle> {
   return engineFetch<EvidenceBundle>(`/projects/${encodeURIComponent(projectId)}/evidence/bundles/${encodeURIComponent(bundleId)}`);
 }
@@ -1604,6 +1704,15 @@ export async function listEpisodes(projectId: string): Promise<SourceEpisode[]> 
 
 export async function getEpisode(projectId: string, episodeId: string): Promise<SourceEpisode> {
   return engineFetch<SourceEpisode>(`/projects/${encodeURIComponent(projectId)}/episodes/${encodeURIComponent(episodeId)}`);
+}
+
+export async function listYakReceipts(projectId: string): Promise<YakReceipt[]> {
+  const response = await engineFetch<{ receipts?: YakReceipt[] }>(`/projects/${encodeURIComponent(projectId)}/yak-receipts`);
+  return Array.isArray(response.receipts) ? response.receipts : [];
+}
+
+export async function createYakReceipt(projectId: string, episodeId: string): Promise<YakReceipt> {
+  return engineFetch<YakReceipt>(`/projects/${encodeURIComponent(projectId)}/episodes/${encodeURIComponent(episodeId)}/yak-receipt`, { method: "POST", body: "{}" });
 }
 
 export async function listMilestones(projectId: string): Promise<SnapshotMilestone[]> {

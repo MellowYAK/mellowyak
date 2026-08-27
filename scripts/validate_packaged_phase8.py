@@ -26,6 +26,7 @@ SUPPORTED_DATABASE_SCHEMAS = {
     "0008_validated_repair_apply",
     "0009_technical_preview_readiness",
     "0010_passive_sentinel_orchestration",
+    "0011_baseline_lock_and_local_proof",
 }
 REPORT_SCHEMA = "mellowyak.phase8_packaged_validation.v1"
 AUTH_TOKEN = "packaged-phase-eight-validation-token-2026"

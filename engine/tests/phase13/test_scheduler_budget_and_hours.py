@@ -38,7 +38,7 @@ class MutableClock:
 
 def _seed(tmp_path: Path, clock: MutableClock) -> SimpleNamespace:
     database = LocalDatabase(StoragePaths.create(tmp_path / "data"))
-    assert database.migrate() == "0010_passive_sentinel_orchestration"
+    assert database.migrate() == "0011_baseline_lock_and_local_proof"
     events = LocalEventBus()
     project_id = str(uuid.uuid4())
     behavior_id = str(uuid.uuid4())

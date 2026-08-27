@@ -211,6 +211,11 @@ class EvidenceService:
             project = session.get(Project, project_id)
             if project is None or project.archived_at is not None:
                 raise EvidenceServiceError("PROJECT_NOT_FOUND")
+            behavior = session.get(ProtectedBehavior, capture.behavior_id)
+            if behavior is None or behavior.project_id != project_id:
+                raise EvidenceServiceError("BEHAVIOR_NOT_FOUND")
+            if behavior.last_accepted_baseline_id:
+                raise EvidenceServiceError("BASELINE_PROMOTION_REQUIRES_EXPECTED_CHANGE")
             current_source = {
                 "branch": project.current_branch,
                 "head_sha": project.current_head_sha,
@@ -272,9 +277,6 @@ class EvidenceService:
             )
             if bundle_items == 0:
                 raise EvidenceServiceError("EVIDENCE_BUNDLE_EMPTY")
-            behavior = session.get(ProtectedBehavior, capture.behavior_id)
-            if behavior is None or behavior.project_id != project_id:
-                raise EvidenceServiceError("BEHAVIOR_NOT_FOUND")
             if behavior.current_version_id != capture.behavior_version_id:
                 raise EvidenceServiceError("CAPTURE_BEHAVIOR_VERSION_STALE")
             attestation = BaselineAttestation(

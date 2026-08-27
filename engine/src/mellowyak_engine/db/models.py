@@ -634,8 +634,63 @@ class BehaviorBaseline(Base):
     )
     status: Mapped[str] = mapped_column(String(40), nullable=False)
     source_revision_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    supersedes_baseline_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    promotion_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    promotion_decision_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    promotion_verification_run_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    promotion_runtime_identity_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    promotion_confirmed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    promotion_actor: Mapped[str | None] = mapped_column(String(80), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class BehaviorChangeDecision(Base):
+    __tablename__ = "behavior_change_decisions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    behavior_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("protected_behaviors.id"), nullable=False
+    )
+    previous_baseline_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("behavior_baselines.id"), nullable=False
+    )
+    decision: Mapped[str] = mapped_column(String(40), nullable=False)
+    state: Mapped[str] = mapped_column(String(60), nullable=False)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    source_identity_json: Mapped[str] = mapped_column(Text, nullable=False)
+    runtime_identity_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    capture_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    verification_run_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    confirmation_digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    confirmation_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    confirmation_used_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    promoted_baseline_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    actor: Mapped[str] = mapped_column(String(80), nullable=False, default="LOCAL_OPERATOR")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class YakReceipt(Base):
+    __tablename__ = "yak_receipts"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    episode_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("source_episodes.id"), nullable=False, unique=True
+    )
+    snapshot_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    source_identity_json: Mapped[str] = mapped_column(Text, nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    digest: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
 class EvidenceAuditEvent(Base):

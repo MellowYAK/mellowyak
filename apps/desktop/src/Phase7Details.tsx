@@ -20,6 +20,20 @@ import type { TranslationKey } from "./i18n";
 
 export type Phase7Translator = (key: TranslationKey, values?: Record<string, string | number>) => string;
 
+function applyProgressKey(state: string): TranslationKey {
+  const keys: Record<string, TranslationKey> = {
+    PREFLIGHT: "repairContract.progress.checkingSource",
+    SAFETY_SNAPSHOT: "repairContract.progress.safetySnapshot",
+    JOURNAL_CREATED: "repairContract.progress.transaction",
+    PREPARING: "repairContract.progress.transaction",
+    WRITING: "repairContract.progress.applying",
+    CAPTURING_LIVE_SOURCE: "repairContract.progress.rechecking",
+    VERIFYING_LIVE: "repairContract.progress.rechecking",
+    ROLLING_BACK: "repairContract.progress.restoring",
+  };
+  return keys[state] ?? "repairContract.progress.waiting";
+}
+
 const limitationKeys: Record<string, TranslationKey> = {
   RUNTIME_SETUP_INCOMPLETE: "limitation.runtimeSetupIncomplete.title",
   RUNTIME_UNAVAILABLE: "limitation.runtimeUnavailable.title",
@@ -125,6 +139,11 @@ export function RepairWorkspacePanel({ projectId, regressionId, initial, t, onEr
             {validation && <div className="analysis-banner"><strong>{t("phase8.validationResult")}</strong><span>{validation.status}</span><span>{t("phase8.validationChecks", { count: validation.items.length })}</span></div>}
             {transaction && <section className="phase8-confirmation" aria-live="polite">
               <div className="section-head"><h3>{awaitingConfirmation ? t("phase8.confirm.title") : t("phase12.apply.transactionTitle")}</h3><span className={`readiness ${committed ? "good" : rolledBack ? "warn" : "neutral"}`}>{t(`phase12.state.${transaction.state}` as TranslationKey)}</span></div>
+              {awaitingConfirmation && <section className="repair-contract"><h3>{t("repairContract.verifiedTitle")}</h3><ul><li>{t("repairContract.testedAway")}</li><li>{t("repairContract.behaviorPassed")}</li><li>{t("repairContract.liveMatched")}</li></ul><p>{t("repairContract.explicit")}</p><p>{t("repairContract.recheck")}</p><p>{t("repairContract.rollback")}</p><div className="button-row"><button className="secondary" onClick={() => setDiff(candidate.files.flatMap((file) => file.relative_path))}>{t("repairContract.review")}</button></div></section>}
+              {!awaitingConfirmation && !committed && !rolledBack && <p className="analysis-banner"><strong>{t(applyProgressKey(transaction.state))}</strong></p>}
+              {committed && <section className="repair-contract success"><h3>{t("repairContract.protectedAgain")}</h3><ul><li>{t("repairContract.applied")}</li><li>{t("repairContract.livePassed")}</li><li>{t("repairContract.snapshotRetained")}</li></ul></section>}
+              {transaction.state === "ROLLING_BACK" && <section className="repair-contract warning"><h3>{t("repairContract.liveFailed")}</h3><p>{t("repairContract.restoring")}</p></section>}
+              {rolledBack && <section className="repair-contract success"><h3>{t("repairContract.restored")}</h3><p>{t("repairContract.nothingElse")}</p><p>{t("repairContract.candidateAvailable")}</p></section>}
               {awaitingConfirmation && <><p>{t("phase8.confirm.onlyCandidate")}</p><p>{t("phase8.confirm.safetySnapshot")}</p><p>{t("phase8.confirm.rollback")}</p><p>{t("phase8.confirm.unrelated")}</p></>}
               <dl className="truth-dl">
                 <div><dt>{t("phase12.apply.candidateValidation")}</dt><dd>{t("phase12.value.passed")}</dd></div>

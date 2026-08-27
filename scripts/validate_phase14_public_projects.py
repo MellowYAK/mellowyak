@@ -22,7 +22,7 @@ from phase14_public_corpus import PUBLIC_PROJECTS
 
 TOKEN = "phase14-public-project-validation-token-2026"
 CANARY = "phase14-canary-never-persist-7F6B3E"
-SCHEMA = "0010_passive_sentinel_orchestration"
+SCHEMA = "0011_baseline_lock_and_local_proof"
 
 
 def arguments() -> argparse.Namespace:

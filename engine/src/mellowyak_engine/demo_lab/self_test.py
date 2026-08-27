@@ -104,7 +104,7 @@ class ProductSelfTestService:
                 "database_migration",
                 lambda: require(
                     database_scalar("SELECT version_num FROM alembic_version")
-                    == "0010_passive_sentinel_orchestration",
+                    == "0011_baseline_lock_and_local_proof",
                     "SELF_TEST_MIGRATION_MISMATCH",
                 ),
             )

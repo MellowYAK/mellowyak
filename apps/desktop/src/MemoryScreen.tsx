@@ -1,17 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createKnownGoodMilestone,
+  createYakReceipt,
   createSnapshot,
   getSnapshot,
   listEpisodes,
   listMilestones,
   listSnapshots,
+  listYakReceipts,
   materializeSnapshot,
   setSnapshotPinned,
   type Project,
   type SnapshotMilestone,
   type SourceEpisode,
   type SourceSnapshot,
+  type YakReceipt,
 } from "./api";
 import type { TranslationKey } from "./i18n";
 import type { Phase7Translator } from "./Phase7Details";
@@ -64,12 +67,14 @@ export function MemoryScreen({ project, t, onError }: { project: Project; t: Pha
   const [milestoneName, setMilestoneName] = useState("");
   const [showMilestone, setShowMilestone] = useState(false);
   const [materializedPath, setMaterializedPath] = useState("");
+  const [receipts, setReceipts] = useState<YakReceipt[]>([]);
+  const [selectedReceipt, setSelectedReceipt] = useState<YakReceipt | null>(null);
 
   const refresh = useCallback(async () => {
-    const [nextSnapshots, nextEpisodes, nextMilestones] = await Promise.all([
-      listSnapshots(project.id), listEpisodes(project.id), listMilestones(project.id),
+    const [nextSnapshots, nextEpisodes, nextMilestones, nextReceipts] = await Promise.all([
+      listSnapshots(project.id), listEpisodes(project.id), listMilestones(project.id), listYakReceipts(project.id),
     ]);
-    setSnapshots(nextSnapshots); setEpisodes(nextEpisodes); setMilestones(nextMilestones);
+    setSnapshots(nextSnapshots); setEpisodes(nextEpisodes); setMilestones(nextMilestones); setReceipts(nextReceipts);
     setSelected((current) => current ? nextSnapshots.find((item) => item.id === current.id) ?? current : null);
   }, [project.id]);
 
@@ -94,6 +99,26 @@ export function MemoryScreen({ project, t, onError }: { project: Project; t: Pha
     void run(selected.id, async () => setSelected(await getSnapshot(project.id, selected.id)));
   };
 
+  const copyReceipt = async (receipt: YakReceipt) => {
+    const payload = receipt.payload;
+    const lines = [
+      t("yakReceipt.title"),
+      t("yakReceipt.changeSettled"),
+      dateTime(payload.settled_at),
+      `${t("yakReceipt.considered")}: ${payload.protected_behaviors_considered}`,
+      `${t("yakReceipt.checked")}: ${payload.checked}`,
+      `${t("yakReceipt.passed")}: ${payload.passed}`,
+      `${t("yakReceipt.confirmed")}: ${payload.confirmed_regressions}`,
+      `${t("yakReceipt.deferred")}: ${payload.deferred}`,
+      `${t("yakReceipt.runtimeUnavailable")}: ${payload.runtime_unavailable}`,
+      `${t("yakReceipt.omitted")}: ${payload.omitted}`,
+      `${t("yakReceipt.unknown")}: ${payload.unknown}`,
+      `${t("yakReceipt.sourceModified")}: ${payload.source_modified_by_yak ? t("common.yes") : t("common.no")}`,
+      `${t("yakReceipt.digest")}: ${receipt.digest}`,
+    ];
+    await navigator.clipboard.writeText(lines.join("\n"));
+  };
+
   return <div className="phase7-page">
     <section className="page-head"><div><div className="eyebrow">{t("memory.eyebrow")}</div><h1>{t("memory.title")}</h1><p>{t("memory.subtitle")}</p></div><button className="primary" disabled={busy === "create"} onClick={() => void run("create", async () => { const saved = await createSnapshot(project.id); setSelected(saved); })}>{busy === "create" ? t("common.working") : t("memory.createSavePoint")}</button></section>
     <section className="memory-metrics metric-grid">
@@ -105,7 +130,7 @@ export function MemoryScreen({ project, t, onError }: { project: Project; t: Pha
     <div className="memory-layout">
       <section className="panel episode-timeline">
         <div className="section-head"><div><h2>{t("episode.title")}</h2><p className="muted">{t("episode.description")}</p></div><span>{episodes.length}</span></div>
-        {episodes.length ? <ol>{episodes.map((episode) => <li key={episode.id}><span className={`timeline-marker ${episode.status.toLowerCase()}`} aria-hidden="true" /><article><div className="section-head"><strong>{t(episodeStatusKey(episode.status))}</strong><time>{dateTime(episode.started_at)}</time></div><p>{t("episode.changeSummary", { added: episode.added_paths.length, modified: episode.modified_paths.length, deleted: episode.deleted_paths.length })}</p><small>{t("episode.events", { count: episode.event_count })}</small>{episode.dependency_changes.length > 0 && <span className="local-badge">{t("episode.dependenciesChanged", { count: episode.dependency_changes.length })}</span>}</article></li>)}</ol>
+        {episodes.length ? <ol>{episodes.map((episode) => <li key={episode.id}><span className={`timeline-marker ${episode.status.toLowerCase()}`} aria-hidden="true" /><article><div className="section-head"><strong>{t(episodeStatusKey(episode.status))}</strong><time>{dateTime(episode.started_at)}</time></div><p>{t("episode.changeSummary", { added: episode.added_paths.length, modified: episode.modified_paths.length, deleted: episode.deleted_paths.length })}</p><small>{t("episode.events", { count: episode.event_count })}</small>{episode.dependency_changes.length > 0 && <span className="local-badge">{t("episode.dependenciesChanged", { count: episode.dependency_changes.length })}</span>}<div className="button-row">{receipts.find((item) => item.episode_id === episode.id) ? <button className="secondary" onClick={() => setSelectedReceipt(receipts.find((item) => item.episode_id === episode.id) ?? null)}>{t("yakReceipt.open")}</button> : episode.status === "STABILIZED" && <button className="secondary" disabled={busy === episode.id} onClick={() => void run(episode.id, async () => { const receipt = await createYakReceipt(project.id, episode.id); setSelectedReceipt(receipt); })}>{t("yakReceipt.create")}</button>}</div></article></li>)}</ol>
           : <div className="empty-state"><strong>{t("episode.empty")}</strong><p className="muted">{t("episode.emptyBody")}</p></div>}
       </section>
       <section className="panel save-point-history">
@@ -114,6 +139,14 @@ export function MemoryScreen({ project, t, onError }: { project: Project; t: Pha
           : <div className="empty-state"><strong>{t("snapshot.empty")}</strong><p className="muted">{t("snapshot.emptyBody")}</p></div>}
       </section>
     </div>
+    {selectedReceipt && <section className="panel yak-receipt" aria-label={t("yakReceipt.title")}>
+      <div className="section-head"><div><div className="eyebrow">{t("yakReceipt.localProof")}</div><h2>{t("yakReceipt.title")}</h2><p>{t("yakReceipt.description")}</p></div><button className="secondary" onClick={() => setSelectedReceipt(null)}>{t("common.close")}</button></div>
+      <div className="receipt-settled"><strong>{t("yakReceipt.changeSettled")}</strong><time>{dateTime(selectedReceipt.payload.settled_at)}</time></div>
+      <div className="metric-grid"><div><strong>{selectedReceipt.payload.protected_behaviors_considered}</strong><span>{t("yakReceipt.considered")}</span></div><div><strong>{selectedReceipt.payload.checked}</strong><span>{t("yakReceipt.checked")}</span></div><div><strong>{selectedReceipt.payload.passed}</strong><span>{t("yakReceipt.passed")}</span></div><div><strong>{selectedReceipt.payload.confirmed_regressions}</strong><span>{t("yakReceipt.confirmed")}</span></div><div><strong>{selectedReceipt.payload.deferred}</strong><span>{t("yakReceipt.deferred")}</span></div><div><strong>{selectedReceipt.payload.unknown}</strong><span>{t("yakReceipt.unknown")}</span></div></div>
+      <div className="status-row"><span>{t("yakReceipt.runtimeUnavailable")}</span><strong>{selectedReceipt.payload.runtime_unavailable}</strong></div><div className="status-row"><span>{t("yakReceipt.omitted")}</span><strong>{selectedReceipt.payload.omitted}</strong></div><div className="status-row"><span>{t("yakReceipt.sourceModified")}</span><strong>{selectedReceipt.payload.source_modified_by_yak ? t("common.yes") : t("common.no")}</strong></div>
+      <section><h3>{t("yakReceipt.evidence")}</h3>{selectedReceipt.payload.evidence.length ? selectedReceipt.payload.evidence.map((item, index) => <article className="evidence-row" key={`${String(item.run_id)}-${index}`}><strong>{t(`yakReceipt.result.${String(item.result)}` as TranslationKey)}</strong><code dir="ltr">{String(item.probe_id)}</code><span>{Boolean(item.comparable) ? t("yakReceipt.comparableYes") : t("yakReceipt.comparableNo")}</span></article>) : <p className="muted">{t("yakReceipt.noCheckedEvidence")}</p>}</section>
+      <p className="privacy-note">{t("yakReceipt.truthNote")}</p><div className="button-row"><button className="primary" onClick={() => void copyReceipt(selectedReceipt)}>{t("yakReceipt.copy")}</button></div><details><summary>{t("common.technicalDetails")}</summary><pre dir="ltr">{JSON.stringify({ digest: selectedReceipt.digest, source_identity: selectedReceipt.source_identity, limitations: selectedReceipt.limitations }, null, 2)}</pre></details>
+    </section>}
     {selected && <section className="panel snapshot-detail">
       <div className="section-head"><div><h2>{t("snapshot.detail")}</h2><code dir="ltr">{selected.id}</code></div><span className={selected.integrity_status === "VERIFIED" ? "readiness good" : "readiness warn"}>{selected.integrity_status === "VERIFIED" ? t("snapshot.integrityVerified") : t("snapshot.integrityNeedsAttention")}</span></div>
       <div className="snapshot-metrics">

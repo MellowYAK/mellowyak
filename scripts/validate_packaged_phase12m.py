@@ -28,7 +28,7 @@ from validate_packaged_phase7 import (
 
 ROOT = Path(__file__).resolve().parents[1]
 TOKEN = "packaged-phase-twelvem-validation-token-2026"
-SCHEMA = "0010_passive_sentinel_orchestration"
+SCHEMA = "0011_baseline_lock_and_local_proof"
 
 
 def parse_args() -> argparse.Namespace:

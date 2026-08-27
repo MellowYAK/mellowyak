@@ -28,7 +28,7 @@ from validate_packaged_phase7 import (
 
 ROOT = Path(__file__).resolve().parents[1]
 TOKEN = "packaged-phase-nine-validation-token-2026"
-HEAD = "0010_passive_sentinel_orchestration"
+HEAD = "0011_baseline_lock_and_local_proof"
 
 
 def parse_args() -> argparse.Namespace:
@@ -136,7 +136,7 @@ def validate_clean_install(engine: Path, root: Path) -> dict[str, Any]:
         assert_authentication_required(handle.base_url)
         health = api(handle.base_url, "/health")
         if health["database_schema_version"] != HEAD:
-            raise AssertionError("packaged engine did not migrate to Phase 9")
+            raise AssertionError("packaged engine did not migrate to the current head")
         onboarding = api(handle.base_url, "/app/onboarding")
         if not onboarding["requires_first_run"]:
             raise AssertionError("clean install did not require first run")

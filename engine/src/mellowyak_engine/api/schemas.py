@@ -1251,6 +1251,78 @@ class BehaviorBaselineResponse(BaseModel):
     revoked_at: datetime | None
 
 
+class BehaviorChangeDecisionRequest(BaseModel):
+    decision: str = Field(min_length=1, max_length=40)
+    reason: str = Field(default="", max_length=4000)
+
+
+class ExpectedChangeReverifyRequest(BaseModel):
+    decision_id: str = Field(min_length=1, max_length=36)
+    capture_id: str = Field(min_length=1, max_length=36)
+
+
+class KnownGoodPromoteRequest(BaseModel):
+    decision_id: str = Field(min_length=1, max_length=36)
+    confirmation_nonce: str = Field(min_length=20, max_length=240)
+    deliberate_confirmation: bool = False
+    reviewer: str = Field(min_length=1, max_length=240)
+    notes: str = Field(default="", max_length=4000)
+
+
+class BehaviorChangeDecisionResponse(BaseModel):
+    id: str
+    project_id: str
+    behavior_id: str
+    previous_baseline_id: str
+    decision: str
+    state: str
+    reason: str
+    source_identity: dict[str, object]
+    runtime_identity: dict[str, object]
+    capture_id: str | None
+    verification_run_id: str | None
+    promoted_baseline_id: str | None
+    confirmation_expires_at: str | None
+    confirmation_used: bool
+    confirmation_nonce: str | None = None
+    actor: str
+    created_at: str
+    updated_at: str
+    known_facts: list[str]
+    unknowns: list[str]
+    limitations: list[str]
+
+
+class KnownGoodLineageResponse(BaseModel):
+    project_id: str
+    behavior_id: str
+    state: str
+    current_baseline_id: str | None
+    baselines: list[dict[str, object]]
+    active_decision: dict[str, object] | None
+    known_facts: list[str]
+    unknowns: list[str]
+    limitations: list[str]
+
+
+class YakReceiptResponse(BaseModel):
+    id: str
+    project_id: str
+    episode_id: str
+    snapshot_id: str | None
+    source_identity: dict[str, object]
+    payload: dict[str, object]
+    digest: str
+    created_at: str
+    known_facts: list[str]
+    unknowns: list[str]
+    limitations: list[str]
+
+
+class YakReceiptListResponse(BaseModel):
+    receipts: list[YakReceiptResponse]
+
+
 class EvidenceArtifactResponse(BaseModel):
     id: str
     project_id: str

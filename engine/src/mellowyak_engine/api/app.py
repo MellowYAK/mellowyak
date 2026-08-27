@@ -25,6 +25,8 @@ from mellowyak_engine.api.schemas import (
     BehaviorBaselineResponse,
     BehaviorCandidateListResponse,
     BehaviorCandidateResponse,
+    BehaviorChangeDecisionRequest,
+    BehaviorChangeDecisionResponse,
     BehaviorDraftRequest,
     BehaviorMonitoringPolicyRequest,
     BrowserCaptureListResponse,
@@ -49,6 +51,7 @@ from mellowyak_engine.api.schemas import (
     EvidenceArtifactResponse,
     EvidenceBundleResponse,
     EvidenceListResponse,
+    ExpectedChangeReverifyRequest,
     GateDecisionResponse,
     GitStateResponse,
     GlobalMonitoringPolicyRequest,
@@ -63,6 +66,8 @@ from mellowyak_engine.api.schemas import (
     ImpactSummaryResponse,
     ImpactUnknownListResponse,
     InstallationResponse,
+    KnownGoodLineageResponse,
+    KnownGoodPromoteRequest,
     LocalEventListResponse,
     LocalExportResponse,
     MilestoneCreateRequest,
@@ -143,6 +148,8 @@ from mellowyak_engine.api.schemas import (
     VerificationRunResponse,
     VerificationStartRequest,
     WatcherRescanRequest,
+    YakReceiptListResponse,
+    YakReceiptResponse,
 )
 from mellowyak_engine.behaviors.service import BehaviorService, BehaviorServiceError
 from mellowyak_engine.browser.service import BrowserCaptureError, BrowserCaptureService
@@ -166,6 +173,11 @@ from mellowyak_engine.monitoring.service import MonitoringService
 from mellowyak_engine.noise_control.service import NoiseControlService
 from mellowyak_engine.orchestration.service import OrchestrationService
 from mellowyak_engine.probes.service import ProbeService, ProbeServiceError
+from mellowyak_engine.product_lock.service import (
+    ProductLockError,
+    ProductLockService,
+    YakReceiptService,
+)
 from mellowyak_engine.product_truth.service import ProductTruthService
 from mellowyak_engine.productization.service import ProductizationError, ProductizationService
 from mellowyak_engine.projects.service import ProjectError, ProjectService
@@ -247,6 +259,8 @@ class EngineRuntime:
     impact_memory: ImpactMemoryService
     noise_control: NoiseControlService
     compatibility: ProjectCompatibilityService
+    product_lock: ProductLockService
+    yak_receipts: YakReceiptService
 
 
 def _open_folder(path: str) -> str:
@@ -286,6 +300,8 @@ def create_app(settings: EngineSettings) -> FastAPI:
     monitoring = MonitoringService(projects, scans, episodes)
     runtime_profiles = RuntimeProfileService(database.sessions, events)
     compatibility = ProjectCompatibilityService(database.sessions)
+    product_lock = ProductLockService(database.sessions, events)
+    yak_receipts = YakReceiptService(database.sessions, events)
     impact = ImpactService(database.sessions, events)
     behaviors = BehaviorService(database.sessions, events)
     evidence = EvidenceService(database.sessions, EvidenceStore(paths.evidence), events)
@@ -395,6 +411,8 @@ def create_app(settings: EngineSettings) -> FastAPI:
         impact_memory=impact_memory,
         noise_control=noise_control,
         compatibility=compatibility,
+        product_lock=product_lock,
+        yak_receipts=yak_receipts,
     )
 
     app = FastAPI(
@@ -459,6 +477,19 @@ def create_app(settings: EngineSettings) -> FastAPI:
             status = 400
         elif code in {"PLAYWRIGHT_UNAVAILABLE", "CHROMIUM_UNAVAILABLE"}:
             status = 503
+        return HTTPException(status_code=status, detail=code)
+
+    def phase15_error(error: ProductLockError) -> HTTPException:
+        code = error.code
+        status = 409
+        if code.endswith("_NOT_FOUND"):
+            status = 404
+        elif code.endswith("_INVALID") or code in {
+            "PROMOTION_REASON_REQUIRED",
+            "PROMOTION_DELIBERATE_CONFIRMATION_REQUIRED",
+            "ATTESTATION_INVALID",
+        }:
+            status = 400
         return HTTPException(status_code=status, detail=code)
 
     @app.get("/handshake", response_model=HandshakeResponse, include_in_schema=True)
@@ -1019,6 +1050,72 @@ def create_app(settings: EngineSettings) -> FastAPI:
             return ActionResponse(status=result["status"])
         except EvidenceServiceError as error:
             raise phase4_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/behaviors/{behavior_id}/known-good-lineage",
+        response_model=KnownGoodLineageResponse,
+        dependencies=[Depends(guard)],
+    )
+    def known_good_lineage(project_id: str, behavior_id: str) -> KnownGoodLineageResponse:
+        try:
+            return KnownGoodLineageResponse(**product_lock.lineage(project_id, behavior_id))
+        except ProductLockError as error:
+            raise phase15_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/behaviors/{behavior_id}/change-decision",
+        response_model=BehaviorChangeDecisionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def behavior_change_decision(
+        project_id: str, behavior_id: str, request: BehaviorChangeDecisionRequest
+    ) -> BehaviorChangeDecisionResponse:
+        try:
+            return BehaviorChangeDecisionResponse(
+                **product_lock.decide(project_id, behavior_id, request.decision, request.reason)
+            )
+        except ProductLockError as error:
+            raise phase15_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/behaviors/{behavior_id}/expected-change/reverify",
+        response_model=BehaviorChangeDecisionResponse,
+        dependencies=[Depends(guard)],
+    )
+    def reverify_expected_change(
+        project_id: str, behavior_id: str, request: ExpectedChangeReverifyRequest
+    ) -> BehaviorChangeDecisionResponse:
+        try:
+            return BehaviorChangeDecisionResponse(
+                **product_lock.reverify(
+                    project_id, behavior_id, request.decision_id, request.capture_id
+                )
+            )
+        except ProductLockError as error:
+            raise phase15_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/behaviors/{behavior_id}/known-good/promote",
+        response_model=KnownGoodLineageResponse,
+        dependencies=[Depends(guard)],
+    )
+    def promote_known_good(
+        project_id: str, behavior_id: str, request: KnownGoodPromoteRequest
+    ) -> KnownGoodLineageResponse:
+        try:
+            return KnownGoodLineageResponse(
+                **product_lock.promote(
+                    project_id,
+                    behavior_id,
+                    request.decision_id,
+                    request.confirmation_nonce,
+                    request.deliberate_confirmation,
+                    request.reviewer,
+                    request.notes,
+                )
+            )
+        except ProductLockError as error:
+            raise phase15_error(error) from error
 
     @app.get(
         "/projects/{project_id}/runtime-configurations",
@@ -1967,6 +2064,31 @@ def create_app(settings: EngineSettings) -> FastAPI:
             return SourceEpisodeResponse(**episodes.get(project_id, episode_id))
         except ValueError as error:
             raise phase7_error(error) from error
+
+    @app.get(
+        "/projects/{project_id}/yak-receipts",
+        response_model=YakReceiptListResponse,
+        dependencies=[Depends(guard)],
+    )
+    def list_yak_receipts(project_id: str) -> YakReceiptListResponse:
+        try:
+            projects.get_model(project_id)
+            return YakReceiptListResponse(receipts=yak_receipts.list(project_id))
+        except (ProjectError, ProductLockError) as error:
+            if isinstance(error, ProductLockError):
+                raise phase15_error(error) from error
+            raise project_error(error) from error
+
+    @app.post(
+        "/projects/{project_id}/episodes/{episode_id}/yak-receipt",
+        response_model=YakReceiptResponse,
+        dependencies=[Depends(guard)],
+    )
+    def create_yak_receipt(project_id: str, episode_id: str) -> YakReceiptResponse:
+        try:
+            return YakReceiptResponse(**yak_receipts.get_or_create(project_id, episode_id))
+        except ProductLockError as error:
+            raise phase15_error(error) from error
 
     @app.get(
         "/projects/{project_id}/episodes/{episode_id}/summary",

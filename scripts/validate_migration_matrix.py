@@ -23,8 +23,9 @@ REVISIONS = [
     "0007_runtime_snapshot_probe_foundation",
     "0008_validated_repair_apply",
     "0009_technical_preview_readiness",
+    "0010_passive_sentinel_orchestration",
 ]
-HEAD = "0010_passive_sentinel_orchestration"
+HEAD = "0011_baseline_lock_and_local_proof"
 
 
 def config(database: Path) -> Config:
@@ -74,10 +75,12 @@ def upgrade_case(database: Path, starting_revision: str | None) -> dict[str, obj
         "notification_activation_events",
         "update_validation_runs",
         "package_acceptance_runs",
+        "behavior_change_decisions",
+        "yak_receipts",
     }
     if revision != HEAD or required - tables:
         raise AssertionError(
-            f"migration from {starting_revision or 'empty'} did not reach Phase 9"
+            f"migration from {starting_revision or 'empty'} did not reach Phase 15M"
         )
     if starting_revision is not None and (
         canary is None or canary[0] != starting_revision

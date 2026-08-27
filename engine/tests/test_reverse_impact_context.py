@@ -613,7 +613,7 @@ def test_phase8_migration_preserves_existing_project_rows(
             (project_id, "Preserved Phase Project", str(tmp_path / "source"), now),
         )
     upgraded = LocalDatabase(paths)
-    assert upgraded.migrate() == "0010_passive_sentinel_orchestration"
+    assert upgraded.migrate() == "0011_baseline_lock_and_local_proof"
     with upgraded.engine.connect() as connection:
         row = connection.execute(
             text("SELECT display_name, root_path FROM projects WHERE id = :id"), {"id": project_id}

@@ -5,14 +5,18 @@ import {
   cancelCapture,
   configureRuntime,
   createBehavior,
+  decideBehaviorChange,
   deleteEvidenceArtifact,
   getEvidenceBundle,
+  getKnownGoodLineage,
   listBehaviors,
   listCaptures,
   listEvidence,
   listRuntimes,
   listRuntimeProfiles,
   pauseCapture,
+  promoteKnownGood,
+  reverifyExpectedChange,
   resumeCapture,
   revokeBaseline,
   startCapture,
@@ -22,6 +26,7 @@ import {
   updateBehavior,
   type BrowserCapture,
   type EvidenceBundle,
+  type KnownGoodLineage,
   type ProtectedBehavior,
   type RuntimeConfiguration,
   type RuntimeProfile,
@@ -59,6 +64,9 @@ export function BehaviorsScreen({ projectId, initialBehaviorId, t, onError }: Pr
   const [reviewer, setReviewer] = useState("");
   const [reviewNotes, setReviewNotes] = useState("");
   const [bundle, setBundle] = useState<EvidenceBundle | null>(null);
+  const [lineage, setLineage] = useState<KnownGoodLineage | null>(null);
+  const [decisionReason, setDecisionReason] = useState("");
+  const [promotionConfirmed, setPromotionConfirmed] = useState(false);
   const [stepLabels, setStepLabels] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
 
@@ -85,6 +93,11 @@ export function BehaviorsScreen({ projectId, initialBehaviorId, t, onError }: Pr
   useEffect(() => {
     if (initialBehaviorId) setSelectedId(initialBehaviorId);
   }, [initialBehaviorId]);
+
+  useEffect(() => {
+    if (!selectedId) { setLineage(null); return; }
+    void getKnownGoodLineage(projectId, selectedId).then(setLineage).catch((reason) => onError(failure(reason)));
+  }, [projectId, selectedId]);
 
   const selected = useMemo(
     () => behaviors.find((behavior) => behavior.id === selectedId) ?? null,
@@ -179,6 +192,14 @@ export function BehaviorsScreen({ projectId, initialBehaviorId, t, onError }: Pr
 
   const approveBaseline = () => void run(async () => {
     if (!reviewCapture || reviewCapture.status !== "VALIDATED") return;
+    if (selected?.last_accepted_baseline_id) {
+      const decision = lineage?.active_decision;
+      if (!decision || decision.state !== "EXPECTED_CHANGE_SELECTED") return;
+      const verified = await reverifyExpectedChange(projectId, selected.id, decision.id, reviewCapture.id);
+      const refreshed = await getKnownGoodLineage(projectId, selected.id);
+      setLineage({ ...refreshed, active_decision: verified });
+      return;
+    }
     const result = await acceptBaseline(
       projectId,
       reviewCapture.id,
@@ -186,6 +207,22 @@ export function BehaviorsScreen({ projectId, initialBehaviorId, t, onError }: Pr
       reviewNotes,
     );
     setBundle(await getEvidenceBundle(projectId, result.evidence_bundle_id));
+    setReviewer("");
+    setReviewNotes("");
+    await refresh();
+  });
+
+  const decideChange = (decision: "EXPECTED" | "REGRESSION" | "UNSURE") => void run(async () => {
+    if (!selected) return;
+    await decideBehaviorChange(projectId, selected.id, decision, decision === "EXPECTED" ? decisionReason : "");
+    setLineage(await getKnownGoodLineage(projectId, selected.id));
+    setDecisionReason("");
+  });
+
+  const confirmPromotion = () => void run(async () => {
+    if (!selected || !lineage?.active_decision?.confirmation_nonce) return;
+    setLineage(await promoteKnownGood(projectId, selected.id, lineage.active_decision.id, lineage.active_decision.confirmation_nonce, reviewer, reviewNotes));
+    setPromotionConfirmed(false);
     setReviewer("");
     setReviewNotes("");
     await refresh();
@@ -299,7 +336,7 @@ export function BehaviorsScreen({ projectId, initialBehaviorId, t, onError }: Pr
               <label className="field"><span>{t("capture.reviewer")}</span><input value={reviewer} onChange={(event) => setReviewer(event.target.value)} /></label>
               <label className="field"><span>{t("capture.notes")}</span><textarea value={reviewNotes} onChange={(event) => setReviewNotes(event.target.value)} /></label>
               {reviewCapture.status === "REVIEW_REQUIRED" && <button className="primary" disabled={busy || !selectedRuntimeProfileVersion} onClick={validateBaseline}>{t("capture.validateReplay")}</button>}
-              {reviewCapture.status === "VALIDATED" && <button className="primary" disabled={busy || !reviewer.trim()} onClick={approveBaseline}>{t("capture.accept")}</button>}
+              {reviewCapture.status === "VALIDATED" && <button className="primary" disabled={busy || (!selected?.last_accepted_baseline_id && !reviewer.trim()) || (Boolean(selected?.last_accepted_baseline_id) && lineage?.active_decision?.state !== "EXPECTED_CHANGE_SELECTED")} onClick={approveBaseline}>{selected?.last_accepted_baseline_id ? t("baselineLock.reverify") : t("capture.accept")}</button>}
             </div>}
             {behaviorCaptures.filter((capture) => capture.status !== "RECORDING" && capture.status !== "REVIEW_REQUIRED").map((capture) => <article className="capture-history" key={capture.id}><span>{t(`capture.state.${capture.status}` as TranslationKey)}</span><code dir="ltr">{capture.entry_url}</code></article>)}
           </section>
@@ -310,6 +347,22 @@ export function BehaviorsScreen({ projectId, initialBehaviorId, t, onError }: Pr
             {!selected.baselines.length && <p className="muted">{t("evidence.empty")}</p>}
             {bundle && <div className="bundle-details"><h3>{t("evidence.bundle")}</h3><code dir="ltr">{bundle.manifest_sha256}</code>{bundle.items.map((item) => <article key={item.ordinal}><strong>{t(`evidence.type.${item.item_type}` as TranslationKey)}</strong><span>{t("evidence.bytes", { count: item.artifact.size_bytes })}</span><code dir="ltr">{item.artifact.sha256}</code><em>{item.artifact.integrity_verified ? t("evidence.integrityVerified") : t("evidence.integrityFailed")}</em></article>)}</div>}
             {selected.last_accepted_baseline_id && <button className="secondary danger" disabled={busy} onClick={() => void run(async () => { await revokeBaseline(projectId, selected.id); setBundle(null); await refresh(); })}>{t("evidence.revoke")}</button>}
+          </section>
+          <section className="panel baseline-lock-panel">
+            <div className="section-head"><div><h2>{t("baselineLock.title")}</h2><p className="muted">{t("baselineLock.subtitle")}</p></div><span className="local-badge">{t("common.localOnly")}</span></div>
+            {!selected.last_accepted_baseline_id ? <p className="muted">{t("baselineLock.noKnownGood")}</p> : <>
+              <div className="analysis-banner"><strong>{t("baselineLock.changedTitle")}</strong><span>{t("baselineLock.changedQuestion")}</span></div>
+              <label className="field"><span>{t("baselineLock.reason")}</span><textarea value={decisionReason} maxLength={4000} onChange={(event) => setDecisionReason(event.target.value)} /></label>
+              <div className="button-row">
+                <button className="primary" disabled={busy || !decisionReason.trim()} onClick={() => decideChange("EXPECTED")}>{t("baselineLock.expected")}</button>
+                <button className="secondary danger" disabled={busy} onClick={() => decideChange("REGRESSION")}>{t("baselineLock.regression")}</button>
+                <button className="secondary" disabled={busy} onClick={() => decideChange("UNSURE")}>{t("baselineLock.unsure")}</button>
+              </div>
+              {lineage?.active_decision && <div className="status-row"><span>{t("baselineLock.decisionState")}</span><strong>{t(`baselineLock.state.${lineage.active_decision.state}` as TranslationKey)}</strong></div>}
+              {lineage?.active_decision?.state === "EXPECTED_CHANGE_SELECTED" && <p className="privacy-note">{t("baselineLock.reverifyNext")}</p>}
+              {lineage?.active_decision?.state === "PROMOTION_AWAITING_CONFIRMATION" && <section className="phase8-confirmation"><h3>{t("baselineLock.compareTitle")}</h3><div className="baseline-compare"><article><span>{t("baselineLock.old")}</span><code dir="ltr">{lineage.active_decision.previous_baseline_id}</code></article><article><span>{t("baselineLock.proposed")}</span><code dir="ltr">{lineage.active_decision.verification_run_id ?? t("common.unknown")}</code></article></div><p>{t("baselineLock.promotionWarning")}</p><label><input type="checkbox" checked={promotionConfirmed} onChange={(event) => setPromotionConfirmed(event.target.checked)} /> <span>{t("baselineLock.confirm")}</span></label><button className="primary" disabled={busy || !promotionConfirmed || !reviewer.trim()} onClick={confirmPromotion}>{t("baselineLock.promote")}</button></section>}
+              <div className="baseline-lineage"><h3>{t("baselineLock.lineage")}</h3>{lineage?.baselines.map((item) => <article className={item.current ? "current" : ""} key={item.id}><div><strong>{t("baselineLock.version", { number: item.order })}</strong>{item.current && <span className="readiness good">{t("baselineLock.current")}</span>}</div><span>{item.promotion_reason ?? t("baselineLock.legacyRoot")}</span><small>{t("baselineLock.acceptedAt", { value: new Intl.DateTimeFormat(document.documentElement.lang, { dateStyle: "medium", timeStyle: "short" }).format(new Date(item.accepted_at)) })}</small><code dir="ltr">{item.source_identity_alias}</code></article>)}</div>
+            </>}
           </section>
         </>}
       </div>

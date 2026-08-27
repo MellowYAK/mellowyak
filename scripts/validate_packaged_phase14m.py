@@ -23,7 +23,7 @@ from validate_packaged_phase7 import (
 )
 
 TOKEN = "packaged-phase-fourteen-validation-token-2026"
-SCHEMA = "0010_passive_sentinel_orchestration"
+SCHEMA = "0011_baseline_lock_and_local_proof"
 
 
 def arguments() -> argparse.Namespace:
@@ -234,7 +234,7 @@ def validate(args: argparse.Namespace, temporary: Path) -> dict[str, Any]:
         "no_external_product_network": security.get("product_outbound_network") is False
         and diagnostics["privacy"]["outbound_product_network"] is False,
         "zero_owned_children_after_quit": process.process.poll() is not None,
-        "schema_0010": health["database_schema_version"] == SCHEMA,
+        "schema_0011": health["database_schema_version"] == SCHEMA,
         "product_self_test": self_test["status"] == "PASS",
     }
     report = {

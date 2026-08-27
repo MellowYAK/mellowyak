@@ -657,6 +657,185 @@
         "title": "BehaviorCandidateResponse",
         "type": "object"
       },
+      "BehaviorChangeDecisionRequest": {
+        "properties": {
+          "decision": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Decision",
+            "type": "string"
+          },
+          "reason": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision"
+        ],
+        "title": "BehaviorChangeDecisionRequest",
+        "type": "object"
+      },
+      "BehaviorChangeDecisionResponse": {
+        "properties": {
+          "actor": {
+            "title": "Actor",
+            "type": "string"
+          },
+          "behavior_id": {
+            "title": "Behavior Id",
+            "type": "string"
+          },
+          "capture_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capture Id"
+          },
+          "confirmation_expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmation Expires At"
+          },
+          "confirmation_nonce": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmation Nonce"
+          },
+          "confirmation_used": {
+            "title": "Confirmation Used",
+            "type": "boolean"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "decision": {
+            "title": "Decision",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "known_facts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Known Facts",
+            "type": "array"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "previous_baseline_id": {
+            "title": "Previous Baseline Id",
+            "type": "string"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "promoted_baseline_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Promoted Baseline Id"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "runtime_identity": {
+            "additionalProperties": true,
+            "title": "Runtime Identity",
+            "type": "object"
+          },
+          "source_identity": {
+            "additionalProperties": true,
+            "title": "Source Identity",
+            "type": "object"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "unknowns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unknowns",
+            "type": "array"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          },
+          "verification_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verification Run Id"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "behavior_id",
+          "previous_baseline_id",
+          "decision",
+          "state",
+          "reason",
+          "source_identity",
+          "runtime_identity",
+          "capture_id",
+          "verification_run_id",
+          "promoted_baseline_id",
+          "confirmation_expires_at",
+          "confirmation_used",
+          "actor",
+          "created_at",
+          "updated_at",
+          "known_facts",
+          "unknowns",
+          "limitations"
+        ],
+        "title": "BehaviorChangeDecisionResponse",
+        "type": "object"
+      },
       "BehaviorDraftRequest": {
         "properties": {
           "always_recheck": {
@@ -2247,6 +2426,28 @@
         "title": "EvidenceListResponse",
         "type": "object"
       },
+      "ExpectedChangeReverifyRequest": {
+        "properties": {
+          "capture_id": {
+            "maxLength": 36,
+            "minLength": 1,
+            "title": "Capture Id",
+            "type": "string"
+          },
+          "decision_id": {
+            "maxLength": 36,
+            "minLength": 1,
+            "title": "Decision Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision_id",
+          "capture_id"
+        ],
+        "title": "ExpectedChangeReverifyRequest",
+        "type": "object"
+      },
       "GateDecisionResponse": {
         "properties": {
           "change_id": {
@@ -3312,6 +3513,127 @@
           "database_schema_version"
         ],
         "title": "InstallationResponse",
+        "type": "object"
+      },
+      "KnownGoodLineageResponse": {
+        "properties": {
+          "active_decision": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Decision"
+          },
+          "baselines": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Baselines",
+            "type": "array"
+          },
+          "behavior_id": {
+            "title": "Behavior Id",
+            "type": "string"
+          },
+          "current_baseline_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Baseline Id"
+          },
+          "known_facts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Known Facts",
+            "type": "array"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "unknowns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unknowns",
+            "type": "array"
+          }
+        },
+        "required": [
+          "project_id",
+          "behavior_id",
+          "state",
+          "current_baseline_id",
+          "baselines",
+          "active_decision",
+          "known_facts",
+          "unknowns",
+          "limitations"
+        ],
+        "title": "KnownGoodLineageResponse",
+        "type": "object"
+      },
+      "KnownGoodPromoteRequest": {
+        "properties": {
+          "confirmation_nonce": {
+            "maxLength": 240,
+            "minLength": 20,
+            "title": "Confirmation Nonce",
+            "type": "string"
+          },
+          "decision_id": {
+            "maxLength": 36,
+            "minLength": 1,
+            "title": "Decision Id",
+            "type": "string"
+          },
+          "deliberate_confirmation": {
+            "default": false,
+            "title": "Deliberate Confirmation",
+            "type": "boolean"
+          },
+          "notes": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Notes",
+            "type": "string"
+          },
+          "reviewer": {
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Reviewer",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision_id",
+          "confirmation_nonce",
+          "reviewer"
+        ],
+        "title": "KnownGoodPromoteRequest",
         "type": "object"
       },
       "LocalEventListResponse": {
@@ -8361,13 +8683,110 @@
         ],
         "title": "WatcherRescanRequest",
         "type": "object"
+      },
+      "YakReceiptListResponse": {
+        "properties": {
+          "receipts": {
+            "items": {
+              "$ref": "#/components/schemas/YakReceiptResponse"
+            },
+            "title": "Receipts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "receipts"
+        ],
+        "title": "YakReceiptListResponse",
+        "type": "object"
+      },
+      "YakReceiptResponse": {
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "digest": {
+            "title": "Digest",
+            "type": "string"
+          },
+          "episode_id": {
+            "title": "Episode Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "known_facts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Known Facts",
+            "type": "array"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "title": "Payload",
+            "type": "object"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Id"
+          },
+          "source_identity": {
+            "additionalProperties": true,
+            "title": "Source Identity",
+            "type": "object"
+          },
+          "unknowns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unknowns",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "episode_id",
+          "snapshot_id",
+          "source_identity",
+          "payload",
+          "digest",
+          "created_at",
+          "known_facts",
+          "unknowns",
+          "limitations"
+        ],
+        "title": "YakReceiptResponse",
+        "type": "object"
       }
     }
   },
   "info": {
     "description": "Loopback-only API used by the MellowYak desktop shell.",
     "title": "MellowYak Local Engine",
-    "version": "0.4.0-preview.1"
+    "version": "0.5.0-preview.1"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -11817,6 +12236,292 @@
         "summary": "Revoke Behavior Baseline"
       }
     },
+    "/projects/{project_id}/behaviors/{behavior_id}/change-decision": {
+      "post": {
+        "operationId": "behavior_change_decision_projects__project_id__behaviors__behavior_id__change_decision_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "behavior_id",
+            "required": true,
+            "schema": {
+              "title": "Behavior Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BehaviorChangeDecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BehaviorChangeDecisionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Behavior Change Decision"
+      }
+    },
+    "/projects/{project_id}/behaviors/{behavior_id}/expected-change/reverify": {
+      "post": {
+        "operationId": "reverify_expected_change_projects__project_id__behaviors__behavior_id__expected_change_reverify_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "behavior_id",
+            "required": true,
+            "schema": {
+              "title": "Behavior Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpectedChangeReverifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BehaviorChangeDecisionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reverify Expected Change"
+      }
+    },
+    "/projects/{project_id}/behaviors/{behavior_id}/known-good-lineage": {
+      "get": {
+        "operationId": "known_good_lineage_projects__project_id__behaviors__behavior_id__known_good_lineage_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "behavior_id",
+            "required": true,
+            "schema": {
+              "title": "Behavior Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnownGoodLineageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Known Good Lineage"
+      }
+    },
+    "/projects/{project_id}/behaviors/{behavior_id}/known-good/promote": {
+      "post": {
+        "operationId": "promote_known_good_projects__project_id__behaviors__behavior_id__known_good_promote_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "behavior_id",
+            "required": true,
+            "schema": {
+              "title": "Behavior Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KnownGoodPromoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnownGoodLineageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Promote Known Good"
+      }
+    },
     "/projects/{project_id}/behaviors/{behavior_id}/monitoring-policy": {
       "get": {
         "operationId": "behavior_monitoring_policy_projects__project_id__behaviors__behavior_id__monitoring_policy_get",
@@ -14269,6 +14974,70 @@
           }
         },
         "summary": "Get Episode Summary"
+      }
+    },
+    "/projects/{project_id}/episodes/{episode_id}/yak-receipt": {
+      "post": {
+        "operationId": "create_yak_receipt_projects__project_id__episodes__episode_id__yak_receipt_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "episode_id",
+            "required": true,
+            "schema": {
+              "title": "Episode Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/YakReceiptResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Yak Receipt"
       }
     },
     "/projects/{project_id}/evidence": {
@@ -19558,6 +20327,61 @@
           }
         },
         "summary": "Watcher Rescan"
+      }
+    },
+    "/projects/{project_id}/yak-receipts": {
+      "get": {
+        "operationId": "list_yak_receipts_projects__project_id__yak_receipts_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/YakReceiptListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Yak Receipts"
       }
     },
     "/readiness": {

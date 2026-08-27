@@ -675,16 +675,16 @@ The intended principle is:
 
 ## Project status
 
-MellowYak `0.4.0-preview.1` is the Phase 14M Intel macOS release-candidate source. It extends the
-verified Phase 13M Passive Sentinel with installation-specific compatibility assessment, bounded
-Python and Node workspace discovery, honest Git-less and monorepo operation, explicit source/test/
-manifest/lock/generated/build/cache/sensitive/unsupported/ignored file classification, and watcher-
-gap recovery. Acceptance uses disposable copies of four immutable public repositories; it is not a
-universal framework-support claim or a public release. A changed file or dependency is only a reason
-to recheck; only comparable reproducible prior-PASS/current-FAIL evidence can support a confirmed
-regression. Exact results, limitations, package evidence, and the English screenshot guide are in
-[`docs/phase-14m-delivery/PHASE_14M_MASTER_REPORT.md`](docs/phase-14m-delivery/PHASE_14M_MASTER_REPORT.md)
-and [`docs/phase-14m-delivery/PHASE_14M_USER_MANUAL.md`](docs/phase-14m-delivery/PHASE_14M_USER_MANUAL.md).
+MellowYak `0.5.0-preview.1` is the Phase 15M Intel macOS product-lock source. It adds immutable
+Known-Good lineage, an explicit Expected Change decision/reverification/promotion contract, truthful
+event-driven repair language, and immutable local Yak Receipts. The final ad-hoc-signed Intel app and
+DMG pass source, migration, package, updater, and automated native-lifecycle validation. Physical
+human acceptance of tray/notification clicks, login, lock, sleep, Finder drag/alias, and disruptive OS
+transitions remains pending because no operator was present and Screen Recording permission was not
+available. Developer ID signing and notarization are not configured, so this is a controlled local
+technical preview—not a trusted public Mac release. Exact results and the English operator guide are
+in [`docs/phase-15m-delivery/PHASE_15M_MASTER_REPORT.md`](docs/phase-15m-delivery/PHASE_15M_MASTER_REPORT.md)
+and [`docs/phase-15m-delivery/PHASE_15M_OPERATOR_MANUAL.md`](docs/phase-15m-delivery/PHASE_15M_OPERATOR_MANUAL.md).
 
 The complete workflow described in this README is the product direction. Implementation must advance through verified stages.
 
@@ -960,6 +960,27 @@ Windows/Linux/Apple Silicon runtime acceptance, physical macOS interaction accep
 signing, notarization, Gatekeeper public distribution, production updater publication, cloud/source
 upload, private-project acceptance, automatic repair generation, or automatic Apply. Those boundaries
 remain explicit in the Phase 14M master report and user manual.
+
+### Phase 15M — Intel Mac product lock
+
+- makes an accepted Known Good immutable and preserves superseded versions as lineage roots/entries;
+- requires an operator reason, exact source/runtime-bound reverify, comparable PASS, fresh source
+  check, comparison, and single-use short-lived confirmation before promotion;
+- prevents direct acceptance from silently replacing an existing Known Good;
+- presents verified repair, live recheck, success, and byte-identical rollback as event-driven truth;
+- creates one immutable, project/Episode/source-bound Yak Receipt with checked, passed, confirmed,
+  deferred, runtime-unavailable, omitted, unknown, and source-modified facts;
+- adds migration `0011_baseline_lock_and_local_proof` and preserves all historical migrations/data;
+- keeps all visible GUI copy in exact English/Hebrew translation-key parity with Hebrew RTL;
+- builds and installs the Intel `0.5.0-preview.1` app and DMG with local ad-hoc signatures;
+- passes 210 Python tests, 29 React tests, deterministic OpenAPI, migrations, Phase 8–15 package
+  validators, updater E2E, and automated installed-app lifecycle checks;
+- defers Protection Map Lite and the Five-Minute Teach Flow to avoid feature creep.
+
+Phase 15M does **not** claim physical human macOS acceptance, trusted public distribution,
+Developer ID signing, notarization, universal framework support, complete behavior coverage, root
+cause, automatic repair generation, automatic Apply, Windows/Linux/Apple Silicon readiness, or a
+production updater channel. See the Phase 15M master report for the exact blocked physical matrix.
 
 ---
 

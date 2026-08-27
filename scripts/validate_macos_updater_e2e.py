@@ -317,12 +317,12 @@ def main() -> int:
             "downgrade_rejected": downgrade_rejected,
             "data_source_settings_preserved": preservation,
             "lower_application_engine_launched": lower_health.get("mode") == "local",
-            "lower_schema_0010": lower_health.get("database_schema_version")
-            == "0010_passive_sentinel_orchestration",
+            "lower_schema_0011": lower_health.get("database_schema_version")
+            == "0011_baseline_lock_and_local_proof",
             "lower_product_self_test": lower_self_test.get("status") == "PASS",
             "higher_application_engine_launched": higher_health.get("mode") == "local",
-            "higher_schema_0010": higher_health.get("database_schema_version")
-            == "0010_passive_sentinel_orchestration",
+            "higher_schema_0011": higher_health.get("database_schema_version")
+            == "0011_baseline_lock_and_local_proof",
             "higher_product_self_test": higher_self_test.get("status") == "PASS",
             "project_identity_preserved": project_identity_preserved,
             "durable_database_history_preserved": durable_history_preserved,
