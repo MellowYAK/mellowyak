@@ -44,6 +44,7 @@ struct EngineState {
     keep_running_on_close: Mutex<bool>,
     explicit_quit: AtomicBool,
     pending_route: Mutex<Option<String>>,
+    notification_route: Mutex<Option<String>>,
 }
 
 enum ManagedChild {
@@ -435,13 +436,26 @@ fn show_native_notification(
             .body(&body)
             .show()
             .map_err(|error| error.to_string())?;
+        if let Some(state) = app.try_state::<EngineState>() {
+            if let Ok(mut pending) = state.notification_route.lock() {
+                *pending = Some(route.clone());
+            }
+        }
         std::thread::spawn(move || {
             handle.wait_for_action(|action| {
-                if action != "__closed" {
-                    let route_app = app.clone();
-                    let target_route = route.clone();
-                    let _ = app.run_on_main_thread(move || navigate(&route_app, &target_route));
-                }
+                let route_app = app.clone();
+                let target_route = route.clone();
+                let notification_activated = action != "__closed";
+                let _ = app.run_on_main_thread(move || {
+                    if let Some(state) = route_app.try_state::<EngineState>() {
+                        if let Ok(mut pending) = state.notification_route.lock() {
+                            *pending = None;
+                        }
+                    }
+                    if notification_activated {
+                        navigate(&route_app, &target_route);
+                    }
+                });
             });
         });
         return Ok(());
@@ -453,6 +467,14 @@ fn show_native_notification(
         .body(body)
         .show()
         .map_err(|error| error.to_string())
+}
+
+fn take_notification_route(state: &EngineState) -> Option<String> {
+    state
+        .notification_route
+        .lock()
+        .ok()
+        .and_then(|mut route| route.take())
 }
 
 #[tauri::command]
@@ -693,6 +715,14 @@ pub fn run() {
             update_tray_state
         ])
         .on_window_event(|window, event| {
+            if let WindowEvent::Focused(true) = event {
+                let notification_route = window
+                    .try_state::<EngineState>()
+                    .and_then(|state| take_notification_route(&state));
+                if let Some(route) = notification_route {
+                    navigate(window.app_handle(), &route);
+                }
+            }
             if let WindowEvent::CloseRequested { api, .. } = event {
                 if let Some(state) = window.try_state::<EngineState>() {
                     let keep_running = state
@@ -812,6 +842,7 @@ pub fn run() {
                             keep_running_on_close: Mutex::new(true),
                             explicit_quit: AtomicBool::new(false),
                             pending_route: Mutex::new(None),
+                            notification_route: Mutex::new(None),
                         });
                         return Ok(());
                     }
@@ -823,6 +854,7 @@ pub fn run() {
                     keep_running_on_close: Mutex::new(true),
                     explicit_quit: AtomicBool::new(false),
                     pending_route: Mutex::new(None),
+                    notification_route: Mutex::new(None),
                 });
                 let app_handle = app.handle().clone();
                 tauri::async_runtime::spawn_blocking(move || {
@@ -852,6 +884,7 @@ pub fn run() {
                         keep_running_on_close: Mutex::new(true),
                         explicit_quit: AtomicBool::new(false),
                         pending_route: Mutex::new(None),
+                        notification_route: Mutex::new(None),
                     });
                     return Ok(());
                 }
@@ -863,6 +896,7 @@ pub fn run() {
                 keep_running_on_close: Mutex::new(true),
                 explicit_quit: AtomicBool::new(false),
                 pending_route: Mutex::new(None),
+                notification_route: Mutex::new(None),
             });
             let app_handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
