@@ -34,5 +34,19 @@
   "tray.alertSeverity.critical": "Critical",
   "tray.alertSeverity.high": "High",
   "tray.alertSeverity.warning": "Warning",
-  "tray.alertSeverity.info": "Information"
+  "tray.alertSeverity.info": "Information",
+  "notificationLab.information.title": "MellowYak information",
+  "notificationLab.information.body": "Local monitoring is active. No protected behavior regression is currently confirmed.",
+  "notificationLab.warning.title": "MellowYak warning",
+  "notificationLab.warning.body": "A local check needs attention. Review the available evidence before continuing.",
+  "notificationLab.high.title": "MellowYak high-priority alert",
+  "notificationLab.high.body": "Required verification is incomplete. Completion remains blocked until the missing check is resolved.",
+  "notificationLab.regression.title": "Regression detected — critical",
+  "notificationLab.regression.body": "A protected behavior failed repeatedly after a change. Completion is blocked and local evidence is available.",
+  "notificationLab.recovery.title": "Recovery required — critical",
+  "notificationLab.recovery.body": "MellowYak could not prove a complete rollback. Open the local recovery details before editing affected files.",
+  "notificationLab.error.title": "Local engine error",
+  "notificationLab.error.body": "Monitoring could not continue safely. Project source was not modified; open MellowYak for recovery guidance.",
+  "notificationLab.resolved.title": "Regression resolved",
+  "notificationLab.resolved.body": "The protected behavior passed again with current local evidence. Review the result before closing the incident."
 }

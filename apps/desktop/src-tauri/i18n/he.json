@@ -34,5 +34,19 @@
   "tray.alertSeverity.critical": "קריטית",
   "tray.alertSeverity.high": "גבוהה",
   "tray.alertSeverity.warning": "אזהרה",
-  "tray.alertSeverity.info": "מידע"
+  "tray.alertSeverity.info": "מידע",
+  "notificationLab.information.title": "מידע מ־MellowYak",
+  "notificationLab.information.body": "המעקב המקומי פעיל. כרגע לא אומתה רגרסיה בהתנהגות מוגנת.",
+  "notificationLab.warning.title": "אזהרה מ־MellowYak",
+  "notificationLab.warning.body": "בדיקה מקומית דורשת תשומת לב. יש לעיין בראיות הזמינות לפני שממשיכים.",
+  "notificationLab.high.title": "התראה בעדיפות גבוהה מ־MellowYak",
+  "notificationLab.high.body": "אימות נדרש טרם הושלם. ההשלמה נשארת חסומה עד לטיפול בבדיקה החסרה.",
+  "notificationLab.regression.title": "זוהתה רגרסיה — קריטי",
+  "notificationLab.regression.body": "התנהגות מוגנת נכשלה שוב ושוב לאחר שינוי. ההשלמה חסומה וראיות מקומיות זמינות.",
+  "notificationLab.recovery.title": "נדרש שחזור — קריטי",
+  "notificationLab.recovery.body": "MellowYak לא הצליחה להוכיח שחזור מלא. יש לפתוח את פרטי השחזור המקומיים לפני עריכת הקבצים המושפעים.",
+  "notificationLab.error.title": "שגיאה במנוע המקומי",
+  "notificationLab.error.body": "המעקב לא יכול להמשיך בבטחה. מקור הפרויקט לא שונה; יש לפתוח את MellowYak לקבלת הנחיות שחזור.",
+  "notificationLab.resolved.title": "הרגרסיה טופלה",
+  "notificationLab.resolved.body": "ההתנהגות המוגנת עברה שוב עם ראיות מקומיות עדכניות. יש לעיין בתוצאה לפני סגירת האירוע."
 }

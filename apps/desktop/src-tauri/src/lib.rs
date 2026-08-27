@@ -163,6 +163,30 @@ fn acceptance_tray_lab_state() -> Option<TrayStatePayload> {
     })
 }
 
+fn acceptance_notification_lab_payload(
+    strings: &HashMap<String, String>,
+) -> Option<(String, String)> {
+    if std::env::var("MELLOWYAK_ACCEPTANCE_LAB").ok().as_deref() != Some("native-notifications") {
+        return None;
+    }
+    let requested =
+        std::env::var("MELLOWYAK_NOTIFICATION_LAB_STATE").unwrap_or_else(|_| "information".into());
+    let prefix = match requested.as_str() {
+        "information" => "notificationLab.information",
+        "warning" => "notificationLab.warning",
+        "high" => "notificationLab.high",
+        "regression" => "notificationLab.regression",
+        "recovery" => "notificationLab.recovery",
+        "engine-error" => "notificationLab.error",
+        "resolved" => "notificationLab.resolved",
+        _ => return None,
+    };
+    Some((
+        strings[&format!("{prefix}.title")].clone(),
+        strings[&format!("{prefix}.body")].clone(),
+    ))
+}
+
 fn build_tray_menu(
     app: &tauri::AppHandle,
     strings: &HashMap<String, String>,
@@ -704,6 +728,14 @@ pub fn run() {
                 tray = tray.icon(icon);
             }
             tray.build(app)?;
+
+            if let Some((title, body)) = acceptance_notification_lab_payload(&strings) {
+                let app_handle = app.handle().clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(std::time::Duration::from_secs(2));
+                    let _ = show_native_notification(app_handle, title, body, "alerts".into());
+                });
+            }
 
             let token = random_session_token();
             let parent_pid = std::process::id().to_string();

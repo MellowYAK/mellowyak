@@ -676,11 +676,12 @@ The intended principle is:
 ## Project status
 
 MellowYak `0.5.0-preview.2` is the active Phase 16M Intel macOS physical-acceptance candidate. It
-preserves the Phase 15M product lock, adds an opt-in synthetic Tray Notification Lab for physical
-menu-bar evidence, completes the missing English/Hebrew alert translations, and renders `HIGH`
+preserves the Phase 15M product lock, adds opt-in synthetic tray-menu and native-notification labs
+for physical menu-bar and banner evidence, completes the missing English/Hebrew alert translations, and renders `HIGH`
 tray alerts distinctly instead of falling back to `INFO`. The lab is disabled by default, contains
-no project/source data, and requires both `MELLOWYAK_ACCEPTANCE_LAB=tray-notifications` and an
-explicit `MELLOWYAK_TRAY_LAB_STATE`. Physical acceptance and trusted public distribution remain
+no project/source data. Tray-menu mode requires `MELLOWYAK_ACCEPTANCE_LAB=tray-notifications` plus
+`MELLOWYAK_TRAY_LAB_STATE`; native banners require `MELLOWYAK_ACCEPTANCE_LAB=native-notifications`
+plus `MELLOWYAK_NOTIFICATION_LAB_STATE`. Physical acceptance and trusted public distribution remain
 blocked until their documented gates pass.
 
 MellowYak `0.5.0-preview.1` was the Phase 15M Intel macOS product-lock source. It adds immutable
