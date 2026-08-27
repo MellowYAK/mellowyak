@@ -10,7 +10,7 @@ This is the consolidated English technical report for Phase 16M-C closure on Int
 |---|---|
 | Version | `0.5.0-preview.3` |
 | Branch | `product/intel-mac-product-lock` |
-| Final build commit | `71e3955d8a62e546b4a0ac8c34a2fe46f72053b7` |
+| Final build commit | `a24d9f7e252c71f4d389493988ffd38075783807` |
 | Database schema | `0011_baseline_lock_and_local_proof` |
 | Installed location | `/Applications/MellowYak.app` |
 | Platform | Intel macOS, `x86_64` |
@@ -20,10 +20,10 @@ This is the consolidated English technical report for Phase 16M-C closure on Int
 
 | Artifact | SHA-256 |
 |---|---|
-| Desktop executable | `7d21d73deee3c8606e3cdd0aadbee1512bd07ecf6710e5561c9ccbf476aeb0a5` |
+| Desktop executable | `2f798f787be42df85072812b33daf860b26789d5885f8f3bfd5f4d4adf168159` |
 | Embedded engine | `ea492adad0b4239b6e4ba5c7ed998d55c4e0dd883d484511202b0b1f49cb8e2e` |
 | Browser launcher | `97136324f0a487d9fef8eee50341a1b433a05bc4228daae5b1ac19d18ff068fb` |
-| Signed DMG | `39a4720dcb43ac95eb6ec892f2d4edb169a69c894ff8b516e503ecdd7ae30f73` |
+| Signed DMG | `ada29bfe1c9887256f057279ee7e201cad0ea6db3a379bb980a6466ffe3ce7dd` |
 | Deterministic OpenAPI | `608ced66dbc65676ab44abae5ed97f070b1ee41af7fc7db127fa35623a66949f` |
 
 The built and installed desktop/engine hashes matched exactly. The DMG path is `apps/desktop/src-tauri/target/release/bundle/dmg/MellowYak_0.5.0-preview.3_x64.dmg`.
@@ -31,6 +31,8 @@ The built and installed desktop/engine hashes matched exactly. The DMG path is `
 ## 4. Phase implementation
 
 Notification activation was corrected to revalidate a notification route at activation time. If its project, alert, behavior, change, regression, or gate destination has become stale, the installed UI opens the safe Alerts route. A React regression test proves the fallback and prevents the former stale-context navigation behavior.
+
+Native close-policy automation exposed a second shipping defect: disabling “Keep monitoring when the window closes” destroyed the window but left the tray application and engine running. Commit `a24d9f7e252c71f4d389493988ffd38075783807` now maps the disabled policy to an explicit application exit and owned-engine cleanup. A Rust regression test covers all three decisions: hide to tray, quit application, and allow an already-explicit quit. The desktop and DMG were rebuilt from that commit; the repaired installed application closed to zero desktop and zero engine processes when the setting was disabled.
 
 Version metadata was synchronized across the desktop package, Tauri configuration, Rust lockfile, Python engine metadata, OpenAPI metadata, and packaged validators. The final candidate was rebuilt from the exact recorded commit.
 
@@ -58,7 +60,7 @@ macOS Screen Recording permission was unavailable, so no new full-screen capture
 
 | Check | Result |
 |---|---|
-| Python tests | PASS — 210 passed |
+| Python tests | PASS — 211 passed |
 | React/Vitest | PASS — 30 passed |
 | TypeScript | PASS |
 | Vite production build | PASS |
@@ -82,12 +84,13 @@ The single Python warning was a third-party Starlette deprecation warning and di
 | Phase 11M macOS package | `VERIFIED_WORKING` after outer DMG signing correction |
 | Phase 12 safe apply | `VERIFIED_WORKING` |
 | Phase 13 orchestration | `VERIFIED_WORKING` |
+| Phase 14 public-project corpus and package | `VERIFIED_WORKING` |
 | Phase 15 product lock | `VERIFIED_WORKING` |
 | Native lifecycle | `VERIFIED_WORKING` |
 | Updater E2E | `VERIFIED_WORKING` with ephemeral acceptance keys |
 | External product network | None observed |
 
-Phase 12 included a successful apply, a forced post-check failure, byte-identical rollback, and stale-source rejection. Native lifecycle included clean launch, single-instance focus, one engine, supervised engine restart, explicit exit, and owned-child cleanup. Updater E2E rejected tampered, wrong-key, and incomplete packages while preserving data.
+Phase 12 included a successful apply, a forced post-check failure, byte-identical rollback, and stale-source rejection. Native lifecycle included clean launch, single-instance focus, one engine, supervised engine restart, explicit exit, and owned-child cleanup. Updater E2E rejected tampered, wrong-key, incomplete, and downgrade packages while preserving durable data and project identity.
 
 ## 9. DMG correction
 
@@ -111,6 +114,7 @@ The authoritative per-test matrix is in `PHASE_16M_PHYSICAL_ACCEPTANCE.md` and t
 - Files under `images/native/notifications` are genuine Notification Center banner captures.
 - Files under `images/deterministic` are labeled `DETERMINISTIC_PRODUCT_VIEW — NOT HUMAN PHYSICAL EVIDENCE`.
 - The same canonical image may appear in both PDFs.
+- Unchanged canonical images reused in this closure retain their original per-image capture commit and app hash. Those values preserve honest capture provenance; the candidate table and top-level manifest identity remain authoritative for the rebuilt final candidate.
 - Accessibility automation is evidence for native automation only.
 - No screenshot is promoted to a stronger evidence class than its origin supports.
 
@@ -195,13 +199,13 @@ Expected and actual details for every row are maintained in `PHASE_16M_PHYSICAL_
 
 ## Expected, actual, evidence, cleanup, and remaining action
 
-+| Test ID | Native automation | Human physical | Visual | Functional | Expected | Actual | Evidence | Cleanup | Remaining human action |
+| Test ID | Native automation | Human physical | Visual | Functional | Expected | Actual | Evidence | Cleanup | Remaining human action |
 |---|---|---|---|---|---|---|---|---|---|
 | P15-PHYS-101 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | VISUAL_PASS | PASS | One translated menu and truthful counters | Native menu inspected; one app/engine | Native tray capture and lifecycle log | PASS | Physically open and confirm |
 | P15-PHYS-102 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | PASS | Existing window focuses safely | Same window/process restored | Installed lifecycle log | PASS | Physically select Open |
 | P15-PHYS-103 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | NO_VISUAL_EVIDENCE_REQUIRED | PASS | No duplicate app or engine | Second instance exited; one app/engine | Lifecycle validator | PASS | Launch from Finder/Spotlight |
 | P15-PHYS-104 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | PASS | Window hides; monitoring continues | Existing identity remained active | Lifecycle validator | PASS | Physically click red close |
-| P15-PHYS-105 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | PASS | Close follows explicit exit policy | Policy matched and setting restored | Lifecycle validator | PASS | Physically repeat with setting off |
+| P15-PHYS-105 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | PASS | Disabled close-to-tray exits app and engine | Defect reproduced, fixed, rebuilt; installed retest ended at 0 desktop and 0 engine | Accessibility run, Rust regression, process inspection | PASS | Physically repeat with setting off |
 | P15-PHYS-106 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | PASS | All owned processes exit | Desktop, engine and children exited | Process evidence | PASS | Physically choose tray Quit |
 | P15-PHYS-107 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | NOT_RUN | PASS | Cmd+Q/menu Quit cleans all children | Shutdown defect fixed; cleanup passed | Process evidence | PASS | Physically use application-menu Quit |
 | P15-PHYS-108 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | VISUAL_PASS | PASS | OS and product permission agree | MellowYak permission enabled | Privacy-safe Settings crop | PASS | None |

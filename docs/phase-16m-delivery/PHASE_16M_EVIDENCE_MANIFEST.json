@@ -1,15 +1,15 @@
 {
   "schema": "mellowyak.phase16m.acceptance-evidence.v2",
-  "generated_at": "2026-08-27T19:35:00+03:00",
+  "generated_at": "2026-08-28T00:39:09+03:00",
   "candidate": {
     "version": "0.5.0-preview.3",
     "branch": "product/intel-mac-product-lock",
-    "final_build_commit": "71e3955d8a62e546b4a0ac8c34a2fe46f72053b7",
+    "final_build_commit": "a24d9f7e252c71f4d389493988ffd38075783807",
     "database_head": "0011_baseline_lock_and_local_proof",
-    "desktop_sha256": "7d21d73deee3c8606e3cdd0aadbee1512bd07ecf6710e5561c9ccbf476aeb0a5",
+    "desktop_sha256": "2f798f787be42df85072812b33daf860b26789d5885f8f3bfd5f4d4adf168159",
     "engine_sha256": "ea492adad0b4239b6e4ba5c7ed998d55c4e0dd883d484511202b0b1f49cb8e2e",
     "browser_launcher_sha256": "97136324f0a487d9fef8eee50341a1b433a05bc4228daae5b1ac19d18ff068fb",
-    "dmg_sha256": "39a4720dcb43ac95eb6ec892f2d4edb169a69c894ff8b516e503ecdd7ae30f73"
+    "dmg_sha256": "ada29bfe1c9887256f057279ee7e201cad0ea6db3a379bb980a6466ffe3ce7dd"
   },
   "verdicts": {
     "product": "INTEL_MAC_TECHNICAL_PREVIEW_ACCEPTED_WITH_LIMITS",
@@ -20,6 +20,7 @@
     "deterministic_images": "DETERMINISTIC_PRODUCT_VIEW — NOT HUMAN PHYSICAL EVIDENCE",
     "accessibility_automation": "NATIVE_AUTOMATION_ONLY",
     "privacy": "No customer data, credentials, browser profiles, normal user data, or private desktop context.",
+    "reused_image_provenance": "Unchanged canonical images retain their original capture build commit and app hash. Those per-image values document capture provenance and do not redefine the final candidate identity.",
     "allowed_statuses": {
       "native_automation": [
         "NATIVE_AUTOMATION_PASS",
@@ -375,8 +376,20 @@
     "PHASE_16M_VISUAL_MANUAL_AND_CHECKLIST.md"
   ],
   "pdfs": [
-    {"path":"PHASE_16M_EXECUTION_AND_EVIDENCE_REPORT.pdf","pages":5,"size_bytes":245438,"sha256":"27e4e6e96bb1002fca714d8b839f604356d47c0623044f9d79b8c5c878ec80c7"},
-    {"path":"PHASE_16M_VISUAL_MANUAL_AND_CHECKLIST.pdf","pages":53,"size_bytes":11730950,"sha256":"bc68dfb43a6e3204a15d83c9adeabd0e78b4e82e59c767dfaa8d289aa75a2df1"}
+    {
+      "path": "PHASE_16M_EXECUTION_AND_EVIDENCE_REPORT.pdf",
+      "pages": 8,
+      "size_bytes": 324428,
+      "sha256": "8819949113a1b90732ec8445b652d9ffade402e4ea1fd3da11d08678e6284c54",
+      "rendered_page_inspection": "PASS — all 8 pages rendered to PNG and visually reviewed"
+    },
+    {
+      "path": "PHASE_16M_VISUAL_MANUAL_AND_CHECKLIST.pdf",
+      "pages": 55,
+      "size_bytes": 12281328,
+      "sha256": "44799be0d5cd290e32b38335576dd8c51f9d0a5d419ca9697876c8699e19a856",
+      "rendered_page_inspection": "PASS — all 55 pages rendered to PNG and visually reviewed"
+    }
   ],
   "images": [
     {
