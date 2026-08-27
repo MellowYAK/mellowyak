@@ -435,7 +435,7 @@ fn show_native_notification(
             .body(&body)
             .show()
             .map_err(|error| error.to_string())?;
-        tauri::async_runtime::spawn_blocking(move || {
+        std::thread::spawn(move || {
             handle.wait_for_action(|action| {
                 if action == "default" {
                     navigate(&app, &route);
