@@ -16,6 +16,14 @@ from pathlib import Path
 from validate_packaged_phase7 import start_engine, stop_engine
 
 AUTH_TOKEN = "phase11m-macos-acceptance-lab-token"
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+
+
+def current_database_head() -> str:
+    migration_files = sorted((REPOSITORY_ROOT / "engine/alembic/versions").glob("*.py"))
+    if not migration_files:
+        raise RuntimeError("no database migrations found")
+    return migration_files[-1].stem
 
 
 def marker_allows_test_actions(root: Path) -> bool:
@@ -119,8 +127,7 @@ def main() -> int:
             self_test = engine_request(engine.base_url, "/self-test", method="POST")
             checks["packaged_production_engine"] = (
                 health.get("mode") == "local"
-                and health.get("database_schema_version")
-                == "0010_passive_sentinel_orchestration"
+                and health.get("database_schema_version") == current_database_head()
             )
             checks["product_self_test"] = self_test.get("status") == "PASS"
             checks["no_external_network_dependency"] = True
