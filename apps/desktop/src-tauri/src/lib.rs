@@ -453,12 +453,12 @@ fn show_native_notification(
                 let target_route = route.clone();
                 let notification_activated = action != "__closed";
                 let _ = app.run_on_main_thread(move || {
-                    if let Some(state) = route_app.try_state::<EngineState>() {
-                        if let Ok(mut pending) = state.notification_route.lock() {
-                            *pending = None;
-                        }
-                    }
                     if notification_activated {
+                        if let Some(state) = route_app.try_state::<EngineState>() {
+                            if let Ok(mut pending) = state.notification_route.lock() {
+                                *pending = None;
+                            }
+                        }
                         navigate(&route_app, &target_route);
                     }
                 });
