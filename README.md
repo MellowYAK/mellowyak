@@ -675,7 +675,15 @@ The intended principle is:
 
 ## Project status
 
-MellowYak `0.5.0-preview.1` is the Phase 15M Intel macOS product-lock source. It adds immutable
+MellowYak `0.5.0-preview.2` is the active Phase 16M Intel macOS physical-acceptance candidate. It
+preserves the Phase 15M product lock, adds an opt-in synthetic Tray Notification Lab for physical
+menu-bar evidence, completes the missing English/Hebrew alert translations, and renders `HIGH`
+tray alerts distinctly instead of falling back to `INFO`. The lab is disabled by default, contains
+no project/source data, and requires both `MELLOWYAK_ACCEPTANCE_LAB=tray-notifications` and an
+explicit `MELLOWYAK_TRAY_LAB_STATE`. Physical acceptance and trusted public distribution remain
+blocked until their documented gates pass.
+
+MellowYak `0.5.0-preview.1` was the Phase 15M Intel macOS product-lock source. It adds immutable
 Known-Good lineage, an explicit Expected Change decision/reverification/promotion contract, truthful
 event-driven repair language, and immutable local Yak Receipts. The final ad-hoc-signed Intel app and
 DMG pass source, migration, package, updater, and automated native-lifecycle validation. Physical

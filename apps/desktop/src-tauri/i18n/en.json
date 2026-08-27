@@ -32,6 +32,7 @@
   "tray.resumeAll": "Resume all monitoring",
   "tray.recentAlert": "{severity} alert",
   "tray.alertSeverity.critical": "Critical",
+  "tray.alertSeverity.high": "High",
   "tray.alertSeverity.warning": "Warning",
   "tray.alertSeverity.info": "Information"
 }

@@ -114,6 +114,55 @@ fn tray_count(strings: &HashMap<String, String>, key: &str, count: u64) -> Strin
     strings[key].replace("{count}", &count.to_string())
 }
 
+fn acceptance_tray_lab_state() -> Option<TrayStatePayload> {
+    if std::env::var("MELLOWYAK_ACCEPTANCE_LAB").ok().as_deref() != Some("tray-notifications") {
+        return None;
+    }
+    let requested =
+        std::env::var("MELLOWYAK_TRAY_LAB_STATE").unwrap_or_else(|_| "monitoring".into());
+    let (state, severities): (&str, &[&str]) = match requested.as_str() {
+        "information" => ("MONITORING", &["INFO"]),
+        "warning" => ("NEEDS_REVIEW", &["WARNING"]),
+        "high" => ("NEEDS_REVIEW", &["HIGH"]),
+        "critical" => ("REGRESSION_DETECTED", &["CRITICAL"]),
+        "mixed" => (
+            "REGRESSION_DETECTED",
+            &["CRITICAL", "HIGH", "WARNING", "INFO"],
+        ),
+        "quiet" => ("QUIET", &[]),
+        "paused" => ("PAUSED", &[]),
+        "analyzing" => ("ANALYZING", &[]),
+        "verifying" => ("VERIFYING", &[]),
+        "needs-review" => ("NEEDS_REVIEW", &["WARNING"]),
+        "regression" => ("REGRESSION_DETECTED", &["CRITICAL"]),
+        "applying" => ("APPLY_IN_PROGRESS", &[]),
+        "recovery" => ("RECOVERY_REQUIRED", &["CRITICAL"]),
+        "engine-error" => ("ENGINE_ERROR", &["CRITICAL"]),
+        "monitoring" => ("MONITORING", &[]),
+        _ => return None,
+    };
+    let recent_alerts = severities
+        .iter()
+        .enumerate()
+        .map(|(index, severity)| TrayAlertState {
+            alert_id: format!("acceptance-lab-{index}"),
+            severity: (*severity).into(),
+        })
+        .collect::<Vec<_>>();
+    Some(TrayStatePayload {
+        state: state.into(),
+        unread_alert_count: recent_alerts.len() as u64,
+        critical_alert_count: recent_alerts
+            .iter()
+            .filter(|alert| alert.severity == "CRITICAL")
+            .count() as u64,
+        active_project_count: if state == "PAUSED" { 0 } else { 1 },
+        paused_project_count: if state == "PAUSED" { 1 } else { 0 },
+        projects: Vec::new(),
+        recent_alerts,
+    })
+}
+
 fn build_tray_menu(
     app: &tauri::AppHandle,
     strings: &HashMap<String, String>,
@@ -209,6 +258,7 @@ fn build_tray_menu(
         for alert in value.recent_alerts.iter().take(5) {
             let severity = match alert.severity.as_str() {
                 "CRITICAL" => &strings["tray.alertSeverity.critical"],
+                "HIGH" => &strings["tray.alertSeverity.high"],
                 "WARNING" => &strings["tray.alertSeverity.warning"],
                 _ => &strings["tray.alertSeverity.info"],
             };
@@ -344,7 +394,10 @@ fn show_native_notification(
 #[tauri::command]
 fn update_tray_state(app: tauri::AppHandle, state: TrayStatePayload) -> Result<(), String> {
     let strings = translations();
-    let menu = build_tray_menu(&app, &strings, Some(&state)).map_err(|error| error.to_string())?;
+    let lab_state = acceptance_tray_lab_state();
+    let effective_state = lab_state.as_ref().unwrap_or(&state);
+    let menu = build_tray_menu(&app, &strings, Some(effective_state))
+        .map_err(|error| error.to_string())?;
     let tray = app
         .tray_by_id("main-tray")
         .ok_or_else(|| "TRAY_UNAVAILABLE".to_string())?;
@@ -592,7 +645,8 @@ pub fn run() {
         })
         .setup(|app| {
             let strings = translations();
-            let menu = build_tray_menu(app.handle(), &strings, None)?;
+            let lab_state = acceptance_tray_lab_state();
+            let menu = build_tray_menu(app.handle(), &strings, lab_state.as_ref())?;
             let mut tray = TrayIconBuilder::with_id("main-tray")
                 .menu(&menu)
                 .tooltip(&strings["tray.tooltip"])

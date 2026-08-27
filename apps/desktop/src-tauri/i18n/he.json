@@ -32,6 +32,7 @@
   "tray.resumeAll": "חידוש כל המעקב",
   "tray.recentAlert": "התראה ברמת {severity}",
   "tray.alertSeverity.critical": "קריטית",
+  "tray.alertSeverity.high": "גבוהה",
   "tray.alertSeverity.warning": "אזהרה",
   "tray.alertSeverity.info": "מידע"
 }

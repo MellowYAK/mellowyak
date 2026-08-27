@@ -8786,7 +8786,7 @@
   "info": {
     "description": "Loopback-only API used by the MellowYak desktop shell.",
     "title": "MellowYak Local Engine",
-    "version": "0.5.0-preview.1"
+    "version": "0.5.0-preview.2"
   },
   "openapi": "3.1.0",
   "paths": {

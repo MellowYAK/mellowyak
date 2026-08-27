@@ -20,7 +20,7 @@ from validate_packaged_phase7 import (
 
 TOKEN = "packaged-phase-fifteen-validation-token-2026"
 SCHEMA = "0011_baseline_lock_and_local_proof"
-VERSION = "0.5.0-preview.1"
+VERSION = "0.5.0-preview.2"
 
 
 def arguments() -> argparse.Namespace:
