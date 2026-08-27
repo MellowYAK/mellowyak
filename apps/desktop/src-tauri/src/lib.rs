@@ -47,6 +47,23 @@ struct EngineState {
     notification_route: Mutex<Option<String>>,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum WindowCloseAction {
+    HideToTray,
+    QuitApplication,
+    AllowClose,
+}
+
+fn window_close_action(keep_running_on_close: bool, explicit_quit: bool) -> WindowCloseAction {
+    if explicit_quit {
+        WindowCloseAction::AllowClose
+    } else if keep_running_on_close {
+        WindowCloseAction::HideToTray
+    } else {
+        WindowCloseAction::QuitApplication
+    }
+}
+
 enum ManagedChild {
     Sidecar(CommandChild),
     #[cfg(target_os = "macos")]
@@ -767,9 +784,20 @@ pub fn run() {
                         .lock()
                         .map(|value| *value)
                         .unwrap_or(true);
-                    if keep_running && !state.explicit_quit.load(Ordering::SeqCst) {
-                        api.prevent_close();
-                        let _ = window.hide();
+                    match window_close_action(
+                        keep_running,
+                        state.explicit_quit.load(Ordering::SeqCst),
+                    ) {
+                        WindowCloseAction::HideToTray => {
+                            api.prevent_close();
+                            let _ = window.hide();
+                        }
+                        WindowCloseAction::QuitApplication => {
+                            state.explicit_quit.store(true, Ordering::SeqCst);
+                            stop_engine(window.app_handle());
+                            window.app_handle().exit(0);
+                        }
+                        WindowCloseAction::AllowClose => {}
                     }
                 }
             }
@@ -989,4 +1017,25 @@ pub fn run() {
             stop_engine(app_handle);
         }
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{window_close_action, WindowCloseAction};
+
+    #[test]
+    fn window_close_policy_hides_only_when_background_monitoring_is_enabled() {
+        assert_eq!(
+            window_close_action(true, false),
+            WindowCloseAction::HideToTray
+        );
+        assert_eq!(
+            window_close_action(false, false),
+            WindowCloseAction::QuitApplication
+        );
+        assert_eq!(
+            window_close_action(true, true),
+            WindowCloseAction::AllowClose
+        );
+    }
 }
