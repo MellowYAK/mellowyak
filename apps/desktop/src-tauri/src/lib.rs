@@ -437,8 +437,10 @@ fn show_native_notification(
             .map_err(|error| error.to_string())?;
         std::thread::spawn(move || {
             handle.wait_for_action(|action| {
-                if action == "default" {
-                    navigate(&app, &route);
+                if action != "__closed" {
+                    let route_app = app.clone();
+                    let target_route = route.clone();
+                    let _ = app.run_on_main_thread(move || navigate(&route_app, &target_route));
                 }
             });
         });
