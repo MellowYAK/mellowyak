@@ -191,6 +191,31 @@ fn native_notification_lab_enabled() -> bool {
     std::env::var("MELLOWYAK_ACCEPTANCE_LAB").ok().as_deref() == Some("native-notifications")
 }
 
+#[cfg(target_os = "macos")]
+fn install_application_quit_menu(
+    app: &tauri::AppHandle,
+    strings: &HashMap<String, String>,
+) -> tauri::Result<()> {
+    let Some(menu) = app.menu() else {
+        return Ok(());
+    };
+    let Some(tauri::menu::MenuItemKind::Submenu(application_menu)) =
+        menu.items()?.into_iter().next()
+    else {
+        return Ok(());
+    };
+    let item_count = application_menu.items()?.len();
+    if item_count == 0 {
+        return Ok(());
+    }
+    application_menu.remove_at(item_count - 1)?;
+    let quit = MenuItemBuilder::with_id("application-quit", &strings["tray.quit"])
+        .accelerator("CmdOrCtrl+Q")
+        .build(app)?;
+    application_menu.insert(&quit, item_count - 1)?;
+    Ok(())
+}
+
 fn build_tray_menu(
     app: &tauri::AppHandle,
     strings: &HashMap<String, String>,
@@ -680,8 +705,19 @@ pub fn run() {
                 }
             }
         })
+        .on_menu_event(|app, event| {
+            if event.id.as_ref() == "application-quit" {
+                if let Some(state) = app.try_state::<EngineState>() {
+                    state.explicit_quit.store(true, Ordering::SeqCst);
+                }
+                stop_engine(app);
+                app.exit(0);
+            }
+        })
         .setup(|app| {
             let strings = translations();
+            #[cfg(target_os = "macos")]
+            install_application_quit_menu(app.handle(), &strings)?;
             let lab_state = acceptance_tray_lab_state();
             let menu = build_tray_menu(app.handle(), &strings, lab_state.as_ref())?;
             let mut tray = TrayIconBuilder::with_id("main-tray")
