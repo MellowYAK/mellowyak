@@ -23,9 +23,14 @@ def main() -> None:
                 session_token=secrets.token_urlsafe(32),
             )
         )
-        target.write_text(
-            json.dumps(app.openapi(), indent=2, sort_keys=True) + "\n", encoding="utf-8"
-        )
+        try:
+            target.write_text(
+                json.dumps(app.openapi(), indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+        finally:
+            for shutdown_handler in app.router.on_shutdown:
+                shutdown_handler()
     print(target)
 
 

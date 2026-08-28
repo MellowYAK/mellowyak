@@ -109,6 +109,7 @@ def test_manifest_represents_deletion_and_rename_without_copying_unchanged_blob(
 
 def test_sensitive_ignore_symlink_artifact_large_and_nested_data_are_excluded(
     tmp_path: Path,
+    create_symlink,
 ) -> None:
     project = tmp_path / "project"
     project.mkdir()
@@ -127,8 +128,8 @@ def test_sensitive_ignore_symlink_artifact_large_and_nested_data_are_excluded(
     (project / ".codex" / "credentials.json").write_text(secret_value, encoding="utf-8")
     outside = tmp_path / "outside.txt"
     outside.write_text("outside", encoding="utf-8")
-    os.symlink(outside, project / "outside-link")
-    os.symlink(project / "safe.txt", project / "inside-link")
+    create_symlink(project / "outside-link", outside)
+    create_symlink(project / "inside-link", project / "safe.txt")
     data_root = project / ".mellowyak-data"
     store = SnapshotStore(data_root, "project-3", max_object_bytes=64)
     (data_root / "must-not-capture.txt").write_text(secret_value, encoding="utf-8")
@@ -191,7 +192,8 @@ def test_materialization_is_byte_exact_and_never_mutates_live_source(tmp_path: P
     assert set(_source_signature(restored)) == set(before)
     for relative, (_, digest) in before.items():
         assert hashlib.sha256((restored / relative).read_bytes()).hexdigest() == digest
-    assert stat.S_IMODE((restored / "run.sh").stat().st_mode) == 0o751
+    if os.name != "nt":
+        assert stat.S_IMODE((restored / "run.sh").stat().st_mode) == 0o751
     assert result.manifest.entries
     with pytest.raises(
         SnapshotStoreError,

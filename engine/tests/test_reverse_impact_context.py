@@ -453,7 +453,7 @@ def test_impact_and_behavior_endpoints_cannot_cross_project_ids(tmp_path: Path) 
         )
 
 
-def test_context_receipt_persists_no_source_or_sensitive_content_and_opens_no_network(
+def test_context_receipt_persists_no_source_or_sensitive_content_and_opens_no_external_network(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     root = repository(tmp_path)
@@ -461,7 +461,12 @@ def test_context_receipt_persists_no_source_or_sensitive_content_and_opens_no_ne
     (root / ".env").write_text(f"TOKEN={secret}\n", encoding="utf-8")
     attempted: list[object] = []
 
-    def deny_connect(_instance: object, address: object) -> None:
+    original_connect = socket.socket.connect
+
+    def deny_connect(instance: socket.socket, address: object) -> None:
+        if isinstance(address, tuple) and address[0] in {"127.0.0.1", "::1"}:
+            original_connect(instance, address)
+            return
         attempted.append(address)
         raise AssertionError(f"network attempted: {address}")
 

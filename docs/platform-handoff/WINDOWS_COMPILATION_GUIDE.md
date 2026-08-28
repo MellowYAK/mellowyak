@@ -1,0 +1,106 @@
+# MellowYak Windows x64 Compilation Guide
+
+This guide explains how to reproduce a native Windows x64 MellowYak build from the shared source. It contains no machine-specific credentials or acceptance evidence.
+
+## Supported source and toolchain
+
+- Windows 11 x64
+- PowerShell 7 recommended
+- Git
+- Node.js 22.x, selected through NVM for Windows
+- npm from the selected Node.js installation
+- Python 3.12 x64 with the Windows `py` launcher recommended
+- Rust 1.98.0 with `rustfmt` and `clippy`
+- Visual Studio 2022 Build Tools with the Desktop development with C++ workload and a current Windows SDK
+- Microsoft Edge WebView2 Runtime
+
+The repository pins Node major 22 in `.nvmrc`, Python 3.12 in `.python-version`, and Rust 1.98.0 in `rust-toolchain.toml`. Do not substitute a newer major merely because a package manager labels it LTS.
+
+## Clone and select the source
+
+```powershell
+git clone https://github.com/MellowYAK/mellowyak.git
+Set-Location mellowyak
+git checkout platform/windows-x64
+git status --short --branch
+```
+
+For a release or acceptance build, check out the exact annotated tag or commit named by the release notes instead of a moving branch.
+
+## Bootstrap
+
+The bootstrap is safe to rerun. It validates the pinned major versions, creates `engine/.venv`, installs locked desktop dependencies, installs the Python engine in editable development mode, installs managed Chromium, and regenerates the OpenAPI TypeScript contract.
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+./scripts/bootstrap-windows.ps1 -NonInteractive
+```
+
+If prerequisites are missing:
+
+```powershell
+./scripts/bootstrap-windows.ps1 -InstallMissing
+```
+
+Open a fresh PowerShell window after package installation and rerun the non-interactive command. The bootstrap uses NVM for Windows for Node 22 and invokes `npm.cmd`, so no permanent PowerShell execution-policy change is required.
+
+Verify the active tools:
+
+```powershell
+node --version
+npm.cmd --version
+py -3.12 --version
+rustc --version
+cargo --version
+```
+
+## Native source gates
+
+```powershell
+$Python = "engine/.venv/Scripts/python.exe"
+& $Python -m pytest engine
+& $Python -m ruff check engine scripts
+& $Python -m ruff format --check engine scripts
+& $Python scripts/export_openapi.py
+npm.cmd --prefix apps/desktop run contract:generate
+& $Python scripts/check_ui_translation_keys.py
+npm.cmd --prefix apps/desktop test
+npm.cmd --prefix apps/desktop run typecheck
+npm.cmd --prefix apps/desktop run build
+cargo fmt --check --manifest-path apps/desktop/src-tauri/Cargo.toml
+cargo check --locked --manifest-path apps/desktop/src-tauri/Cargo.toml
+cargo clippy --locked --manifest-path apps/desktop/src-tauri/Cargo.toml -- -D warnings
+& $Python scripts/validate_migration_matrix.py
+git diff --check
+```
+
+Generated contracts must remain deterministic. Review `git status` after the gates; unexpected tracked changes are a failure, not generated output to commit blindly.
+
+## Build the Windows package
+
+The supported build wrapper stages managed Chromium, builds the Python engine sidecar, runs contract/localization/type checks, and builds the configured Tauri NSIS package.
+
+```powershell
+./scripts/build-platform.ps1 -Platform windows-x64 -Bundle nsis
+```
+
+The principal outputs are under:
+
+- `apps/desktop/src-tauri/target/release/`
+- `apps/desktop/src-tauri/target/release/bundle/nsis/`
+- `build-manifest/windows-x64-artifacts.json`
+
+Do not commit executables, installers, private updater keys, browser profiles, local databases, or acceptance evidence containing user data.
+
+## Validate the source-bound package
+
+```powershell
+$Commit = (git rev-parse HEAD).Trim()
+./scripts/validate-windows.ps1 -ExpectedCommit $Commit
+```
+
+Do not pass `-LifecycleVerified` until installation, first and subsequent launch, loopback authentication, engine supervision, tray/quit behavior, process cleanup, core protection workflows, Apply/rollback, and uninstall have actually passed against the installed package.
+
+## Distribution boundary
+
+A successful local NSIS build is a technical artifact, not proof of public distribution readiness. Public Windows release also requires trusted Authenticode signing, timestamping, SmartScreen/reputation evidence, protected updater signing keys, and a trusted update channel. Never bypass SmartScreen or use a self-signed certificate to claim public trust.

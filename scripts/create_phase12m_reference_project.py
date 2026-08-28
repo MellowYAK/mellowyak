@@ -5,7 +5,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import socket
+import sys
 import tempfile
 from pathlib import Path
 
@@ -426,6 +428,9 @@ if __name__ == "__main__":
     unittest.main()
 """,
     )
+    python_executable = (
+        str(Path(sys.executable).resolve()) if os.name == "nt" else "python3"
+    )
     manifest = {
         "schema": "mellowyak.runtime-manifest.v1",
         "reference_marker": MARKER["schema"],
@@ -451,7 +456,7 @@ if __name__ == "__main__":
                 "display_name": "RideFlow Python API",
                 "runtime_type": "PYTHON",
                 "execution_mode": "MANAGED",
-                "executable": "python3",
+                "executable": python_executable,
                 "argv": ["server.py", "--port", str(api_port)],
                 "relative_working_directory": "api",
                 "expected_ports": [api_port],
@@ -462,7 +467,7 @@ if __name__ == "__main__":
                 "display_name": "RideFlow deterministic tests",
                 "runtime_type": "PYTHON",
                 "execution_mode": "MANUAL",
-                "executable": "python3",
+                "executable": python_executable,
                 "argv": [
                     "-B",
                     "-m",
@@ -482,7 +487,7 @@ if __name__ == "__main__":
                 "display_name": "RideFlow ride status CLI",
                 "runtime_type": "PYTHON",
                 "execution_mode": "MANUAL",
-                "executable": "python3",
+                "executable": python_executable,
                 "argv": ["ride_status.py", "--api", f"http://127.0.0.1:{api_port}"],
                 "relative_working_directory": "cli",
                 "expected_ports": [],

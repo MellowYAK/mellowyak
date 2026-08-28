@@ -45,10 +45,10 @@ def test_candidate_manifest_rejects_sensitive_path(tmp_path: Path) -> None:
         scan_workspace(tmp_path)
 
 
-def test_candidate_manifest_rejects_symlink(tmp_path: Path) -> None:
+def test_candidate_manifest_rejects_symlink(tmp_path: Path, create_symlink) -> None:
     outside = tmp_path.parent / "outside-phase8.txt"
     outside.write_text("outside\n", encoding="utf-8")
-    (tmp_path / "escape").symlink_to(outside)
+    create_symlink(tmp_path / "escape", outside)
     with pytest.raises(CandidateManifestError, match="CANDIDATE_SYMLINK_REJECTED"):
         scan_workspace(tmp_path)
 
@@ -90,7 +90,8 @@ def test_durable_apply_journal_survives_reload(tmp_path: Path) -> None:
     loaded = DurableJournal.load(path)
     assert loaded.payload["state"] == "APPLY_STARTED"
     assert loaded.payload["events"][0]["sequence"] == 1
-    assert path.stat().st_mode & 0o777 == 0o600
+    if os.name != "nt":
+        assert path.stat().st_mode & 0o777 == 0o600
 
 
 def test_preflight_rehash_blocks_digest_mismatch(tmp_path: Path) -> None:

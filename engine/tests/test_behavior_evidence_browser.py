@@ -16,6 +16,7 @@ from sqlalchemy import select
 
 from mellowyak_engine.api.app import create_app
 from mellowyak_engine.behaviors.service import BehaviorServiceError, validate_loopback_runtime_url
+from mellowyak_engine.browser.service import _browser_executable
 from mellowyak_engine.db.models import BrowserCaptureSession, EvidenceArtifact
 from mellowyak_engine.evidence.service import EvidenceServiceError
 from mellowyak_engine.evidence.store import EvidenceStore, EvidenceStoreError
@@ -29,6 +30,42 @@ TOKEN = "phase-four-session-token-that-is-long-enough-12345"
 
 def headers() -> dict[str, str]:
     return {"Authorization": f"Bearer {TOKEN}"}
+
+
+def test_browser_executable_uses_playwright_cache(tmp_path: Path, monkeypatch) -> None:
+    cache = tmp_path / "ms-playwright"
+    executable = cache / "chromium-1234" / "chrome-win64" / "chrome.exe"
+    executable.parent.mkdir(parents=True)
+    executable.write_bytes(b"fixture")
+    monkeypatch.delenv("MELLOWYAK_BROWSER_EXECUTABLE", raising=False)
+    monkeypatch.delenv("MELLOWYAK_RESOURCE_DIR", raising=False)
+    monkeypatch.delenv("MELLOWYAK_APP_BUNDLE_PATH", raising=False)
+    monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(cache))
+
+    assert _browser_executable() == str(executable)
+
+
+def test_browser_executable_uses_packaged_resource_manifest(tmp_path: Path, monkeypatch) -> None:
+    resource_dir = tmp_path / "resources"
+    browser_root = resource_dir / "browser"
+    executable = browser_root / "chromium" / "chrome-win64" / "chrome.exe"
+    executable.parent.mkdir(parents=True)
+    executable.write_bytes(b"fixture")
+    (browser_root / "manifest.json").write_text(
+        json.dumps(
+            {
+                "schema": "mellowyak.packaged_browser.v1",
+                "engine": "chromium",
+                "executable_relative": "chromium/chrome-win64/chrome.exe",
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.delenv("MELLOWYAK_BROWSER_EXECUTABLE", raising=False)
+    monkeypatch.delenv("MELLOWYAK_APP_BUNDLE_PATH", raising=False)
+    monkeypatch.setenv("MELLOWYAK_RESOURCE_DIR", str(resource_dir))
+
+    assert _browser_executable() == str(executable)
 
 
 def repository(tmp_path: Path) -> Path:
@@ -202,14 +239,16 @@ def test_evidence_store_detects_tampering(tmp_path: Path) -> None:
         store.read(project_id, stored.sha256)
 
 
-@pytest.mark.parametrize("payload", [b"", b"x" * (10 * 1024 * 1024 + 1)])
+@pytest.mark.parametrize(
+    "payload", [b"", b"x" * (10 * 1024 * 1024 + 1)], ids=("empty", "oversized")
+)
 def test_evidence_store_enforces_artifact_limits(tmp_path: Path, payload: bytes) -> None:
     store = EvidenceStore(tmp_path / "evidence")
     with pytest.raises(EvidenceStoreError, match="EVIDENCE_ARTIFACT_SIZE_INVALID"):
         store.put(str(uuid.uuid4()), payload)
 
 
-def test_evidence_store_rejects_symlink_reads(tmp_path: Path) -> None:
+def test_evidence_store_rejects_symlink_reads(tmp_path: Path, create_symlink) -> None:
     project_id = str(uuid.uuid4())
     store = EvidenceStore(tmp_path / "evidence")
     digest = hashlib.sha256(b"outside").hexdigest()
@@ -217,7 +256,7 @@ def test_evidence_store_rejects_symlink_reads(tmp_path: Path) -> None:
     outside.write_bytes(b"outside")
     target = tmp_path / "evidence" / project_id / "objects" / digest[:2] / digest
     target.parent.mkdir(parents=True)
-    target.symlink_to(outside)
+    create_symlink(target, outside)
     with pytest.raises(EvidenceStoreError, match="EVIDENCE_OBJECT_NOT_FOUND"):
         store.read(project_id, digest)
 
@@ -369,7 +408,7 @@ def test_real_playwright_pulseplan_capture_and_baseline(tmp_path: Path, monkeypa
                     "display_name": "PulsePlan browser replay",
                     "runtime_type": "GENERIC_PROCESS",
                     "execution_mode": "MANUAL",
-                    "executable_reference": "python3",
+                    "executable_reference": sys.executable,
                     "argv": ["-c", "print('browser replay profile')"],
                     "relative_working_directory": ".",
                     "network_policy": "LOOPBACK_ONLY",

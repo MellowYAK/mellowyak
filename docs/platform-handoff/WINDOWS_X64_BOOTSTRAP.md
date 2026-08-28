@@ -60,6 +60,8 @@ Set-ExecutionPolicy -Scope Process Bypass
 
 If prerequisites are missing, rerun with `-InstallMissing`, reopen PowerShell, and then run the non-interactive bootstrap again.
 
+The Windows bootstrap installs Node through NVM for Windows and validates that the active executable is a current `22.x` release. It deliberately does not install `OpenJS.NodeJS.LTS`, because the package manager's moving LTS alias may point at a newer unsupported major. If PowerShell script execution is restricted, use `npm.cmd`; the repository scripts do this automatically and do not require a permanent execution-policy change.
+
 ## 6. Source verification commands
 
 ```powershell

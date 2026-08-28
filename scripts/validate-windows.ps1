@@ -6,6 +6,9 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+if (Test-Path variable:PSNativeCommandUseErrorActionPreference) {
+  $PSNativeCommandUseErrorActionPreference = $true
+}
 $RepositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 Set-Location $RepositoryRoot
 if (-not $IsWindows) { throw "Windows runtime acceptance must run on Windows." }
@@ -17,9 +20,9 @@ if (git status --porcelain --untracked-files=no) { throw "Tracked source is dirt
 $Python = Join-Path $RepositoryRoot "engine/.venv/Scripts/python.exe"
 if (-not (Test-Path $Python)) { throw "Run scripts/bootstrap-windows.ps1 first." }
 & $Python scripts/export_openapi.py
-npm --prefix apps/desktop run contract:generate
+& npm.cmd --prefix apps/desktop run contract:generate
 & $Python scripts/check_ui_translation_keys.py
-npm --prefix apps/desktop run typecheck
+& npm.cmd --prefix apps/desktop run typecheck
 cargo check --locked --manifest-path apps/desktop/src-tauri/Cargo.toml
 
 $Sidecar = Get-ChildItem "apps/desktop/src-tauri/binaries/mellowyak-engine-*-pc-windows-msvc.exe" -ErrorAction SilentlyContinue

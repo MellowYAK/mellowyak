@@ -45,6 +45,9 @@ jobs:
           cache: npm
           cache-dependency-path: apps/desktop/package-lock.json
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.98.0"
+          components: rustfmt,clippy
       - name: Install dependencies (Unix)
         if: runner.os != 'Windows'
         shell: bash
@@ -70,13 +73,21 @@ jobs:
         shell: pwsh
         run: |
           engine/.venv/Scripts/python.exe scripts/export_openapi.py
-          npm --prefix apps/desktop run contract:generate
-      - name: Build bundled engine and desktop package
+          npm.cmd --prefix apps/desktop run contract:generate
+      - name: Build bundled engine and desktop package (Unix)
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           python scripts/stage_browser.py
           python scripts/build_engine.py
           npm --prefix apps/desktop run tauri build -- --bundles ${{ matrix.bundles }}
+      - name: Build bundled engine and desktop package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          python scripts/stage_browser.py
+          python scripts/build_engine.py
+          npm.cmd --prefix apps/desktop run tauri build -- --bundles ${{ matrix.bundles }}
       - name: Validate packaged Phase 5 flow (macOS)
         if: runner.os == 'macOS'
         run: >-

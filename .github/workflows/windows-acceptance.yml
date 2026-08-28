@@ -9,6 +9,7 @@ on:
         default: main
   push:
     branches:
+      - platform/windows-x64
       - platform/windows-x64-acceptance
       - ci/cross-platform-delivery
 
@@ -39,6 +40,17 @@ jobs:
       - name: Bootstrap exact source tree
         shell: pwsh
         run: ./scripts/bootstrap-windows.ps1 -NonInteractive
+      - name: Native Windows source gates
+        shell: pwsh
+        run: |
+          engine/.venv/Scripts/python.exe -m pytest engine
+          engine/.venv/Scripts/python.exe -m ruff check engine scripts
+          engine/.venv/Scripts/python.exe -m ruff format --check engine scripts
+          npm.cmd --prefix apps/desktop test
+          npm.cmd --prefix apps/desktop run build
+          cargo fmt --check --manifest-path apps/desktop/src-tauri/Cargo.toml
+          cargo clippy --locked --manifest-path apps/desktop/src-tauri/Cargo.toml -- -D warnings
+          engine/.venv/Scripts/python.exe scripts/validate_migration_matrix.py
       - name: Record source identity
         id: source
         shell: pwsh

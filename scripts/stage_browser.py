@@ -72,7 +72,10 @@ def main() -> None:
     destination = STAGING / "chromium"
     if STAGING.exists():
         shutil.rmtree(STAGING)
-    STAGING.mkdir(parents=True, mode=0o700)
+    # Passing mode=0o700 creates an owner-only ACL on Windows that downstream
+    # tools (including Tauri's resource walker) may be unable to traverse.
+    # The umask already provides the intended restriction on POSIX hosts.
+    STAGING.mkdir(parents=True)
     shutil.copytree(install, destination, symlinks=True)
     manifest = {
         "schema": "mellowyak.packaged_browser.v1",

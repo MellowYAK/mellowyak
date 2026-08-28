@@ -268,7 +268,7 @@ class RepairContextService:
         temporary.write_bytes(_canonical(context["payload"]))
         os.chmod(temporary, 0o600)
         temporary.replace(target)
-        relative = str(target.relative_to(self.root.parent))
+        relative = target.relative_to(self.root.parent).as_posix()
         with self.sessions.begin() as session:
             row = session.get(RepairContext, context_id)
             if row is not None:

@@ -7,6 +7,7 @@ import argparse
 import json
 import sqlite3
 import tempfile
+from contextlib import closing
 from pathlib import Path
 
 from alembic import command
@@ -38,7 +39,7 @@ def upgrade_case(database: Path, starting_revision: str | None) -> dict[str, obj
     value = config(database)
     if starting_revision is not None:
         command.upgrade(value, starting_revision)
-        with sqlite3.connect(database) as connection:
+        with closing(sqlite3.connect(database)) as connection:
             connection.execute(
                 "INSERT INTO app_settings(key, value, updated_at) VALUES (?, ?, ?)",
                 (
@@ -49,7 +50,7 @@ def upgrade_case(database: Path, starting_revision: str | None) -> dict[str, obj
             )
             connection.commit()
     command.upgrade(value, "head")
-    with sqlite3.connect(database) as connection:
+    with closing(sqlite3.connect(database)) as connection:
         revision = connection.execute(
             "SELECT version_num FROM alembic_version"
         ).fetchone()[0]

@@ -2997,6 +2997,10 @@ def create_app(settings: EngineSettings) -> FastAPI:
         runtime_profiles.stop_all()
         scans.stop_all()
         browser.close()
+        database.engine.dispose()
+        for handler in logger.handlers:
+            handler.close()
+        logger.handlers.clear()
 
     app.router.on_shutdown.append(stop_background_services)
     episodes.recover()

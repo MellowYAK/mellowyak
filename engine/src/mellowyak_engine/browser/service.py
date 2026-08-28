@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import platform
 import queue
 import sys
 import threading
@@ -74,50 +75,35 @@ def _browser_executable() -> str | None:
     candidates: list[Path] = []
     if override:
         candidates.append(Path(override))
+    resource_dir = os.environ.get("MELLOWYAK_RESOURCE_DIR", "").strip()
+    if resource_dir:
+        _append_manifest_browser(candidates, Path(resource_dir).resolve() / "browser")
     app_bundle = os.environ.get("MELLOWYAK_APP_BUNDLE_PATH", "").strip()
     if app_bundle:
         resources = Path(app_bundle).resolve() / "Contents" / "Resources" / "browser"
-        manifest_path = resources / "manifest.json"
-        if manifest_path.is_file():
-            try:
-                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-                relative = Path(str(manifest.get("executable_relative", "")))
-                candidate = (resources / relative).resolve()
-                if candidate.is_relative_to(resources.resolve()):
-                    candidates.append(candidate)
-            except (OSError, ValueError, json.JSONDecodeError):
-                pass
+        _append_manifest_browser(candidates, resources)
     executable = Path(sys.executable).resolve()
     if getattr(sys, "frozen", False):
-        resources = executable.parent.parent / "Resources" / "browser"
-        manifest_path = resources / "manifest.json"
-        if manifest_path.is_file():
-            try:
-                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-                relative = Path(str(manifest.get("executable_relative", "")))
-                candidate = (resources / relative).resolve()
-                if candidate.is_relative_to(resources.resolve()):
-                    candidates.append(candidate)
-            except (OSError, ValueError, json.JSONDecodeError):
-                pass
-        candidates.extend(
-            [
-                resources
-                / "chrome-mac-arm64"
-                / "Google Chrome for Testing.app"
-                / "Contents"
-                / "MacOS"
-                / "Google Chrome for Testing",
-                resources
-                / "chrome-mac"
-                / "Google Chrome for Testing.app"
-                / "Contents"
-                / "MacOS"
-                / "Google Chrome for Testing",
-                resources / "chrome-linux" / "chrome",
-                resources / "chrome-win64" / "chrome.exe",
-            ]
+        frozen_resource_roots = (
+            executable.parent / "browser",
+            executable.parent.parent / "browser",
+            executable.parent.parent / "Resources" / "browser",
         )
+        for resources in frozen_resource_roots:
+            _append_manifest_browser(candidates, resources)
+            candidates.extend(_browser_layout_candidates(resources))
+    else:
+        cache_override = os.environ.get("PLAYWRIGHT_BROWSERS_PATH", "").strip()
+        if cache_override and cache_override != "0":
+            cache_root = Path(cache_override).expanduser()
+        elif platform.system().lower() == "windows":
+            cache_root = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "ms-playwright"
+        elif platform.system().lower() == "darwin":
+            cache_root = Path.home() / "Library" / "Caches" / "ms-playwright"
+        else:
+            cache_root = Path.home() / ".cache" / "ms-playwright"
+        for install in sorted(cache_root.glob("chromium-*"), reverse=True):
+            candidates.extend(_browser_layout_candidates(install))
     candidates.extend(
         [
             Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"),
@@ -129,6 +115,41 @@ def _browser_executable() -> str | None:
         if candidate.is_file():
             return str(candidate)
     return None
+
+
+def _append_manifest_browser(candidates: list[Path], resources: Path) -> None:
+    manifest_path = resources / "manifest.json"
+    if not manifest_path.is_file():
+        return
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        relative = Path(str(manifest.get("executable_relative", "")))
+        candidate = (resources / relative).resolve()
+        if candidate.is_relative_to(resources.resolve()):
+            candidates.append(candidate)
+    except (OSError, ValueError, json.JSONDecodeError):
+        return
+
+
+def _browser_layout_candidates(resources: Path) -> tuple[Path, ...]:
+    return (
+        resources
+        / "chrome-mac-arm64"
+        / "Google Chrome for Testing.app"
+        / "Contents"
+        / "MacOS"
+        / "Google Chrome for Testing",
+        resources
+        / "chrome-mac-x64"
+        / "Google Chrome for Testing.app"
+        / "Contents"
+        / "MacOS"
+        / "Google Chrome for Testing",
+        resources / "chrome-linux" / "chrome",
+        resources / "chrome-linux64" / "chrome",
+        resources / "chrome-win" / "chrome.exe",
+        resources / "chrome-win64" / "chrome.exe",
+    )
 
 
 @dataclass

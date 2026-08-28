@@ -83,7 +83,9 @@ def test_git_observer_reports_clean_staged_unstaged_and_untracked(tmp_path: Path
     assert "src/main.ts" not in staged.unstaged
 
 
-def test_project_api_persists_scan_and_real_impact_without_source_copy(tmp_path: Path) -> None:
+def test_project_api_persists_scan_and_real_impact_without_source_copy(
+    tmp_path: Path, create_symlink
+) -> None:
     root = repository(tmp_path)
     data_root = tmp_path / "local-data"
     secret = "SOURCE-CONTENT-MUST-NOT-BE-COPIED-91f8"
@@ -91,7 +93,7 @@ def test_project_api_persists_scan_and_real_impact_without_source_copy(tmp_path:
     (root / "large.ts").write_bytes(b"x" * 1_000_001)
     outside = tmp_path / "outside.txt"
     outside.write_text(secret, encoding="utf-8")
-    (root / "outside-link").symlink_to(outside)
+    create_symlink(root / "outside-link", outside)
     ignored = root / "dist"
     ignored.mkdir()
     (ignored / "ignored.js").write_text(secret, encoding="utf-8")

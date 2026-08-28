@@ -16,7 +16,9 @@ use std::time::Duration;
 use tauri::menu::{Menu, MenuBuilder, MenuItemBuilder};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{Emitter, Manager, RunEvent, State, WebviewWindow, WindowEvent};
-use tauri_plugin_autostart::{MacosLauncher, ManagerExt as AutostartManagerExt};
+#[cfg(target_os = "macos")]
+use tauri_plugin_autostart::MacosLauncher;
+use tauri_plugin_autostart::ManagerExt as AutostartManagerExt;
 #[cfg(not(target_os = "macos"))]
 use tauri_plugin_notification::NotificationExt;
 use tauri_plugin_shell::process::{CommandChild, CommandEvent};
@@ -515,12 +517,15 @@ fn show_native_notification(
         return Ok(());
     }
     #[cfg(not(target_os = "macos"))]
-    app.notification()
-        .builder()
-        .title(title)
-        .body(body)
-        .show()
-        .map_err(|error| error.to_string())
+    {
+        let _ = route;
+        app.notification()
+            .builder()
+            .title(title)
+            .body(body)
+            .show()
+            .map_err(|error| error.to_string())
+    }
 }
 
 fn take_notification_route(state: &EngineState) -> Option<String> {
@@ -743,17 +748,17 @@ fn supervise_macos_engine(
 }
 
 pub fn run() {
+    let autostart = tauri_plugin_autostart::Builder::new();
+    #[cfg(target_os = "macos")]
+    let autostart = autostart.macos_launcher(MacosLauncher::LaunchAgent);
+
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _, _| {
             if let Some(window) = app.get_webview_window("main") {
                 show_main(&window);
             }
         }))
-        .plugin(
-            tauri_plugin_autostart::Builder::new()
-                .macos_launcher(MacosLauncher::LaunchAgent)
-                .build(),
-        )
+        .plugin(autostart.build())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -929,7 +934,7 @@ pub fn run() {
             }
             #[cfg(target_os = "macos")]
             eprintln!("{}", r#"{"event":"macos_engine_resource_missing"}"#);
-            let command = app
+            let mut command = app
                 .shell()
                 .sidecar("mellowyak-engine")?
                 .env("MELLOWYAK_SESSION_TOKEN", &token)
@@ -939,6 +944,9 @@ pub fn run() {
                     "MELLOWYAK_ALLOWED_ORIGINS",
                     "tauri://localhost,http://tauri.localhost,http://localhost:1420,http://127.0.0.1:1420",
                 );
+            if let Ok(resource_dir) = app.path().resource_dir() {
+                command = command.env("MELLOWYAK_RESOURCE_DIR", resource_dir);
+            }
             let (mut events, child) = match command.spawn() {
                 Ok(value) => value,
                 Err(error) => {
