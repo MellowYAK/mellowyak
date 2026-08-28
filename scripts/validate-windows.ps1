@@ -15,7 +15,11 @@ if (-not $IsWindows) { throw "Windows runtime acceptance must run on Windows." }
 
 $Commit = (git rev-parse HEAD).Trim()
 if ($ExpectedCommit -and $Commit -ne $ExpectedCommit) { throw "Commit mismatch: expected $ExpectedCommit, found $Commit." }
-if (git status --porcelain --untracked-files=no) { throw "Tracked source is dirty." }
+$TrackedStatus = @(git status --porcelain --untracked-files=no)
+if ($LASTEXITCODE -ne 0) { throw "Unable to inspect tracked source status." }
+if ($TrackedStatus) {
+  throw "Tracked source is dirty before validation: $($TrackedStatus -join '; ')"
+}
 
 $Python = Join-Path $RepositoryRoot "engine/.venv/Scripts/python.exe"
 if (-not (Test-Path $Python)) { throw "Run scripts/bootstrap-windows.ps1 first." }
