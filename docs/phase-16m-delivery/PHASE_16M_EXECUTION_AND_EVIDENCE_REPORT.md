@@ -140,6 +140,8 @@ The following remain `HUMAN_PHYSICAL_NOT_RUN` where a real physical boundary is 
 
 These are intentionally not replaced by Accessibility automation or deterministic images.
 
+Human-only OS-transition acceptance was deliberately deferred by the operator. This does not change the automated or functional evidence and does not imply public Mac distribution readiness.
+
 ## 15. Distribution boundary
 
 The app and DMG are ad-hoc signed local technical-preview artifacts. Developer ID signing, notarization, stapling, trusted public distribution, and production updater trust are not configured. Gatekeeper correctly rejected a quarantined ad-hoc build; no bypass is documented.
@@ -150,15 +152,17 @@ The acceptance configuration is restored to Start at Login off, close-to-tray on
 
 ## 17. Git boundary
 
-The implementation commit is local. Documentation and canonical evidence are committed separately after PDF validation. Generated app bundles, DMGs, runtime data, build manifests, Finder Alias artifacts, databases, and private acceptance state are excluded. Nothing is pushed. No `physical-accepted` tag is created.
+The verified shipping build commit is `a24d9f7e252c71f4d389493988ffd38075783807` and is an ancestor of the final documentation closure. Generated app bundles, DMGs, runtime data, build manifests, Finder Alias artifacts, databases, and private acceptance state remain excluded. The honest shared-source checkpoint is the annotated tag `phase-16m-intel-mac-technical-preview-accepted-with-limits-2026-08-28`; no `physical-accepted` tag is used.
 
 ## 18. Final verdicts
 
 - Product: `INTEL_MAC_TECHNICAL_PREVIEW_ACCEPTED_WITH_LIMITS`.
-- Human physical: `HUMAN_PHYSICAL_ACCEPTANCE_PENDING`.
+- Automated/functional Mac closure: `CLOSED`.
+- Human physical: `DEFERRED_POST_PREVIEW`.
 - Distribution: `PUBLIC_MAC_DISTRIBUTION_BLOCKED`.
-- Local tag: not created at this closure because the mandatory physical boundary is incomplete.
-- Exact next authorized phase: finish the remaining Phase 16M human physical checks against this exact candidate; Phase 17 is not authorized.
+- Windows x64 port: `AUTHORIZED`.
+- Linux x64 and Apple Silicon: `NOT_YET_NATIVELY_ACCEPTED`.
+- Exact next authorized work: native Windows x64 implementation from the frozen shared-source checkpoint. Phase 17 was not started on this Mac.
 
 
 ## 19. Complete test-axis matrix

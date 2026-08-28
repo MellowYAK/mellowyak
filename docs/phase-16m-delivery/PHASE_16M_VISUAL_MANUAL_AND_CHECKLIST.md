@@ -442,7 +442,9 @@ Record each result on its independent evidence axes. Do not convert a determinis
 
 ## Closure verdict
 
-Product: `INTEL_MAC_TECHNICAL_PREVIEW_ACCEPTED_WITH_LIMITS`. Human physical acceptance: `HUMAN_PHYSICAL_ACCEPTANCE_PENDING`. Public macOS distribution: `PUBLIC_MAC_DISTRIBUTION_BLOCKED`. Phase 17 is not authorized by this manual.
+Product: `INTEL_MAC_TECHNICAL_PREVIEW_ACCEPTED_WITH_LIMITS`. Automated/functional Mac closure: `CLOSED`. Human physical acceptance: `DEFERRED_POST_PREVIEW`. Public macOS distribution: `PUBLIC_MAC_DISTRIBUTION_BLOCKED`. Windows x64 port: `AUTHORIZED`. Linux x64 and Apple Silicon: `NOT_YET_NATIVELY_ACCEPTED`.
+
+Human-only OS-transition acceptance was deliberately deferred by the operator. This does not change the automated or functional evidence and does not imply public Mac distribution readiness. Every human row below remains `HUMAN_PHYSICAL_NOT_RUN` until a person performs it.
 
 
 ## Complete human workbook status matrix

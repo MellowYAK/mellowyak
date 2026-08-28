@@ -3,11 +3,15 @@
 ## Current verdict
 
 - Product verdict: `INTEL_MAC_TECHNICAL_PREVIEW_ACCEPTED_WITH_LIMITS`.
-- Human physical verdict: `HUMAN_PHYSICAL_ACCEPTANCE_PENDING`.
+- Automated/functional Mac closure: `CLOSED`.
+- Human physical verdict: `DEFERRED_POST_PREVIEW`.
 - Distribution verdict: `PUBLIC_MAC_DISTRIBUTION_BLOCKED`.
-- Phase 17: not started and not authorized by this report.
-- Local verified tag: not created because human-only boundaries remain pending and P15-PHYS-112/P15-PHYS-127 do not have complete physical activation evidence.
-- Repository push: not performed.
+- Windows x64 port: `AUTHORIZED` from the frozen shared-source checkpoint.
+- Linux x64 and Apple Silicon: `NOT_YET_NATIVELY_ACCEPTED`.
+- Phase 17: not started by this closure.
+- Source checkpoint tag: `phase-16m-intel-mac-technical-preview-accepted-with-limits-2026-08-28`.
+
+Human-only OS-transition acceptance was deliberately deferred by the operator. This does not change the automated or functional evidence and does not imply public Mac distribution readiness.
 
 ## Exact candidate identity
 
@@ -78,13 +82,13 @@ All GUI copy must be referenced through translation keys. English is the base ca
 
 ## PDF quality gate
 
-- Execution report: 8 pages, 324,428 bytes, SHA-256 `8819949113a1b90732ec8445b652d9ffade402e4ea1fd3da11d08678e6284c54`.
-- Visual manual: 55 pages, 12,281,328 bytes, SHA-256 `44799be0d5cd290e32b38335576dd8c51f9d0a5d419ca9697876c8699e19a856`.
-- All 63 pages were rendered back to PNG, checked for blank or edge-clipped content, and visually reviewed. Tables, images, captions, evidence labels, page numbers, and privacy boundaries passed inspection.
+- Execution report: 9 pages, 330,140 bytes, SHA-256 `3216caa1910c7d2ff31c5304f863bfdd7e2a26c9ecee0a78c0ffde3cb24403e0`.
+- Visual manual: 55 pages, 12,283,935 bytes, SHA-256 `4ee4ddcd85e527db1de9658552d080864c2aca19be4e1716779829ba4e2b0034`.
+- Both closure PDFs were regenerated and rendered successfully after the handoff verdict update. The modified verdict pages, final matrix page, images, page numbers, and privacy boundaries passed inspection.
 
 ## Exact next authorized action
 
-Perform only the remaining human physical tests against this exact installed candidate, record evidence without exposing private desktop content, and then decide whether Phase 16M may receive a local verified tag. Do not begin Phase 17 from this report.
+Use the annotated source checkpoint for native Windows x64 implementation. The deferred Mac workbook remains available for later post-preview hardening; its rows remain `HUMAN_PHYSICAL_NOT_RUN`. Do not treat this handoff as Phase 17 implementation on macOS.
 
 
 ## Complete acceptance-axis cross-reference

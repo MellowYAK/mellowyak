@@ -17,13 +17,16 @@ The `0.5.0-preview.3` Intel macOS candidate is a local technical preview, not a 
 - Stapling: `NOT_RUN`.
 - Trusted public download/reputation: `NOT_VERIFIED`.
 - Production updater private signing key and public channel: `NOT_CONFIGURED`.
-- Windows and Linux release artifacts: outside this Intel macOS closure.
+- Windows x64 port: authorized from the frozen shared source, but not yet natively accepted.
+- Linux x64 and Apple Silicon: `NOT_YET_NATIVELY_ACCEPTED`.
 
 Gatekeeper correctly rejected a quarantined ad-hoc build. This is expected and is preserved as boundary evidence. No security bypass is recommended or documented.
 
 ## Distribution verdict
 
 `PUBLIC_MAC_DISTRIBUTION_BLOCKED`
+
+Human-only OS-transition acceptance was deliberately deferred by the operator. This does not change the automated or functional evidence and does not imply public Mac distribution readiness.
 
 The next release boundary requires Developer ID signing, notarization, stapling, a production updater trust configuration, and a new verification run over the exact artifacts intended for publication.
 

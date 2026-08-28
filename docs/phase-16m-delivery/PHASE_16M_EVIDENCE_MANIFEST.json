@@ -13,8 +13,12 @@
   },
   "verdicts": {
     "product": "INTEL_MAC_TECHNICAL_PREVIEW_ACCEPTED_WITH_LIMITS",
-    "human_physical": "HUMAN_PHYSICAL_ACCEPTANCE_PENDING",
-    "distribution": "PUBLIC_MAC_DISTRIBUTION_BLOCKED"
+    "automated_functional_mac_closure": "CLOSED",
+    "human_physical": "DEFERRED_POST_PREVIEW",
+    "distribution": "PUBLIC_MAC_DISTRIBUTION_BLOCKED",
+    "windows_x64_port": "AUTHORIZED",
+    "linux_x64": "NOT_YET_NATIVELY_ACCEPTED",
+    "apple_silicon": "NOT_YET_NATIVELY_ACCEPTED"
   },
   "evidence_contract": {
     "deterministic_images": "DETERMINISTIC_PRODUCT_VIEW — NOT HUMAN PHYSICAL EVIDENCE",
@@ -378,17 +382,17 @@
   "pdfs": [
     {
       "path": "PHASE_16M_EXECUTION_AND_EVIDENCE_REPORT.pdf",
-      "pages": 8,
-      "size_bytes": 324428,
-      "sha256": "8819949113a1b90732ec8445b652d9ffade402e4ea1fd3da11d08678e6284c54",
-      "rendered_page_inspection": "PASS — all 8 pages rendered to PNG and visually reviewed"
+      "pages": 9,
+      "size_bytes": 330140,
+      "sha256": "3216caa1910c7d2ff31c5304f863bfdd7e2a26c9ecee0a78c0ffde3cb24403e0",
+      "rendered_page_inspection": "PASS — all 9 pages rendered; modified verdict and final matrix pages visually reviewed"
     },
     {
       "path": "PHASE_16M_VISUAL_MANUAL_AND_CHECKLIST.pdf",
       "pages": 55,
-      "size_bytes": 12281328,
-      "sha256": "44799be0d5cd290e32b38335576dd8c51f9d0a5d419ca9697876c8699e19a856",
-      "rendered_page_inspection": "PASS — all 55 pages rendered to PNG and visually reviewed"
+      "size_bytes": 12283935,
+      "sha256": "4ee4ddcd85e527db1de9658552d080864c2aca19be4e1716779829ba4e2b0034",
+      "rendered_page_inspection": "PASS — all 55 pages rendered; modified closure verdict page visually reviewed"
     }
   ],
   "images": [

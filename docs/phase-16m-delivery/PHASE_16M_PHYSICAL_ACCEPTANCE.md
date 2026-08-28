@@ -6,6 +6,8 @@ Schema: `mellowyak.phase16m.acceptance-evidence.v2`. Each axis is independent. A
 
 Candidate: `0.5.0-preview.3`; build commit `a24d9f7e252c71f4d389493988ffd38075783807`; DMG SHA-256 `ada29bfe1c9887256f057279ee7e201cad0ea6db3a379bb980a6466ffe3ce7dd`.
 
+Overall human physical status: `DEFERRED_POST_PREVIEW`. Human-only OS-transition acceptance was deliberately deferred by the operator. This does not change the automated or functional evidence and does not imply public Mac distribution readiness.
+
 | Test ID | Native automation | Human physical | Visual | Functional | Expected | Actual | Evidence | Cleanup | Remaining human action |
 |---|---|---|---|---|---|---|---|---|---|
 | P15-PHYS-101 | NATIVE_AUTOMATION_PASS | HUMAN_PHYSICAL_NOT_RUN | VISUAL_PASS | PASS | One translated menu and truthful counters | Native menu inspected; one app/engine | Native tray capture and lifecycle log | PASS | Physically open and confirm |
@@ -40,7 +42,7 @@ Candidate: `0.5.0-preview.3`; build commit `a24d9f7e252c71f4d389493988ffd3807578
 
 ## Honest boundary
 
-Human physical acceptance remains pending wherever the human axis says `HUMAN_PHYSICAL_NOT_RUN`. P15-PHYS-112 and P15-PHYS-127 are `BLOCKED` on the native-automation axis because their full native banner activation/observation sequence was not completed, even though their source/functional behavior passed.
+Human physical acceptance is deferred wherever the human axis says `HUMAN_PHYSICAL_NOT_RUN`. P15-PHYS-112 and P15-PHYS-127 are `BLOCKED` on the native-automation axis because their full native banner activation/observation sequence was not completed, even though their source/functional behavior passed.
 
 ## Restoration
 
