@@ -1,0 +1,35 @@
+{
+  "schema": "mellowyak.pdf-qa.v1",
+  "phase": "17W",
+  "checked_at": "2026-08-28T11:45:00+03:00",
+  "method": {
+    "renderer": "Poppler pdftoppm",
+    "inspection": "Every rendered page visually inspected",
+    "checks": [
+      "clipping",
+      "unreadable content",
+      "broken images",
+      "accidental blank pages",
+      "stale build identity",
+      "private information"
+    ]
+  },
+  "documents": [
+    {
+      "path": "PHASE_17W_EXECUTION_AND_EVIDENCE_REPORT.pdf",
+      "pages": 11,
+      "size_bytes": 994001,
+      "sha256": "ec48a62fcac652fcab94a3c17f53b7302bcbd5e5f4ba21e28d7e3994f43eaa79",
+      "visual_result": "PASS"
+    },
+    {
+      "path": "PHASE_17W_CUMULATIVE_PRODUCT_MANUAL.pdf",
+      "pages": 7,
+      "size_bytes": 949801,
+      "sha256": "67058d83426812a52d964206aa3bacb9bd93a0bf4553c80d3e9a7e1b66e2c8f4",
+      "visual_result": "PASS"
+    }
+  ],
+  "privacy_result": "PASS",
+  "overall_result": "PASS"
+}

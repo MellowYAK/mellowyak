@@ -1,0 +1,67 @@
+{
+  "schema": "mellowyak.phase17w.screenshot-delta.v1",
+  "phase": "17W",
+  "platform": "windows-x64",
+  "capture_commit": "babfab9ac0aa6e50544f0cd62f7477f70748d0e1",
+  "installed_desktop_sha256": "716ac97c786247fe84d484c93f6c75918750d81dff9ffa11e0165eb4cdc2d3cc",
+  "installed_engine_sha256": "2c2a7b32bfbb77fc7abfc09533c5701f0c38c374c0c765fe93ca541fffac872e",
+  "images": [
+    {
+      "path": "images/native/01-installed-home-clean.png",
+      "class": "native",
+      "delta_class": "RECAPTURED_CHANGED",
+      "bytes": 342519,
+      "sha256": "fd8e6b3662a828a44c783ba8ae787904d91daf4842cc9e82e3591d4f4c7f6a80",
+      "status": "CANONICAL_PASS",
+      "meaning": "Installed Windows app rendered live Home after authenticated local-engine startup."
+    },
+    {
+      "path": "images/native/02-installed-settings.png",
+      "class": "native",
+      "delta_class": "RECAPTURED_CHANGED",
+      "bytes": 342801,
+      "sha256": "8bfe5728560460468a41c65ebb5875c1cce82f6d24c5452a80093f4b9d35c764",
+      "status": "CANONICAL_PASS",
+      "meaning": "Installed Settings surface and native-notification controls."
+    },
+    {
+      "path": "images/native/03-installed-startup-tray.png",
+      "class": "native",
+      "delta_class": "RECAPTURED_CHANGED",
+      "bytes": 122377,
+      "sha256": "6709ec5e96afb9f6d5ff5ef69e1b408867e8d09435fc0d35b96bfb8b75ab2f22",
+      "status": "CANONICAL_PASS",
+      "meaning": "Installed close-to-tray and start-at-login controls, restored to start-at-login off."
+    },
+    {
+      "path": "images/native/04-native-tray-menu.png",
+      "class": "native",
+      "delta_class": "NEW_SCREEN",
+      "bytes": 8619,
+      "sha256": "894cc14fa65e2f402c4522f9e4df96ba66abeff8649c900bb3f40e7b43100d23",
+      "status": "CANONICAL_PASS",
+      "meaning": "Actual Windows notification-area menu used for explicit Quit acceptance."
+    },
+    {
+      "path": "images/blocked/00-superseded-startup-failure.png",
+      "class": "blocked",
+      "delta_class": "RETIRED",
+      "bytes": 293660,
+      "sha256": "1b4780f6f4e96e976083c99a3d3d7c355b4822b9c4c97d61249c4292810831a2",
+      "status": "SUPERSEDED_DIAGNOSTIC",
+      "meaning": "Initial installed failure before the Windows watchdog and data-root fixes; not candidate evidence."
+    }
+  ],
+  "reused_phase16_images": {
+    "copied": false,
+    "reason": "Unchanged macOS product-view evidence remains under docs/phase-16m-delivery and is referenced by provenance rather than duplicated."
+  },
+  "delta_counts": {
+    "NEW_SCREEN": 1,
+    "RECAPTURED_CHANGED": 3,
+    "REUSED_UNCHANGED": 0,
+    "RETIRED": 1,
+    "BLOCKED_NO_CAPTURE": 0
+  },
+  "privacy_review": "PASS; canonical Windows crops show only MellowYak product or native tray UI and contain no source, credentials, tokens, or private paths."
+}

@@ -7,9 +7,12 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { chromium } from "../apps/desktop/node_modules/playwright-core/index.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const delivery = path.join(root, "docs", "phase-16m-delivery");
-const temp = process.env.MELLOWYAK_PHASE16M_RENDER_ROOT
-  ?? "/private/tmp/mellowyak-phase16m-pdf-render";
+const delivery = process.env.MELLOWYAK_DELIVERY_DIR
+  ? path.resolve(process.env.MELLOWYAK_DELIVERY_DIR)
+  : path.join(root, "docs", "phase-16m-delivery");
+const temp = process.env.MELLOWYAK_RENDER_ROOT
+  ?? process.env.MELLOWYAK_PHASE16M_RENDER_ROOT
+  ?? path.join(root, "tmp", "pdfs", "mellowyak-delivery-render");
 
 const defaultDocuments = [
   "PHASE_16M_EXECUTION_AND_EVIDENCE_REPORT",
@@ -157,6 +160,8 @@ async function browserPath() {
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
     "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
     "/Applications/MellowYak.app/Contents/Resources/browser/chromium/chrome-mac-x64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing",
+    "C:/Users/Mike/AppData/Local/MellowYak/browser/chromium/chrome-win64/chrome.exe",
+    path.join(root, "apps", "desktop", "src-tauri", ".browser-resources", "browser", "chromium", "chrome-win64", "chrome.exe"),
   ].filter(Boolean);
   for (const candidate of candidates) {
     try { await access(candidate); return candidate; } catch { /* continue */ }

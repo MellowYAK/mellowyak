@@ -92,6 +92,43 @@ The principal outputs are under:
 
 Do not commit executables, installers, private updater keys, browser profiles, local databases, or acceptance evidence containing user data.
 
+## Installed layout and local test entry points
+
+The per-user NSIS package installs the desktop executable, engine sidecar, bundled browser, and uninstaller under `%LOCALAPPDATA%\MellowYak`. Runtime data is deliberately separate under `%LOCALAPPDATA%\com.mellowyak.desktop\engine`; it must never be written into the installation directory.
+
+```powershell
+$InstallRoot = Join-Path $env:LOCALAPPDATA "MellowYak"
+$DataRoot = Join-Path $env:LOCALAPPDATA "com.mellowyak.desktop\engine"
+$Desktop = Join-Path $InstallRoot "mellowyak-desktop.exe"
+$Engine = Join-Path $InstallRoot "mellowyak-engine.exe"
+$Uninstaller = Join-Path $InstallRoot "uninstall.exe"
+
+Start-Process -FilePath $Desktop
+Get-Process mellowyak-desktop, mellowyak-engine
+Get-NetTCPConnection -State Listen |
+  Where-Object OwningProcess -In (Get-Process mellowyak-engine).Id
+```
+
+The engine port is ephemeral. A healthy installed launch has one loopback listener on `127.0.0.1`, rejects requests without its per-launch bearer token, and remains supervised by the desktop process. Do not record the token in logs or documentation.
+
+## Authenticode signing
+
+Do not describe an unsigned or self-signed package as publicly trusted. A release signer needs a currently valid Windows code-signing certificate with its private key, access to an RFC 3161 timestamp service, and an appropriate key-protection process. With the certificate available in the Windows certificate store, sign the final installer using the Windows SDK x64 `signtool.exe`:
+
+```powershell
+$SignTool = "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe"
+$Thumbprint = "REPLACE_WITH_RELEASE_CERTIFICATE_THUMBPRINT"
+$TimestampUrl = "https://REPLACE_WITH_RFC3161_TIMESTAMP_SERVICE"
+
+& $SignTool sign /sha1 $Thumbprint /fd SHA256 /tr $TimestampUrl /td SHA256 `
+  "apps\desktop\src-tauri\target\release\bundle\nsis\MellowYak_0.5.0-preview.3_x64-setup.exe"
+
+& $SignTool verify /pa /all /v `
+  "apps\desktop\src-tauri\target\release\bundle\nsis\MellowYak_0.5.0-preview.3_x64-setup.exe"
+```
+
+Replace the example versioned filename when the product version changes. A public release pipeline must additionally sign the desktop executable and sidecar before they are embedded into NSIS, using the Tauri signing hook or an equivalent split build/bundle pipeline; do not rebuild after signing because that replaces signed artifacts. Keep certificate material and private keys outside the repository.
+
 ## Validate the source-bound package
 
 ```powershell
