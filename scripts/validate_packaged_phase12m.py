@@ -268,6 +268,23 @@ def expect_stale_source(base_url: str, project_id: str, candidate_id: str) -> No
 
 
 def process_alive(pid: int) -> bool:
+    if os.name == "nt":
+        result = subprocess.run(
+            [
+                "powershell.exe",
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                (
+                    f"if (Get-Process -Id {pid} -ErrorAction SilentlyContinue) "
+                    "{ exit 0 } else { exit 1 }"
+                ),
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        return result.returncode == 0
     try:
         os.kill(pid, 0)
     except ProcessLookupError:
@@ -284,7 +301,8 @@ def validate(engine: Path, app: Path, root: Path) -> dict[str, Any]:
     sentinel = project_root / "unrelated-sentinel.txt"
     sentinel.write_bytes(b"phase12-packaged-unrelated-sentinel\n")
     initialize_repository(project_root)
-    browser_manifest = app / "Contents" / "Resources" / "browser" / "manifest.json"
+    resource_dir = app / "Contents" / "Resources" if os.name != "nt" else app
+    browser_manifest = resource_dir / "browser" / "manifest.json"
     if not browser_manifest.is_file():
         raise AssertionError("packaged browser manifest is missing")
     environment = os.environ.copy()
@@ -296,6 +314,7 @@ def validate(engine: Path, app: Path, root: Path) -> dict[str, Any]:
             "MELLOWYAK_BROWSER_HEADLESS": "1",
             "MELLOWYAK_PHASE4_VALIDATION": "1",
             "MELLOWYAK_APP_BUNDLE_PATH": str(app),
+            "MELLOWYAK_RESOURCE_DIR": str(resource_dir),
         }
     )
     stderr_log = root / "engine-stderr.log"
@@ -362,6 +381,21 @@ def validate(engine: Path, app: Path, root: Path) -> dict[str, Any]:
         capture_path = f"/projects/{project_id}/captures/{capture['id']}"
         api(handle.base_url, f"{capture_path}/validation-fixture-flow", "POST", {})
         stopped = api(handle.base_url, f"{capture_path}/stop", "POST", {})
+        if stopped.get("status") != "REVIEW_REQUIRED":
+            current_project = api(handle.base_url, f"/projects/{project_id}")
+            source_status = subprocess.run(
+                ["git", "status", "--porcelain=v1", "--untracked-files=all"],
+                cwd=project_root,
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            raise AssertionError(
+                "packaged capture did not reach review; "
+                f"source_status={source_status!r}; "
+                f"current_git={json.dumps(current_project.get('git'), sort_keys=True)}: "
+                f"{json.dumps(stopped, sort_keys=True)}"
+            )
         api(
             handle.base_url,
             f"{capture_path}/review",

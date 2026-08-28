@@ -52,3 +52,5 @@ apps/desktop/src-tauri/icons/64x64.png
 /browser-profiles/
 /runtime-data/
 /WINDOWS README/
+/.build-manifest/
+/build-manifest/

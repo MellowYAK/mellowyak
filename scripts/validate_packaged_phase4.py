@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 import urllib.error
 import urllib.request
 from http.server import ThreadingHTTPServer
@@ -67,6 +68,16 @@ def start_engine(
 def stop_engine(process: subprocess.Popen[str]) -> None:
     if process.poll() is not None:
         return
+    if os.name == "nt":
+        subprocess.run(
+            ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        process.wait(timeout=10)
+        time.sleep(1)
+        return
     process.terminate()
     try:
         process.wait(timeout=10)
@@ -76,12 +87,29 @@ def stop_engine(process: subprocess.Popen[str]) -> None:
 
 
 def descendant_process_ids(parent_pid: int) -> set[int]:
-    result = subprocess.run(
-        ["ps", "-axo", "pid=,ppid=,command="],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+    if os.name == "nt":
+        result = subprocess.run(
+            [
+                "powershell.exe",
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                (
+                    "Get-CimInstance Win32_Process | ForEach-Object { "
+                    "'{0} {1}' -f $_.ProcessId,$_.ParentProcessId }"
+                ),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    else:
+        result = subprocess.run(
+            ["ps", "-axo", "pid=,ppid=,command="],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
     children: dict[int, set[int]] = {}
     for line in result.stdout.splitlines():
         parts = line.strip().split(maxsplit=2)

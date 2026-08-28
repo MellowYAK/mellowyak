@@ -160,6 +160,26 @@ def start_engine(
 def stop_engine(process: subprocess.Popen[str]) -> None:
     if process.poll() is not None:
         return
+    if os.name == "nt":
+        # A one-file PyInstaller executable uses a bootloader parent and a
+        # Python child. Terminating only the Popen handle can orphan the child
+        # on Windows and keep SQLite files locked after validation completes.
+        subprocess.run(
+            ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        try:
+            process.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait(timeout=10)
+        # Windows can report the process gone just before its final file
+        # handles become deletable. Give NTFS a short bounded settling window
+        # before TemporaryDirectory removes the validation data root.
+        time.sleep(1)
+        return
     process.terminate()
     try:
         process.wait(timeout=10)

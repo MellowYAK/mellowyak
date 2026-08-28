@@ -108,6 +108,13 @@ def _working_hash(root: Path, relative_path: str) -> str:
     return digest.hexdigest()
 
 
+def _excluded_untracked_path(relative_path: str) -> bool:
+    parts = Path(relative_path.rstrip("/")).parts
+    return bool(
+        _NON_GIT_EXCLUDED_DIRECTORIES.intersection(parts) or is_sensitive_path(relative_path)
+    )
+
+
 def observe_git(path: Path) -> GitState:
     selected = path.expanduser().resolve(strict=True)
     repo = discover_repository(selected)
@@ -159,7 +166,13 @@ def observe_git(path: Path) -> GitState:
         )
     )
     unstaged = tuple(sorted(_text_path(item) for item in status.unstaged))
-    untracked = tuple(sorted(_text_path(item) for item in status.untracked))
+    untracked = tuple(
+        sorted(
+            path
+            for item in status.untracked
+            if not _excluded_untracked_path(path := _text_path(item))
+        )
+    )
 
     try:
         head_sha = repo.head().decode("ascii")

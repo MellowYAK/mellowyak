@@ -13,6 +13,7 @@ import tempfile
 import time
 import urllib.parse
 import zipfile
+from contextlib import closing
 from pathlib import Path
 from typing import Any
 
@@ -101,7 +102,7 @@ def phase8_data_root(root: Path) -> tuple[Path, str]:
     config.set_main_option("sqlalchemy.url", f"sqlite:///{database}")
     command.upgrade(config, "0008_validated_repair_apply")
     installation_id = "phase8-upgrade-fixture-installation"
-    with sqlite3.connect(database) as connection:
+    with closing(sqlite3.connect(database)) as connection:
         connection.execute(
             "INSERT INTO installations(id, created_at, last_started_at, app_version, engine_version) VALUES (?, ?, ?, ?, ?)",
             (
@@ -335,7 +336,9 @@ def validate_upgrade(engine: Path, root: Path) -> dict[str, Any]:
             )
     finally:
         stop_engine(handle.process)
-    with sqlite3.connect(data_root / "database" / "mellowyak.sqlite3") as connection:
+    with closing(
+        sqlite3.connect(data_root / "database" / "mellowyak.sqlite3")
+    ) as connection:
         canary = connection.execute(
             "SELECT value FROM app_settings WHERE key='phase8_upgrade_canary'"
         ).fetchone()

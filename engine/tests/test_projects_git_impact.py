@@ -83,6 +83,20 @@ def test_git_observer_reports_clean_staged_unstaged_and_untracked(tmp_path: Path
     assert "src/main.ts" not in staged.unstaged
 
 
+def test_git_observer_excludes_untracked_generated_cache(tmp_path: Path) -> None:
+    root = repository(tmp_path)
+    before = observe_git(root)
+    generated = root / "api" / "__pycache__"
+    generated.mkdir(parents=True)
+    (generated / "server.cpython-312.pyc").write_bytes(b"generated")
+
+    after = observe_git(root)
+
+    assert after.is_dirty is False
+    assert after.untracked == ()
+    assert after.worktree_fingerprint == before.worktree_fingerprint
+
+
 def test_project_api_persists_scan_and_real_impact_without_source_copy(
     tmp_path: Path, create_symlink
 ) -> None:
