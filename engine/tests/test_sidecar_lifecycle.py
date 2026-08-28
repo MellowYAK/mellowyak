@@ -8,7 +8,7 @@ import threading
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-from mellowyak_engine.core.lifecycle import supervise_parent
+from mellowyak_engine.core.lifecycle import parent_is_alive, supervise_parent
 
 TOKEN = "sidecar-test-token-that-is-long-enough-123456789"
 
@@ -19,6 +19,10 @@ def test_parent_supervision_requests_shutdown_when_parent_is_missing() -> None:
     assert thread is not None
     thread.join(timeout=1)
     assert shutdown.is_set()
+
+
+def test_parent_probe_recognizes_current_process() -> None:
+    assert parent_is_alive(os.getpid()) is True
 
 
 def test_real_sidecar_handshake_and_authenticated_health(tmp_path: Path) -> None:

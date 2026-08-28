@@ -15,7 +15,8 @@ def test_platform_data_root_resolution(monkeypatch, tmp_path: Path) -> None:
     expected = tmp_path / "native" / "MellowYak"
     monkeypatch.delenv("MELLOWYAK_DATA_ROOT", raising=False)
     monkeypatch.setattr(config, "user_data_path", lambda *args, **kwargs: expected)
-    assert config.resolve_data_root() == expected.resolve()
+    suffix = Path("engine") if platform.system().lower() == "windows" else Path()
+    assert config.resolve_data_root() == (expected / suffix).resolve()
 
 
 def test_documented_platform_paths_match_platformdirs_contract() -> None:
@@ -24,7 +25,7 @@ def test_documented_platform_paths_match_platformdirs_contract() -> None:
     if system == "darwin":
         assert value.endswith("/Library/Application Support/MellowYak")
     elif system == "windows":
-        assert value.endswith("/MellowYak")
+        assert value.endswith("/com.mellowyak.desktop/engine")
     else:
         assert value.endswith("/.local/share/MellowYak") or "/mellowyak" in value.lower()
 

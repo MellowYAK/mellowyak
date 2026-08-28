@@ -21,6 +21,13 @@ def resolve_data_root(override: str | Path | None = None) -> Path:
     environment_override = os.environ.get("MELLOWYAK_DATA_ROOT", "").strip()
     if environment_override:
         return Path(environment_override).expanduser().resolve()
+    if os.name == "nt":
+        # The per-user NSIS installer uses %LOCALAPPDATA%\MellowYak. Keep
+        # mutable product data outside that installation directory so an
+        # uninstall or upgrade cannot mistake user state for program files.
+        return (
+            Path(user_data_path("com.mellowyak.desktop", appauthor=False, roaming=False)) / "engine"
+        ).resolve()
     return Path(user_data_path("MellowYak", appauthor=False, roaming=False)).resolve()
 
 
