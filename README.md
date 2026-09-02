@@ -26,9 +26,43 @@ and Hebrew catalogs complete; Arabic and Hebrew must render right-to-left. Run
 > [!IMPORTANT]
 > **Early preview — use at your own risk.** MellowYak is in active development, is not a final product, and is not production-ready. Back up your work, keep source control enabled, and review every proposed or applied change. The software is provided as-is, without warranty or a guarantee that it will detect, prevent, repair, or safely reverse every defect or regression. See the [disclaimer](DISCLAIMER.md) and [license](LICENSE.md).
 
-## See MellowYak in action
+## What is MellowYak?
 
-This is what the local desktop experience and the evidence-first repair loop look like today.
+MellowYak is a local desktop application that protects existing software behavior while people and AI coding tools change code.
+
+It runs quietly beside tools such as Codex, Claude Code, Cursor, VS Code, terminal-based agents, and existing CI systems. It does not replace the coding agent and its primary job is not to write code.
+
+Its job is to answer a harder question:
+
+> **When an AI changes the code, what existing behavior might also be affected—and what must be rechecked before the work is called done?**
+
+MellowYak observes an exact local change, connects it to relevant source, tests, runtime areas, and protected behaviors, selects the smallest defensible set of fresh checks, and keeps completion blocked when required evidence is missing or failing.
+
+When a regression is found, it preserves what changed, what used to work, what failed now, why the check was selected, and what must pass after a repair. The repair can be prepared in an isolated local workspace and is verified again before any explicit apply action.
+
+## The desktop product
+
+The same local-first product experience is designed for both macOS and Windows.
+
+### macOS preview
+
+<p align="center">
+  <img src="docs/readme-gallery/mellowyak-macos-preview-mockup-v2.png" alt="MellowYak macOS product preview with the local engine ready" width="100%">
+</p>
+
+<p align="center"><sub>macOS presentation based on the current real development interface. Early preview, not a production-release claim.</sub></p>
+
+### Windows 11 preview
+
+<p align="center">
+  <img src="docs/readme-gallery/mellowyak-windows-preview-mockup.png" alt="MellowYak Windows 11 product preview with the local engine ready" width="100%">
+</p>
+
+<p align="center"><sub>Windows 11 presentation based on the current real development interface. It illustrates the intended Windows build and is not a captured production release.</sub></p>
+
+## How MellowYak works in practice
+
+The screenshots below show the local evidence-first workflow from choosing a project through detecting and validating a regression.
 
 ### 1. Choose a real project folder or try the disposable Demo Lab
 
@@ -72,52 +106,7 @@ The regression view compares the accepted baseline with repeated current failure
 
 <p align="center"><sub>Synthetic Demo Lab data: repair work stays isolated, required checks remain bound to the candidate, and live-source apply requires an explicit user action.</sub></p>
 
-<details>
-<summary><strong>Platform window previews</strong></summary>
-<br>
-
-<strong>Actual macOS development build</strong>
-
-<img src="docs/readme-gallery/mellowyak-macos-local-engine-ready.png" alt="MellowYak macOS development build with the local engine ready and verified capabilities loaded" width="100%">
-
-<sub>Actual macOS development build.</sub>
-
-<br><br>
-
-<strong>Windows 11 preview mockup</strong>
-
-<img src="docs/readme-gallery/mellowyak-windows-preview-mockup.png" alt="MellowYak Windows 11 preview mockup with the local engine ready" width="100%">
-
-<sub>Windows 11 preview mockup based on the current interface. It is not a captured or validated Windows build.</sub>
-
-</details>
-
 The screenshots show the product direction and current development builds. They are not a promise that every capability is complete on every platform. For the implementation boundary, see [Project status](#project-status).
-
----
-
-## What is MellowYak?
-
-MellowYak is a local application that runs quietly beside tools such as Codex, Claude Code, Cursor, VS Code, terminal-based agents, and existing CI systems.
-
-Its job is not to write code.
-
-Its job is to help answer a harder question:
-
-> **When an AI changes the code, what existing behavior might also be affected—and what must be rechecked before the work is called done?**
-
-MellowYak observes an exact code change, connects that change to relevant source, runtime areas, tests, and protected behaviors, runs or requests the smallest defensible set of checks, and keeps completion blocked when required evidence is missing or failing.
-
-When a regression is found, MellowYak prepares focused repair context for any coding agent:
-
-- what the new change must **keep**;
-- what existing behavior must be **restored**;
-- what changed;
-- why the failed behavior is related;
-- which files and evidence matter;
-- which checks must pass after the repair.
-
-The repaired revision is then verified again.
 
 ---
 
