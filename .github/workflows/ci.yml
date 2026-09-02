@@ -55,5 +55,6 @@ jobs:
       - name: Rust checks
         run: |
           engine/.venv/bin/python scripts/build_engine.py
+          mkdir -p apps/desktop/src-tauri/.browser-resources/browser
           cargo fmt --check --manifest-path apps/desktop/src-tauri/Cargo.toml
           cargo check --manifest-path apps/desktop/src-tauri/Cargo.toml
