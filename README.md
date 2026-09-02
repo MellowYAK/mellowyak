@@ -1,5 +1,5 @@
 > [!CAUTION]
-> **NON-NEGOTIABLE UI LOCALIZATION RULE:** No user-facing UI text may be hardcoded anywhere in MellowYak. Every label, message, title, placeholder, accessible name, and mascot description must be rendered from a translation key. English and Hebrew catalogs must stay complete, Arabic & Hebrew UI must render right-to-left. Run `python3 scripts/check_ui_translation_keys.py` before every commit.
+> **NON-NEGOTIABLE UI LOCALIZATION RULE:** No user-facing UI text may be hardcoded anywhere in MellowYak. Every label, message, title, placeholder, accessible name, and mascot description must be rendered from a translation key. English , Arabic,  Hebrew catalogs must stay complete, Arabic & Hebrew UI must render right-to-left. Run `python3 scripts/check_ui_translation_keys.py` before every commit.
 
 <div align="center">
 
