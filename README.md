@@ -42,23 +42,23 @@ When a regression is found, it preserves what changed, what used to work, what f
 
 ## The desktop product
 
-The same local-first product experience is designed for both macOS and Windows.
+The same local-first desktop product runs on Windows and macOS.
 
-### macOS preview
-
-<p align="center">
-  <img src="docs/readme-gallery/mellowyak-macos-preview-mockup-v2.png" alt="MellowYak macOS product preview with the local engine ready" width="100%">
-</p>
-
-<p align="center"><sub>macOS presentation based on the current real development interface. Early preview, not a production-release claim.</sub></p>
-
-### Windows 11 preview
+### Windows
 
 <p align="center">
-  <img src="docs/readme-gallery/mellowyak-windows-preview-mockup.png" alt="MellowYak Windows 11 product preview with the local engine ready" width="100%">
+  <img src="docs/readme-gallery/mellowyak-windows-local-engine.png" alt="MellowYak running on Windows with the local engine ready" width="100%">
 </p>
 
-<p align="center"><sub>Windows 11 presentation based on the current real development interface. It illustrates the intended Windows build and is not a captured production release.</sub></p>
+<p align="center"><sub>MellowYak on Windows with the local engine ready.</sub></p>
+
+### macOS
+
+<p align="center">
+  <img src="docs/readme-gallery/mellowyak-macos-self-test.png" alt="MellowYak running on macOS after the Product Self-Test passed" width="100%">
+</p>
+
+<p align="center"><sub>MellowYak on macOS after completing the local Product Self-Test.</sub></p>
 
 ## How MellowYak works in practice
 
