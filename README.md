@@ -1,5 +1,10 @@
-> [!CAUTION]
-> **NON-NEGOTIABLE UI LOCALIZATION RULE:** No user-facing UI text may be hardcoded anywhere in MellowYak. Every label, message, title, placeholder, accessible name, and mascot description must be rendered from a translation key. English , Arabic,  Hebrew catalogs must stay complete, Arabic & Hebrew UI must render right-to-left. Run `python3 scripts/check_ui_translation_keys.py` before every commit.
+<!--
+Internal model/contributor rule (intentionally hidden from the rendered public landing page):
+No user-facing UI text may be hardcoded. Render every label, message, title, placeholder,
+accessible name, and mascot description from a translation key. Keep the English, Arabic,
+and Hebrew catalogs complete; Arabic and Hebrew must render right-to-left. Run
+`python3 scripts/check_ui_translation_keys.py` before every commit.
+-->
 
 <div align="center">
 
@@ -13,11 +18,81 @@
 [![Privacy](https://img.shields.io/badge/privacy-local--first-14B8A6)](#privacy-by-design)
 [![Cloud](https://img.shields.io/badge/cloud-not%20required-2563EB)](#local-first-architecture)
 [![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux-0F172A)](#installation)
+[![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial-0F766E)](#license)
+[![Commercial use](https://img.shields.io/badge/commercial%20use-written%20permission%20required-D97706)](#commercial-use)
 
 </div>
 
 > [!IMPORTANT]
-> MellowYak is in active development. This README defines the product contract and intended full workflow. It does **not** claim that every capability described below is already implemented or production-ready. Current implementation status must be verified through the project roadmap and validation reports.
+> **Early preview — use at your own risk.** MellowYak is in active development, is not a final product, and is not production-ready. Back up your work, keep source control enabled, and review every proposed or applied change. The software is provided as-is, without warranty or a guarantee that it will detect, prevent, repair, or safely reverse every defect or regression. See the [disclaimer](DISCLAIMER.md) and [license](LICENSE.md).
+
+## See MellowYak in action
+
+This is what the local desktop experience and the evidence-first repair loop look like today.
+
+### 1. Choose a real project folder or try the disposable Demo Lab
+
+<p align="center">
+  <img src="docs/phase-9-delivery/screenshots/01-first-run-choose-project-or-demo.png" alt="MellowYak first-run screen for choosing a real local project folder or the disposable Demo Lab" width="100%">
+</p>
+
+MellowYak observes a selected local source folder without taking ownership of it. The Demo Lab lets someone explore the complete workflow without touching a real project.
+
+### 2. Work normally while MellowYak watches the bounded local evidence
+
+<p align="center">
+  <img src="docs/phase-13m-delivery/images/28-home-background-monitoring.png" alt="MellowYak background monitoring screen showing a local project, selected checks, queue, evidence timeline, and safe next action" width="100%">
+</p>
+
+The dashboard shows which project is monitored, which checks were selected or omitted, what is running, the exact source identity, and what remains unknown. This screenshot uses the local RideFlow validation fixture.
+
+### 3. If protected behavior breaks, MellowYak blocks completion and tells you
+
+<p align="center">
+  <img src="docs/phase-16m-delivery/images/native/notifications/04-critical-regression.png" alt="Native MellowYak notification stating that a critical regression was detected and completion is blocked" width="700">
+</p>
+
+<p align="center"><sub>Native macOS notification captured during platform validation.</sub></p>
+
+<p align="center">
+  <img src="docs/phase-12m-delivery/images/11-regression-confirmed-live.png" alt="MellowYak confirmed regression screen comparing accepted behavior with the current failed result and showing the evidence-bound state transition" width="100%">
+</p>
+
+The regression view compares the accepted baseline with repeated current failures, keeps expected and observed behavior separate, records the source/runtime identity, and does not pretend to know root cause when the evidence cannot prove it. This screenshot uses a disposable local reference fixture.
+
+### 4. Repair in isolation, validate, then apply with an explicit transaction
+
+<p align="center">
+  <img src="docs/phase-8-delivery/screenshots/00-repair-workspace-ready.png" alt="MellowYak isolated repair workspace ready screen" width="100%">
+</p>
+
+<p align="center">
+  <img src="docs/phase-8-delivery/screenshots/13-applied-and-verified.png" alt="MellowYak applied and verified screen showing the required workspace checks passed" width="100%">
+</p>
+
+<p align="center"><sub>Synthetic Demo Lab data: repair work stays isolated, required checks remain bound to the candidate, and live-source apply requires an explicit user action.</sub></p>
+
+<details>
+<summary><strong>Platform window previews</strong></summary>
+<br>
+
+<strong>Actual macOS development build</strong>
+
+<img src="docs/readme-gallery/mellowyak-macos-local-engine-ready.png" alt="MellowYak macOS development build with the local engine ready and verified capabilities loaded" width="100%">
+
+<sub>Actual macOS development build.</sub>
+
+<br><br>
+
+<strong>Windows 11 preview mockup</strong>
+
+<img src="docs/readme-gallery/mellowyak-windows-preview-mockup.png" alt="MellowYak Windows 11 preview mockup with the local engine ready" width="100%">
+
+<sub>Windows 11 preview mockup based on the current interface. It is not a captured or validated Windows build.</sub>
+
+</details>
+
+The screenshots show the product direction and current development builds. They are not a promise that every capability is complete on every platform. For the implementation boundary, see [Project status](#project-status).
 
 ---
 
@@ -1157,7 +1232,7 @@ When provider usage is unavailable, MellowYak may report deterministic proxies s
 
 ## Contributing
 
-MellowYak is intended to become an inspectable, developer-first open-source project.
+MellowYak is an inspectable, developer-first **source-available** project. Its current license permits noncommercial use, modification, and redistribution, but it is not an OSI-approved Open Source license because commercial use is restricted.
 
 Contribution guidelines will prioritize:
 
@@ -1188,9 +1263,21 @@ The local engine must default to loopback-only communication, per-launch authent
 
 ## License
 
-No license file existed at the Phase 1 starting point, so no license was silently added. See [`docs/OPEN_SOURCE_LICENSE_DECISION.md`](docs/OPEN_SOURCE_LICENSE_DECISION.md) for the pending owner decision.
+MellowYak is licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE.md).
 
-No README statement should be interpreted as formal trademark, licensing, security, or production-readiness clearance.
+You may use, study, modify, and redistribute the software for permitted **noncommercial purposes**, subject to the license terms and required notices. Third-party dependencies and assets remain under their own licenses.
+
+### Commercial use
+
+Any commercial use requires **prior express written permission from MellowYAK** under a separate commercial license. Permission may be free or paid, at MellowYAK's discretion, and is valid only when granted in writing. See [Commercial licensing](COMMERCIAL-LICENSE.md) for the request process.
+
+This licensing model is source-available, not OSI Open Source. “Open Source” licenses permit commercial use; the noncommercial restriction here intentionally does not.
+
+### No warranty and user responsibility
+
+MellowYak is experimental preview software supplied **as is** and **without warranty**, to the maximum extent allowed by law. You are responsible for backups, source-control history, review of changes, permissions, and deciding whether any output is safe to use. MellowYAK does not accept liability for data loss, code changes, downtime, security issues, missed regressions, or other damages arising from use of the software. Read the complete [disclaimer](DISCLAIMER.md).
+
+Nothing in this README replaces the license terms or constitutes legal advice, a warranty, or production-readiness clearance.
 
 ---
 

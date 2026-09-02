@@ -1,13 +1,11 @@
-# Open-source license decision required
+# Source-available license decision
 
-No license file existed at the clean Phase 1 starting commit. Phase 1 therefore does not add or imply a license. Copyright law applies until the owner makes a documented choice; public source visibility alone does not grant reuse rights. This is an engineering comparison, not legal advice or formal clearance.
+The owner selected the [PolyForm Noncommercial License 1.0.0](../LICENSE.md).
 
-| Option | Practical effect | Considerations for MellowYak |
-|---|---|---|
-| Apache-2.0 | Permissive use with notices and an express patent grant. | Strong ecosystem clarity; more notice obligations than MIT. |
-| MIT | Short permissive license with broad reuse. | Simple adoption; no explicit patent grant and permits closed derivatives. |
-| MPL-2.0 | File-level copyleft. Modified covered files stay open while larger works may remain separate. | Can protect core improvements while remaining connector-friendly; boundary management matters. |
-| AGPL-3.0 | Strong copyleft including network interaction. | Protects hosted modifications, but may reduce commercial/enterprise adoption and complicate integrations. |
-| Open core | Governance/business model, not itself a license. Core and proprietary modules need explicit boundaries and compatible licenses. | Could fund connectors/team features, but risks confusing the privacy/open-source promise unless defined transparently. |
+The public license permits use, modification, and distribution for permitted noncommercial purposes. Commercial use requires prior express written permission under a separate [commercial license](../COMMERCIAL-LICENSE.md), which MellowYAK may grant for free or for a fee.
 
-The owner should obtain appropriate legal advice and select a license before accepting external contributions or distributing release packages. Signing a contributor agreement or adding licensing enforcement is outside Phase 1.
+Because the license restricts commercial use, MellowYak must be described as **source-available**, not as OSI Open Source. Open Source licenses cannot restrict use in a field of endeavor, including business use.
+
+The software remains experimental and is supplied without warranty. See the [disclaimer](../DISCLAIMER.md).
+
+This records the owner's project decision and is not legal advice. The owner should have the licensing package reviewed by qualified counsel before accepting external contributions or distributing production releases.
