@@ -11,6 +11,8 @@ permissions:
 jobs:
   quality:
     runs-on: ubuntu-24.04
+    env:
+      MELLOWYAK_BROWSER_HEADLESS: "1"
     steps:
       - uses: actions/checkout@v4
       - name: Install Tauri Linux prerequisites
